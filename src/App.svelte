@@ -2,6 +2,7 @@
   import { onMount } from 'svelte'
   import FileUpload from './lib/FileUpload.svelte'
   import ReportViewer from './lib/ReportViewer.svelte'
+  import CertificateManager from './lib/CertificateManager.svelte'
   import { processFile } from './lib/c2pa'
   import { testTrustListFetch } from './lib/trustListTest'
 
@@ -9,6 +10,8 @@
   let error: string | null = null
   let processing = false
   let globalDragOver = false
+  let testCertificates: string[] = []
+  let usedTestCertificates = false
 
   // Test trust list fetching on component mount
   onMount(async () => {
@@ -48,18 +51,31 @@
 
   async function handleFileSelect(event: CustomEvent<File>) {
     const file = event.detail
+    console.log('📄 File selected:', file.name, file.type, file.size, 'bytes')
+
     processing = true
     error = null
     report = null
+    usedTestCertificates = testCertificates.length > 0
 
     try {
-      report = await processFile(file)
+      console.log('⏳ Starting file processing...')
+      if (testCertificates.length > 0) {
+        console.log('⚠️  Using', testCertificates.length, 'test certificate(s)')
+      }
+      report = await processFile(file, testCertificates)
+      console.log('✅ File processed successfully:', report)
     } catch (err) {
       error = err instanceof Error ? err.message : 'An error occurred processing the file'
-      console.error('Error processing file:', err)
+      console.error('❌ Error processing file:', err)
     } finally {
+      console.log('🏁 Processing complete. Report:', !!report, 'Error:', !!error)
       processing = false
     }
+  }
+
+  function handleCertificatesUpdated(event: CustomEvent<string[]>) {
+    testCertificates = event.detail
   }
 
   // Global drag and drop handlers
@@ -103,173 +119,124 @@
   on:dragover={handleGlobalDragOver}
   on:dragleave={handleGlobalDragLeave}
   on:drop={handleGlobalDrop}
-  class:global-drag-over={globalDragOver}
+  class="relative min-h-screen"
+  class:pointer-events-none={globalDragOver}
 >
   {#if globalDragOver}
-    <div class="drop-overlay">
-      <div class="drop-message">
-        <div class="drop-icon">📁</div>
-        <p>Drop file to analyze</p>
+    <div class="fixed inset-0 z-50 flex items-center justify-center bg-blue-600 dark:bg-blue-700 bg-opacity-95 transition-opacity duration-200">
+      <div class="text-center text-white">
+        <div class="text-8xl mb-4 animate-bounce">📁</div>
+        <p class="text-3xl font-semibold">Drop file to analyze</p>
       </div>
     </div>
   {/if}
 
-  <div class="header">
-    <div class="title-section">
-      <h1>C2PA Conformance Testing Tool</h1>
-      <p class="subtitle">Drag and drop files anywhere or click browse to validate C2PA manifests</p>
+  {#if !report && !processing}
+    <!-- Hero Section -->
+    <div class="max-w-4xl mx-auto text-center mb-12">
+      <h1 class="text-5xl font-bold text-gray-900 dark:text-white mb-6">C2PA Conformance Testing Tool</h1>
+      <p class="text-xl text-gray-600 dark:text-gray-400 mb-8">
+        Verify the authenticity and provenance of digital content using the official C2PA specification
+      </p>
+
+      <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-6 mb-8 text-left">
+        <h2 class="text-lg font-semibold text-blue-900 dark:text-blue-100 mb-3">What is C2PA?</h2>
+        <p class="text-gray-700 dark:text-gray-300 mb-3">
+          The Coalition for Content Provenance and Authenticity (C2PA) is a technical standard that provides transparency about the origin and history of digital content.
+        </p>
+        <ul class="space-y-2 text-gray-700 dark:text-gray-300">
+          <li class="flex items-start gap-2">
+            <span class="text-blue-600 dark:text-blue-400 mt-1">✓</span>
+            <span><strong>Validate signatures</strong> against the official C2PA Conformance Trust List</span>
+          </li>
+          <li class="flex items-start gap-2">
+            <span class="text-blue-600 dark:text-blue-400 mt-1">✓</span>
+            <span><strong>View detailed manifests</strong> including assertions, ingredients, and provenance information</span>
+          </li>
+          <li class="flex items-start gap-2">
+            <span class="text-blue-600 dark:text-blue-400 mt-1">✓</span>
+            <span><strong>100% client-side processing</strong> - your files never leave your device</span>
+          </li>
+        </ul>
+      </div>
+
+      <!-- Test Certificate Manager -->
+      <div class="mb-8">
+        <CertificateManager
+          bind:testCertificates={testCertificates}
+          on:certificatesUpdated={handleCertificatesUpdated}
+        />
+      </div>
     </div>
-    <FileUpload on:fileselect={handleFileSelect} compact={report !== null || processing} />
-  </div>
+
+    <!-- Upload Area -->
+    <div class="max-w-2xl mx-auto">
+      <FileUpload on:fileselect={handleFileSelect} compact={false} />
+    </div>
+  {:else}
+    <!-- Compact Header when viewing report -->
+    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 mb-8">
+      <div class="flex-1">
+        <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">C2PA Conformance Testing Tool</h1>
+        <p class="text-gray-600 dark:text-gray-400">Verify digital content authenticity and provenance</p>
+      </div>
+      <FileUpload on:fileselect={handleFileSelect} compact={true} />
+    </div>
+  {/if}
 
   {#if processing}
-    <div class="processing">
-      <div class="spinner"></div>
-      <p>Processing file...</p>
+    <div class="flex flex-col items-center gap-4 py-16">
+      <div class="w-16 h-16 border-4 border-blue-200 dark:border-blue-800 border-t-blue-600 dark:border-t-blue-400 rounded-full animate-spin"></div>
+      <p class="text-lg text-gray-700 dark:text-gray-300">Processing file...</p>
     </div>
   {/if}
 
   {#if error}
-    <div class="error">
-      <h2>Error</h2>
-      <p>{error}</p>
+    <div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-6 my-8">
+      <h2 class="text-2xl font-semibold text-red-700 dark:text-red-400 mb-2">Error</h2>
+      <p class="text-red-600 dark:text-red-300">{error}</p>
     </div>
   {/if}
 
   {#if report}
-    <ReportViewer {report} />
+    <ReportViewer {report} {usedTestCertificates} />
+  {/if}
+
+  {#if !report && !processing}
+    <!-- Footer Information -->
+    <div class="max-w-4xl mx-auto mt-16 pt-8 border-t border-gray-200 dark:border-gray-700">
+      <div class="grid md:grid-cols-2 gap-8 text-sm text-gray-600 dark:text-gray-400">
+        <div>
+          <h3 class="font-semibold text-gray-900 dark:text-gray-100 mb-2">About This Tool</h3>
+          <p class="mb-2">
+            This tool validates C2PA manifests using the official <code class="px-1 py-0.5 bg-gray-100 dark:bg-gray-800 rounded text-xs">@contentauth/c2pa-web</code> SDK.
+          </p>
+          <p>
+            All processing happens in your browser. Files never leave your device.
+          </p>
+        </div>
+        <div>
+          <h3 class="font-semibold text-gray-900 dark:text-gray-100 mb-2">Learn More</h3>
+          <ul class="space-y-1">
+            <li>
+              <a href="https://c2pa.org" target="_blank" rel="noopener noreferrer" class="text-blue-600 dark:text-blue-400 hover:underline">
+                C2PA Specification →
+              </a>
+            </li>
+            <li>
+              <a href="https://c2pa.org/conformance" target="_blank" rel="noopener noreferrer" class="text-blue-600 dark:text-blue-400 hover:underline">
+                Conformance Program →
+              </a>
+            </li>
+            <li>
+              <a href="https://contentauthenticity.org" target="_blank" rel="noopener noreferrer" class="text-blue-600 dark:text-blue-400 hover:underline">
+                Content Authenticity Initiative →
+              </a>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
   {/if}
 </main>
 
-<style>
-  main {
-    text-align: center;
-    position: relative;
-  }
-
-  main.global-drag-over {
-    pointer-events: none;
-  }
-
-  .drop-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-color: rgba(100, 108, 255, 0.95);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 1000;
-    pointer-events: none;
-    animation: fadeIn 0.2s ease;
-  }
-
-  @keyframes fadeIn {
-    from {
-      opacity: 0;
-    }
-    to {
-      opacity: 1;
-    }
-  }
-
-  .drop-message {
-    text-align: center;
-    color: white;
-  }
-
-  .drop-icon {
-    font-size: 6rem;
-    margin-bottom: 1rem;
-    animation: bounce 0.6s ease infinite;
-  }
-
-  @keyframes bounce {
-    0%, 100% {
-      transform: translateY(0);
-    }
-    50% {
-      transform: translateY(-20px);
-    }
-  }
-
-  .drop-message p {
-    font-size: 2rem;
-    font-weight: 600;
-    margin: 0;
-  }
-
-  .header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 2rem;
-    margin-bottom: 2rem;
-    flex-wrap: wrap;
-  }
-
-  .title-section {
-    flex: 1;
-    text-align: left;
-  }
-
-  .title-section h1 {
-    margin: 0 0 0.5rem 0;
-  }
-
-  .subtitle {
-    color: #888;
-    margin: 0;
-  }
-
-  .processing {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 1rem;
-    padding: 3rem;
-  }
-
-  .spinner {
-    border: 4px solid rgba(100, 108, 255, 0.1);
-    border-left-color: #646cff;
-    border-radius: 50%;
-    width: 50px;
-    height: 50px;
-    animation: spin 1s linear infinite;
-  }
-
-  @keyframes spin {
-    to { transform: rotate(360deg); }
-  }
-
-  .error {
-    background-color: rgba(255, 50, 50, 0.1);
-    border: 1px solid rgba(255, 50, 50, 0.3);
-    border-radius: 8px;
-    padding: 2rem;
-    margin: 2rem 0;
-  }
-
-  .error h2 {
-    color: #ff5050;
-    margin-top: 0;
-  }
-
-  .error p {
-    color: #ffaaaa;
-  }
-
-  @media (max-width: 768px) {
-    .header {
-      flex-direction: column;
-      align-items: stretch;
-    }
-
-    .title-section {
-      text-align: center;
-    }
-  }
-</style>

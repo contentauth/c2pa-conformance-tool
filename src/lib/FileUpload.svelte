@@ -41,7 +41,10 @@
 </script>
 
 {#if compact}
-  <button class="browse-button" on:click={handleClick}>
+  <button
+    class="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors duration-200 shadow-sm hover:shadow-md whitespace-nowrap"
+    on:click={handleClick}
+  >
     📁 Browse Files
   </button>
   <input
@@ -49,12 +52,15 @@
     type="file"
     on:change={handleFileInput}
     accept="image/*,video/*,audio/*,.pdf"
-    style="display: none;"
+    class="hidden"
   />
 {:else}
   <div
-    class="upload-area"
-    class:drag-over={dragOver}
+    class={`border-2 border-dashed rounded-xl p-12 cursor-pointer transition-all duration-300 hover:border-blue-500 hover:bg-blue-50/50 dark:hover:bg-blue-900/10 ${
+      dragOver
+        ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
+        : 'border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800'
+    }`}
     on:dragover={handleDragOver}
     on:dragleave={handleDragLeave}
     on:drop={handleDrop}
@@ -63,71 +69,17 @@
     on:click={handleClick}
     on:keydown={(e) => e.key === 'Enter' && handleClick()}
   >
-    <div class="upload-icon">📁</div>
-    <p class="upload-text">Drop a file here or click to select</p>
-    <p class="upload-hint">Supports images, videos, audio, and documents with C2PA manifests</p>
+    <div class="text-7xl text-center mb-4">📁</div>
+    <p class="text-xl font-medium text-gray-900 dark:text-white text-center mb-2">Drop a file here or click to select</p>
+    <p class="text-sm text-gray-500 dark:text-gray-400 text-center">Supports images, videos, audio, and documents with C2PA manifests</p>
 
     <input
       bind:this={fileInput}
       type="file"
       on:change={handleFileInput}
       accept="image/*,video/*,audio/*,.pdf"
-      style="display: none;"
+      class="hidden"
     />
   </div>
 {/if}
 
-<style>
-  .browse-button {
-    border-radius: 8px;
-    border: 1px solid #646cff;
-    padding: 0.75em 1.5em;
-    font-size: 1em;
-    font-weight: 500;
-    font-family: inherit;
-    background-color: #646cff;
-    color: white;
-    cursor: pointer;
-    transition: all 0.25s;
-    white-space: nowrap;
-  }
-
-  .browse-button:hover {
-    background-color: #535bf2;
-    transform: translateY(-1px);
-    box-shadow: 0 4px 8px rgba(100, 108, 255, 0.3);
-  }
-
-  .upload-area {
-    border: 2px dashed #646cff;
-    border-radius: 12px;
-    padding: 3rem 2rem;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    background-color: rgba(100, 108, 255, 0.05);
-  }
-
-  .upload-area:hover,
-  .upload-area.drag-over {
-    border-color: #535bf2;
-    background-color: rgba(100, 108, 255, 0.1);
-    transform: scale(1.02);
-  }
-
-  .upload-icon {
-    font-size: 4rem;
-    margin-bottom: 1rem;
-  }
-
-  .upload-text {
-    font-size: 1.2rem;
-    font-weight: 500;
-    margin: 0.5rem 0;
-  }
-
-  .upload-hint {
-    font-size: 0.9rem;
-    color: #888;
-    margin: 0.5rem 0;
-  }
-</style>

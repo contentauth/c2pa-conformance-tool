@@ -53,17 +53,29 @@ async function initC2pa(): Promise<C2paSdk> {
 
 /**
  * Process a file and return a C2PA conformance report
+ * @param file The file to process
+ * @param testCertificates Optional array of test certificates (PEM format) to add to trust list
  */
-export async function processFile(file: File): Promise<ManifestStore> {
+export async function processFile(file: File, testCertificates: string[] = []): Promise<ManifestStore> {
+  console.log('🔍 Starting file processing for:', file.name, 'Type:', file.type)
+
   // Initialize C2PA SDK if not already initialized
+  console.log('Initializing C2PA SDK...')
   const c2pa = await initC2pa()
+  console.log('✅ C2PA SDK initialized')
 
   try {
     console.log('Fetching official C2PA trust lists...')
 
     // Fetch and concatenate the trust lists into a single string
-    const trustAnchors = await fetchTrustLists()
+    let trustAnchors = await fetchTrustLists()
     console.log('✅ Trust anchors fetched, length:', trustAnchors.length)
+
+    // Add test certificates if provided
+    if (testCertificates.length > 0) {
+      console.log('⚠️  Adding', testCertificates.length, 'test certificate(s) to trust list')
+      trustAnchors = trustAnchors + '\n' + testCertificates.join('\n')
+    }
 
     console.log('Configuring C2PA trust verification (official trust list only)...')
     const settings: SettingsContext = {
@@ -88,16 +100,17 @@ export async function processFile(file: File): Promise<ManifestStore> {
     console.log('✅ Reader created successfully with trust verification enabled')
 
     // Get the manifest store
+    console.log('Retrieving manifest store...')
     const manifestStore = await reader.manifestStore()
 
-    console.log('✅ Manifest store retrieved with trust validation')
+    console.log('✅ Manifest store retrieved with trust validation:', manifestStore)
 
     // Clean up the reader
     await reader.free()
 
     return manifestStore
   } catch (error) {
-    console.error('Error in processFile:', error)
+    console.error('❌ Error in processFile:', error)
     if (error instanceof Error) {
       throw new Error(`Failed to process file: ${error.message}`)
     }

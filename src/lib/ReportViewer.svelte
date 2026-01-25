@@ -1,5 +1,6 @@
 <script lang="ts">
   export let report: any
+  export let usedTestCertificates = false
 
   let showRaw = false
 
@@ -67,61 +68,88 @@
   }
 </script>
 
-<div class="report-container">
-  <div class="report-header">
-    <h2>C2PA Conformance Report</h2>
-    <div class="actions">
-      <button on:click={() => showRaw = !showRaw}>
+<div class="text-left mt-8">
+  <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+    <h2 class="text-3xl font-bold text-gray-900 dark:text-white">C2PA Conformance Report</h2>
+    <div class="flex flex-wrap gap-2">
+      <button
+        class="px-4 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors font-medium"
+        on:click={() => showRaw = !showRaw}
+      >
         {showRaw ? 'Show Formatted' : 'Show Raw JSON'}
       </button>
-      <button on:click={downloadReport}>Download Report</button>
-      <button on:click={copyToClipboard}>Copy JSON</button>
+      <button
+        class="px-4 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors font-medium"
+        on:click={downloadReport}
+      >
+        Download Report
+      </button>
+      <button
+        class="px-4 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors font-medium"
+        on:click={copyToClipboard}
+      >
+        Copy JSON
+      </button>
     </div>
   </div>
 
+  {#if usedTestCertificates}
+    <div class="mb-6 bg-amber-50 dark:bg-amber-900/20 border-2 border-amber-400 dark:border-amber-600 rounded-lg p-4">
+      <div class="flex items-start gap-3">
+        <div class="flex-shrink-0 text-2xl">⚠️</div>
+        <div>
+          <h3 class="font-bold text-amber-900 dark:text-amber-100 mb-1">Test Certificate Mode Active</h3>
+          <p class="text-sm text-amber-800 dark:text-amber-200">
+            This validation used custom test certificates. Results may differ from production validation using only the official C2PA trust list.
+          </p>
+        </div>
+      </div>
+    </div>
+  {/if}
+
   {#if showRaw}
-    <pre class="json-output">{JSON.stringify(report, null, 2)}</pre>
+    <pre class="bg-gray-900 dark:bg-gray-950 border border-gray-700 rounded-lg p-6 overflow-x-auto text-sm leading-relaxed text-gray-100">{JSON.stringify(report, null, 2)}</pre>
   {:else}
-    <div class="formatted-report">
+    <div class="space-y-6">
       {#if activeManifest}
         {#if activeManifest.signature_info}
-          <section>
-            <h3>Signature Information</h3>
-            <div class="info-grid">
+          <section class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6 shadow-sm">
+            <h3 class="text-xl font-semibold text-blue-600 dark:text-blue-400 mb-4 pb-3 border-b-2 border-blue-200 dark:border-blue-800">Signature Information</h3>
+            <div class="space-y-3">
               {#if activeManifest.signature_info.common_name}
-                <div class="info-item">
-                  <span class="label">Common Name:</span>
-                  <span class="value">{activeManifest.signature_info.common_name}</span>
+                <div class="flex gap-2">
+                  <span class="font-semibold text-gray-700 dark:text-gray-300 min-w-[140px]">Common Name:</span>
+                  <span class="text-gray-900 dark:text-gray-100 break-all">{activeManifest.signature_info.common_name}</span>
                 </div>
               {/if}
               {#if activeManifest.signature_info.issuer}
-                <div class="info-item">
-                  <span class="label">Issuer:</span>
-                  <span class="value">{activeManifest.signature_info.issuer}</span>
+                <div class="flex gap-2">
+                  <span class="font-semibold text-gray-700 dark:text-gray-300 min-w-[140px]">Issuer:</span>
+                  <span class="text-gray-900 dark:text-gray-100 break-all">{activeManifest.signature_info.issuer}</span>
                 </div>
               {/if}
               {#if activeManifest.signature_info.time}
-                <div class="info-item">
-                  <span class="label">Signed:</span>
-                  <span class="value">{activeManifest.signature_info.time}</span>
+                <div class="flex gap-2">
+                  <span class="font-semibold text-gray-700 dark:text-gray-300 min-w-[140px]">Signed:</span>
+                  <span class="text-gray-900 dark:text-gray-100 break-all">{activeManifest.signature_info.time}</span>
                 </div>
               {/if}
               {#if activeManifest.signature_info.alg}
-                <div class="info-item">
-                  <span class="label">Algorithm:</span>
-                  <span class="value">{activeManifest.signature_info.alg}</span>
+                <div class="flex gap-2">
+                  <span class="font-semibold text-gray-700 dark:text-gray-300 min-w-[140px]">Algorithm:</span>
+                  <span class="text-gray-900 dark:text-gray-100 break-all">{activeManifest.signature_info.alg}</span>
                 </div>
               {/if}
             </div>
           </section>
         {/if}
 
-        <section>
-          <h3>Active Manifest</h3>
-          <div class="info-grid">
-            <div class="info-item">
-              <span class="label">Claim Generator:</span>
-              <span class="value">
+        <section class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6 shadow-sm">
+          <h3 class="text-xl font-semibold text-blue-600 dark:text-blue-400 mb-4 pb-3 border-b-2 border-blue-200 dark:border-blue-800">Active Manifest</h3>
+          <div class="space-y-3">
+            <div class="flex gap-2">
+              <span class="font-semibold text-gray-700 dark:text-gray-300 min-w-[140px]">Claim Generator:</span>
+              <span class="text-gray-900 dark:text-gray-100">
                 {#if activeManifest.claim_generator_info && activeManifest.claim_generator_info.length > 0}
                   {activeManifest.claim_generator_info[0].name}
                   {#if activeManifest.claim_generator_info[0].version}
@@ -134,28 +162,28 @@
                 {/if}
               </span>
             </div>
-            <div class="info-item">
-              <span class="label">Instance ID:</span>
-              <span class="value">{activeManifest.instance_id || 'N/A'}</span>
+            <div class="flex gap-2">
+              <span class="font-semibold text-gray-700 dark:text-gray-300 min-w-[140px]">Instance ID:</span>
+              <span class="text-gray-900 dark:text-gray-100 break-all">{activeManifest.instance_id || 'N/A'}</span>
             </div>
             {#if activeManifest.label}
-              <div class="info-item">
-                <span class="label">Label:</span>
-                <span class="value">{activeManifest.label}</span>
+              <div class="flex gap-2">
+                <span class="font-semibold text-gray-700 dark:text-gray-300 min-w-[140px]">Label:</span>
+                <span class="text-gray-900 dark:text-gray-100 break-all">{activeManifest.label}</span>
               </div>
             {/if}
           </div>
         </section>
 
         {#if activeManifest.assertions && activeManifest.assertions.length > 0}
-          <section>
-            <h3>Assertions ({activeManifest.assertions.length})</h3>
-            <div class="assertions-list">
+          <section class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6 shadow-sm">
+            <h3 class="text-xl font-semibold text-blue-600 dark:text-blue-400 mb-4 pb-3 border-b-2 border-blue-200 dark:border-blue-800">Assertions ({activeManifest.assertions.length})</h3>
+            <div class="space-y-4">
               {#each activeManifest.assertions as assertion}
-                <div class="assertion-item">
-                  <strong>{assertion.label || assertion.url || 'Unknown'}</strong>
+                <div class="bg-gray-50 dark:bg-gray-900/50 rounded-lg p-4">
+                  <strong class="text-gray-900 dark:text-gray-100">{assertion.label || assertion.url || 'Unknown'}</strong>
                   {#if assertion.data}
-                    <pre class="assertion-data">{formatAssertionData(assertion.data)}</pre>
+                    <pre class="mt-2 bg-gray-100 dark:bg-gray-900 p-3 rounded text-sm overflow-x-auto text-gray-800 dark:text-gray-200">{formatAssertionData(assertion.data)}</pre>
                   {/if}
                 </div>
               {/each}
@@ -164,23 +192,26 @@
         {/if}
 
         {#if activeManifest.ingredients && activeManifest.ingredients.length > 0}
-          <section>
-            <h3>Ingredients ({activeManifest.ingredients.length})</h3>
-            <div class="ingredients-list">
+          <section class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6 shadow-sm">
+            <h3 class="text-xl font-semibold text-blue-600 dark:text-blue-400 mb-4 pb-3 border-b-2 border-blue-200 dark:border-blue-800">Ingredients ({activeManifest.ingredients.length})</h3>
+            <div class="space-y-4">
               {#each activeManifest.ingredients as ingredient}
-                <div class="ingredient-item">
-                  <strong>{ingredient.title || ingredient.instance_id || 'Unknown'}</strong>
-                  {#if ingredient.format}
-                    <p><span class="ingredient-label">Format:</span> {ingredient.format}</p>
-                  {/if}
+                <div class="bg-gray-50 dark:bg-gray-900/50 rounded-lg p-4">
+                  <strong class="text-gray-900 dark:text-gray-100">{ingredient.title || ingredient.instance_id || 'Unknown'}</strong>
                   {#if ingredient.relationship}
-                    <p><span class="ingredient-label">Relationship:</span> {ingredient.relationship}</p>
+                    <p class="mt-2 text-sm text-gray-700 dark:text-gray-300">
+                      <span class="font-semibold text-gray-600 dark:text-gray-400">Relationship:</span> {ingredient.relationship}
+                    </p>
                   {/if}
                   {#if ingredient.document_id}
-                    <p><span class="ingredient-label">Document ID:</span> {ingredient.document_id}</p>
+                    <p class="mt-1 text-sm text-gray-700 dark:text-gray-300">
+                      <span class="font-semibold text-gray-600 dark:text-gray-400">Document ID:</span> {ingredient.document_id}
+                    </p>
                   {/if}
                   {#if ingredient.instance_id && !ingredient.title}
-                    <p><span class="ingredient-label">Instance ID:</span> {ingredient.instance_id}</p>
+                    <p class="mt-1 text-sm text-gray-700 dark:text-gray-300">
+                      <span class="font-semibold text-gray-600 dark:text-gray-400">Instance ID:</span> {ingredient.instance_id}
+                    </p>
                   {/if}
                 </div>
               {/each}
@@ -189,14 +220,22 @@
         {/if}
 
         {#if report.validation_status && report.validation_status.length > 0}
-          <section>
-            <h3>Validation Status</h3>
-            <div class="validation-list">
+          <section class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6 shadow-sm">
+            <h3 class="text-xl font-semibold text-blue-600 dark:text-blue-400 mb-4 pb-3 border-b-2 border-blue-200 dark:border-blue-800">Validation Status</h3>
+            <div class="space-y-3">
               {#each report.validation_status as status}
-                <div class="validation-item" class:success={status.success}>
-                  <strong>{status.code}</strong>
+                <div class={`rounded-lg p-4 border ${
+                  status.success
+                    ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800'
+                    : 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800'
+                }`}>
+                  <strong class="text-gray-900 dark:text-gray-100">{status.code}</strong>
                   {#if status.explanation}
-                    <p>{status.explanation}</p>
+                    <p class={`mt-1 text-sm ${
+                      status.success
+                        ? 'text-green-700 dark:text-green-300'
+                        : 'text-red-700 dark:text-red-300'
+                    }`}>{status.explanation}</p>
                   {/if}
                 </div>
               {/each}
@@ -204,196 +243,9 @@
           </section>
         {/if}
       {:else}
-        <p class="no-manifest">No active manifest found in this file.</p>
+        <p class="text-center text-gray-500 dark:text-gray-400 py-8">No active manifest found in this file.</p>
       {/if}
     </div>
   {/if}
 </div>
 
-<style>
-  .report-container {
-    text-align: left;
-    margin-top: 2rem;
-  }
-
-  .report-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 1.5rem;
-    flex-wrap: wrap;
-    gap: 1rem;
-  }
-
-  .report-header h2 {
-    margin: 0;
-  }
-
-  .actions {
-    display: flex;
-    gap: 0.5rem;
-    flex-wrap: wrap;
-  }
-
-  .json-output {
-    background-color: #1a1a1a;
-    border: 1px solid #333;
-    border-radius: 8px;
-    padding: 1.5rem;
-    overflow-x: auto;
-    text-align: left;
-    font-size: 0.9rem;
-    line-height: 1.4;
-  }
-
-  .formatted-report {
-    background-color: rgba(100, 108, 255, 0.05);
-    border: 1px solid rgba(100, 108, 255, 0.2);
-    border-radius: 8px;
-    padding: 1.5rem;
-  }
-
-  section {
-    margin-bottom: 2rem;
-  }
-
-  section:last-child {
-    margin-bottom: 0;
-  }
-
-  h3 {
-    color: #646cff;
-    margin-top: 0;
-    margin-bottom: 1rem;
-    border-bottom: 1px solid rgba(100, 108, 255, 0.2);
-    padding-bottom: 0.5rem;
-  }
-
-  .info-grid {
-    display: grid;
-    gap: 1rem;
-  }
-
-  .info-item {
-    display: flex;
-    gap: 0.5rem;
-  }
-
-  .label {
-    font-weight: 600;
-    min-width: 140px;
-  }
-
-  .value {
-    word-break: break-all;
-  }
-
-  .assertions-list,
-  .ingredients-list {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-  }
-
-  .assertion-item,
-  .ingredient-item {
-    background-color: rgba(0, 0, 0, 0.2);
-    border-radius: 6px;
-    padding: 1rem;
-  }
-
-  .assertion-data {
-    margin-top: 0.5rem;
-    background-color: rgba(0, 0, 0, 0.3);
-    padding: 0.75rem;
-    border-radius: 4px;
-    overflow-x: auto;
-    font-size: 0.85rem;
-  }
-
-  .ingredient-item p {
-    margin: 0.5rem 0 0 0;
-    font-size: 0.9rem;
-  }
-
-  .ingredient-label {
-    font-weight: 600;
-    color: #888;
-  }
-
-  :global(.value:has(> :contains("<elided>"))) {
-    font-style: italic;
-    opacity: 0.7;
-  }
-
-  .validation-status {
-    background-color: rgba(255, 50, 50, 0.1);
-    border: 1px solid rgba(255, 50, 50, 0.3);
-    border-radius: 6px;
-    padding: 1rem;
-  }
-
-  .validation-status.valid {
-    background-color: rgba(50, 255, 50, 0.1);
-    border-color: rgba(50, 255, 50, 0.3);
-  }
-
-  .validation-list {
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
-  }
-
-  .validation-item {
-    background-color: rgba(255, 50, 50, 0.1);
-    border: 1px solid rgba(255, 50, 50, 0.3);
-    border-radius: 6px;
-    padding: 0.75rem;
-  }
-
-  .validation-item.success {
-    background-color: rgba(50, 255, 50, 0.1);
-    border-color: rgba(50, 255, 50, 0.3);
-  }
-
-  .validation-item p {
-    margin: 0.5rem 0 0 0;
-    font-size: 0.9rem;
-  }
-
-  .errors {
-    margin-top: 1rem;
-  }
-
-  .errors ul {
-    margin: 0.5rem 0 0 0;
-    padding-left: 1.5rem;
-  }
-
-  .errors li {
-    margin: 0.25rem 0;
-  }
-
-  .no-manifest {
-    text-align: center;
-    color: #888;
-    padding: 2rem;
-  }
-
-  @media (prefers-color-scheme: light) {
-    .json-output {
-      background-color: #f9f9f9;
-      border-color: #ddd;
-      color: #213547;
-    }
-
-    .assertion-item,
-    .ingredient-item {
-      background-color: rgba(0, 0, 0, 0.05);
-    }
-
-    .assertion-data {
-      background-color: rgba(0, 0, 0, 0.08);
-    }
-  }
-</style>

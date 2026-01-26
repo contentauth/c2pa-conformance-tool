@@ -134,9 +134,15 @@
   {#if !report && !processing}
     <!-- Hero Section -->
     <div class="max-w-4xl mx-auto text-center mb-12">
-      <h1 class="text-5xl font-bold text-gray-900 dark:text-white mb-6">C2PA Conformance Testing Tool</h1>
+      <!-- Logos -->
+      <div class="flex items-center justify-center gap-6 mb-8">
+        <img src="/content_credentials_icon.svg" alt="Content Credentials" class="h-16 w-auto" />
+        <img src="/c2pa_icon.svg" alt="C2PA" class="h-16 w-auto" />
+      </div>
+
+      <h1 class="text-5xl font-bold text-gray-900 dark:text-white mb-6">C2PA Verify</h1>
       <p class="text-xl text-gray-600 dark:text-gray-400 mb-8">
-        Verify the authenticity and provenance of digital content using the official C2PA specification
+        Content Credentials Validator and Conformance Testing Tool
       </p>
 
       <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-6 mb-8 text-left">
@@ -176,9 +182,15 @@
   {:else}
     <!-- Compact Header when viewing report -->
     <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 mb-8">
-      <div class="flex-1">
-        <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">C2PA Conformance Testing Tool</h1>
-        <p class="text-gray-600 dark:text-gray-400">Verify digital content authenticity and provenance</p>
+      <div class="flex-1 flex items-center gap-4">
+        <div class="flex items-center gap-3">
+          <img src="/content_credentials_icon.svg" alt="Content Credentials" class="h-10 w-auto" />
+          <img src="/c2pa_icon.svg" alt="C2PA" class="h-10 w-auto" />
+        </div>
+        <div>
+          <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-1">C2PA Verify</h1>
+          <p class="text-gray-600 dark:text-gray-400">Content Credentials Validator</p>
+        </div>
       </div>
       <FileUpload on:fileselect={handleFileSelect} compact={true} />
     </div>

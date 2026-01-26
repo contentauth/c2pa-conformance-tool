@@ -9,11 +9,14 @@ A web application for validating C2PA (Coalition for Content Provenance and Auth
 - **Drag & Drop Interface**: Easy file upload via drag-and-drop or file selection
 - **Client-Side Processing**: Uses c2pa-rs compiled to WebAssembly for fast, private processing
 - **Official C2PA Trust List**: Validates signatures against the official [C2PA Conformance Trust List](https://c2pa.org/conformance)
+- **Test Certificate Upload**: Upload custom test certificates for conformance testing (session-only, clearly marked)
+- **Modern Tailwind CSS UI**: Clean, responsive design matching verify.contentauthenticity.org
 - **Comprehensive Reports**: View detailed C2PA manifest information including:
+  - Signature information with trust validation
   - Active manifest details
   - Assertions and claims
   - Ingredient information
-  - Validation status with trust verification
+  - Validation status with clear test/production indicators
 - **Multiple Output Formats**:
   - Human-readable formatted view
   - Raw JSON display
@@ -62,6 +65,25 @@ The production-ready files will be in the `dist/` directory.
 npm run preview
 ```
 
+## Deployment
+
+**This is a 100% static site** - no server-side code required! Deploy to any static hosting platform.
+
+### Quick Deploy to GitHub Pages
+
+1. Push your code to GitHub
+2. Go to **Settings → Pages**
+3. Set source to **GitHub Actions**
+4. Push to `main` branch - auto-deploys!
+
+See [DEPLOYMENT.md](./DEPLOYMENT.md) for detailed instructions for:
+- GitHub Pages (with included workflow)
+- Vercel
+- Netlify
+- Cloudflare Pages
+
+**Live URL:** `https://<username>.github.io/<repo-name>/`
+
 ## Project Structure
 
 ```
@@ -81,9 +103,12 @@ conformance-tool/
 
 ## Usage
 
+### Basic Validation
+
 1. Open the application in your browser
-2. Drag and drop a media file, or click to select a file
+2. Drag and drop a media file anywhere, or click "Browse Files"
 3. The tool will process the file and display:
+   - Signature information with trust validation
    - Active C2PA manifest information
    - Assertions and claims
    - Ingredient details
@@ -93,6 +118,14 @@ conformance-tool/
    - Download the report as a JSON file
    - Copy the JSON to clipboard
    - Upload another file
+
+### Conformance Testing with Custom Certificates
+
+1. Click **"Upload Test Certificate"** in the amber warning box
+2. Select your test certificate (.pem, .crt, or .cer file)
+3. Upload a C2PA file - it will validate against both official + test certificates
+4. Reports will show a clear **⚠️ Test Certificate Mode Active** warning
+5. Test certificates are **session-only** (cleared on refresh)
 
 ## Supported File Types
 

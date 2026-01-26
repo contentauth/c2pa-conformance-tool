@@ -41,3 +41,7 @@ public/c2pa.wasm
 
 # Claude Code
 .claude
+
+# Test certificates
+test-certs/
+test-cert.pem

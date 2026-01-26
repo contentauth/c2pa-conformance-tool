@@ -146,22 +146,22 @@
       </p>
 
       <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-6 mb-8 text-left">
-        <h2 class="text-lg font-semibold text-blue-900 dark:text-blue-100 mb-3">What is C2PA?</h2>
+        <h2 class="text-lg font-semibold text-blue-900 dark:text-blue-100 mb-3">What are Content Credentials?</h2>
         <p class="text-gray-700 dark:text-gray-300 mb-3">
-          The Coalition for Content Provenance and Authenticity (C2PA) is a technical standard that provides transparency about the origin and history of digital content.
+          Content Credentials from The Coalition for Content Provenance and Authenticity (C2PA) is the technical standard for digital provenance. It provides verifiable assertions about the origin and history of digital content including images, video, audio, and documents. Here you can:
         </p>
         <ul class="space-y-2 text-gray-700 dark:text-gray-300">
           <li class="flex items-start gap-2">
             <span class="text-blue-600 dark:text-blue-400 mt-1">✓</span>
-            <span><strong>Validate signatures</strong> against the official C2PA Conformance Trust List</span>
+            <span><strong>Validate signatures</strong> against the official C2PA Conformance Trust Lists</span>
           </li>
           <li class="flex items-start gap-2">
             <span class="text-blue-600 dark:text-blue-400 mt-1">✓</span>
-            <span><strong>View detailed manifests</strong> including assertions, ingredients, and provenance information</span>
+            <span><strong>View manifest details</strong> including actions, ingredients, and other assertions</span>
           </li>
           <li class="flex items-start gap-2">
             <span class="text-blue-600 dark:text-blue-400 mt-1">✓</span>
-            <span><strong>100% client-side processing</strong> - your files never leave your device</span>
+            <span><strong>Enjoy 100% client-side processing</strong> - your files never leave your device</span>
           </li>
         </ul>
       </div>

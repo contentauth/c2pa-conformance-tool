@@ -210,6 +210,11 @@
         </ul>
       </div>
 
+      <!-- Upload Area -->
+      <div class="mb-8">
+        <FileUpload on:fileselect={handleFileSelect} compact={false} />
+      </div>
+
       <!-- Test Certificate Manager -->
       <div class="mb-8">
         <CertificateManager
@@ -217,11 +222,6 @@
           on:certificatesUpdated={handleCertificatesUpdated}
         />
       </div>
-    </div>
-
-    <!-- Upload Area -->
-    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-      <FileUpload on:fileselect={handleFileSelect} compact={false} />
     </div>
   {/if}
 

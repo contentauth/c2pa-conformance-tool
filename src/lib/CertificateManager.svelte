@@ -43,27 +43,29 @@
 </script>
 
 <div class="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4">
-  <div class="flex items-start gap-3">
-    <div class="flex-shrink-0 text-2xl">⚠️</div>
-    <div class="flex-1">
-      <h3 class="font-semibold text-amber-900 dark:text-amber-100 mb-2">Test Certificates (Conformance Testing)</h3>
-      <p class="text-sm text-amber-800 dark:text-amber-200 mb-3">
-        Upload test certificates to include in the Trust List. Test certificates are session-only and clearly marked in results.
-      </p>
+  <div class="flex-1">
+    <h3 class="font-semibold text-amber-900 dark:text-amber-100 mb-2 flex items-center gap-2">
+      <span class="text-2xl">⚠️</span>
+      <span>Test Certificates (Conformance Testing)</span>
+    </h3>
+    <p class="text-sm text-amber-800 dark:text-amber-200 mb-3">
+      Upload test certificates to include in the Trust List. Test certificates are session-only and clearly marked in results.
+    </p>
 
-      <div class="flex flex-wrap items-center gap-3">
+      <div class="flex items-center justify-between gap-4">
+        <div>
+          {#if testCertificates.length > 0}
+            <span class="text-sm text-amber-800 dark:text-amber-200 font-medium">
+              {testCertificates.length} test {testCertificates.length === 1 ? 'certificate' : 'certificates'} loaded
+            </span>
+          {/if}
+        </div>
         <button
-          class="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-lg transition-colors font-medium text-sm"
+          class="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-lg transition-colors font-medium text-sm whitespace-nowrap"
           on:click={handleClick}
         >
           Upload Test Certificate
         </button>
-
-        {#if testCertificates.length > 0}
-          <span class="text-sm text-amber-800 dark:text-amber-200 font-medium">
-            {testCertificates.length} test {testCertificates.length === 1 ? 'certificate' : 'certificates'} loaded
-          </span>
-        {/if}
       </div>
 
       {#if testCertificates.length > 0}
@@ -84,7 +86,6 @@
           {/each}
         </div>
       {/if}
-    </div>
   </div>
 </div>
 

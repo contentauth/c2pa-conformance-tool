@@ -11,6 +11,7 @@
   let mediaUrl: string | null = null
   let mediaType: 'image' | 'video' | 'audio' | 'document' | 'unknown' = 'unknown'
   let fileInput: HTMLInputElement
+  let validationStatus: any[] = []
 
   // Create object URL for media preview
   $: if (file) {
@@ -37,6 +38,40 @@
   $: activeManifest = report.active_manifest && report.manifests
     ? report.manifests[report.active_manifest]
     : null
+
+  // Get validation results from the correct location
+  $: validationResults = report.validation_results?.activeManifest
+
+  // Check if trusted based on validation_state or signingCredential.trusted status
+  $: isTrusted = report.validation_state === 'Trusted' ||
+    validationResults?.success?.some((status: any) =>
+      status.code === 'signingCredential.trusted'
+    )
+
+  // Build validation status array - show key validation results from success and failure
+  $: {
+    const successStatuses = validationResults?.success?.filter((status: any) =>
+      status.code === 'signingCredential.trusted' ||
+      status.code === 'timeStamp.trusted' ||
+      status.code === 'claimSignature.validated'
+    ).map((status: any) => ({
+      code: status.code,
+      success: true,
+      explanation: status.explanation || 'Validation passed'
+    })) || []
+
+    const failureStatuses = validationResults?.failure?.filter((status: any) =>
+      status.code === 'signingCredential.untrusted' ||
+      status.code === 'timeStamp.untrusted' ||
+      status.code === 'claimSignature.invalid'
+    ).map((status: any) => ({
+      code: status.code,
+      success: false,
+      explanation: status.explanation || 'Validation failed'
+    })) || []
+
+    validationStatus = [...successStatuses, ...failureStatuses]
+  }
 
   function downloadReport() {
     const blob = new Blob([JSON.stringify(report, null, 2)], { type: 'application/json' })
@@ -219,12 +254,12 @@
           </div>
         {/if}
 
-        <!-- Validation Status (below media preview) -->
-        {#if report.validation_status && report.validation_status.length > 0}
-          <div class="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
-            <h4 class="text-lg font-semibold text-blue-600 dark:text-blue-400 mb-3">Validation Status</h4>
+        <!-- Validation Status (below media preview) - Always shown -->
+        <div class="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
+          <h4 class="text-lg font-semibold text-blue-600 dark:text-blue-400 mb-3">Validation Status</h4>
+          {#if validationStatus && validationStatus.length > 0}
             <div class="space-y-3">
-              {#each report.validation_status as status}
+              {#each validationStatus as status}
                 <div class={`rounded-lg p-4 border ${
                   status.success
                     ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800'
@@ -241,8 +276,12 @@
                 </div>
               {/each}
             </div>
-          </div>
-        {/if}
+          {:else}
+            <div class="bg-gray-50 dark:bg-gray-900/20 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+              <p class="text-gray-600 dark:text-gray-400 text-sm">No validation status available</p>
+            </div>
+          {/if}
+        </div>
       </div>
     </div>
 

@@ -263,11 +263,13 @@
       <!-- What are Content Credentials -->
       <div class="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border border-blue-200 dark:border-blue-800 rounded-2xl p-8 mb-10 text-left shadow-sm hover:shadow-md transition-shadow duration-300">
         <div class="flex items-start gap-3 mb-4">
-          <div class="flex-shrink-0 w-10 h-10 bg-blue-600 dark:bg-blue-500 rounded-lg flex items-center justify-center text-white text-xl">
-            ℹ️
+          <div class="flex-shrink-0 w-10 h-10 bg-blue-600 dark:bg-blue-500 rounded-lg flex items-center justify-center">
+            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
           </div>
           <div>
-            <h3 class="text-xl font-bold text-blue-900 dark:text-blue-100">What are Content Credentials?</h3>
+            <h3 class="text-xl font-bold text-blue-900 dark:text-blue-100">What is this all about?</h3>
           </div>
         </div>
         <p class="text-gray-700 dark:text-gray-300 mb-4 leading-relaxed">
@@ -388,7 +390,7 @@
         </div>
       </div>
       <div class="text-center mt-10 pb-8 text-gray-500 dark:text-gray-500 text-xs">
-        Built with ❤️ for the C2PA community
+        Built with ❤️ by the C2PA Conformance community
       </div>
     </div>
   {/if}

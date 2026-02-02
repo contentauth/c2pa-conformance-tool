@@ -119,8 +119,30 @@
     }
   }
 
-  function handleCertificatesUpdated(event: CustomEvent<string[]>) {
+  async function handleCertificatesUpdated(event: CustomEvent<string[]>) {
     testCertificates = event.detail
+    
+    // If we're currently viewing a report, reprocess the file with updated certificates
+    if (selectedFile && report) {
+      console.log('🔄 Reprocessing file with updated certificates...')
+      processing = true
+      error = null
+      report = null
+      usedTestCertificates = testCertificates.length > 0
+      
+      try {
+        if (testCertificates.length > 0) {
+          console.log('⚠️  Using', testCertificates.length, 'test certificate(s)')
+        }
+        report = await processFile(selectedFile, testCertificates)
+        console.log('✅ File reprocessed successfully')
+      } catch (err) {
+        error = err instanceof Error ? err.message : 'An error occurred processing the file'
+        console.error('❌ Error reprocessing file:', err)
+      } finally {
+        processing = false
+      }
+    }
   }
 
   // Global drag and drop handlers

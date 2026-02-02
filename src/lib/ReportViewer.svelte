@@ -223,15 +223,6 @@
     </div>
   {/if}
 
-  {#if testCertificates.length > 0}
-    <div class="mb-8">
-      <CertificateManager
-        bind:testCertificates={testCertificates}
-        on:certificatesUpdated={(e) => dispatch('certificatesUpdated', e.detail)}
-      />
-    </div>
-  {/if}
-
   {#if showRaw}
     <div class="bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 rounded-2xl p-8 shadow-lg">
       <div class="flex items-center gap-3 mb-6 pb-4 border-b-2 border-gray-200 dark:border-gray-700">
@@ -540,5 +531,17 @@
       {/if}
     </div>
   {/if}
+
+  <!-- Test Certificates Section -->
+  <div class="mt-8 pt-8 border-t-2 border-gray-200 dark:border-gray-700">
+    <h3 class="text-2xl font-bold text-gray-900 dark:text-white mb-4">Test Certificates</h3>
+    <p class="text-gray-600 dark:text-gray-400 mb-6">
+      Add test certificates to revalidate this file. Changes will immediately regenerate the report with updated validation results.
+    </p>
+    <CertificateManager
+      bind:testCertificates={testCertificates}
+      on:certificatesUpdated={(e) => dispatch('certificatesUpdated', e.detail)}
+    />
+  </div>
 </div>
 

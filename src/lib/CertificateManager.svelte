@@ -222,7 +222,7 @@
         dispatch('certificatesUpdated', testCertificates)
         console.log('✅ Test certificate added:', file.name)
       } else {
-        alert('Invalid certificate file. Please upload a PEM-encoded certificate.')
+        alert('Invalid certificate file. Please select a PEM-encoded certificate.')
       }
     }
 
@@ -257,7 +257,7 @@
           Test Certificates
         </h3>
         <p class="text-sm text-amber-800/90 dark:text-amber-200/90 mt-1">
-          Upload test certificates for conformance testing. Session-only and clearly marked in results.
+          Add test certificates for conformance testing. Session-only and clearly marked in results.
         </p>
       </div>
     </div>
@@ -280,7 +280,7 @@
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
         </svg>
-        Upload Certificate
+        Add Certificate
       </button>
     </div>
 

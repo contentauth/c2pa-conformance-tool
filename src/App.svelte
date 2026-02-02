@@ -13,6 +13,7 @@
   let testCertificates: string[] = []
   let usedTestCertificates = false
   let selectedFile: File | null = null
+  let darkMode = false
 
   // Test trust list fetching on component mount
   onMount(async () => {
@@ -21,6 +22,23 @@
       await testTrustListFetch()
     } catch (err) {
       console.warn('Trust list fetch test failed:', err)
+    }
+
+    // Initialize dark mode from localStorage or system preference
+    const savedTheme = localStorage.getItem('theme')
+    if (savedTheme === 'dark') {
+      darkMode = true
+      document.documentElement.classList.add('dark')
+    } else if (savedTheme === 'light') {
+      darkMode = false
+      document.documentElement.classList.remove('dark')
+    } else {
+      // Use system preference
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
+      darkMode = prefersDark
+      if (prefersDark) {
+        document.documentElement.classList.add('dark')
+      }
     }
 
     // Prevent default drag/drop behavior on the entire window
@@ -140,6 +158,17 @@
     processing = false
     selectedFile = null
   }
+
+  function toggleDarkMode() {
+    darkMode = !darkMode
+    if (darkMode) {
+      document.documentElement.classList.add('dark')
+      localStorage.setItem('theme', 'dark')
+    } else {
+      document.documentElement.classList.remove('dark')
+      localStorage.setItem('theme', 'light')
+    }
+  }
 </script>
 
 <main
@@ -171,8 +200,8 @@
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div class="flex items-center justify-between h-16 gap-4">
         <!-- Left: Content Credentials Logo -->
-        <div class="flex items-center justify-start">
-          <img src="/content_credentials_icon.svg" alt="Content Credentials" class="h-8 w-auto transition-transform hover:scale-105" />
+        <div class="flex items-center justify-start gap-3">
+          <img src="/content_credentials_icon.svg" alt="Content Credentials" class="h-8 w-auto transition-transform hover:scale-105 dark:brightness-0 dark:invert" />
         </div>
 
         <!-- Center: Title (clickable when viewing report) -->
@@ -190,9 +219,27 @@
           {/if}
         </div>
 
-        <!-- Right: C2PA Logo -->
-        <div class="flex items-center justify-end">
-          <img src="/c2pa_icon.svg" alt="C2PA" class="h-8 w-auto transition-transform hover:scale-105" />
+        <!-- Right: Dark mode toggle + C2PA Logo -->
+        <div class="flex items-center justify-end gap-3">
+          <button
+            on:click={toggleDarkMode}
+            class="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-all duration-200 group"
+            aria-label="Toggle dark mode"
+            title={darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
+          >
+            {#if darkMode}
+              <!-- Sun icon for light mode -->
+              <svg class="w-5 h-5 text-yellow-500 group-hover:text-yellow-400 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+              </svg>
+            {:else}
+              <!-- Moon icon for dark mode -->
+              <svg class="w-5 h-5 text-gray-700 dark:text-gray-300 group-hover:text-gray-900 dark:group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+              </svg>
+            {/if}
+          </button>
+          <img src="/c2pa_icon.svg" alt="C2PA" class="h-8 w-auto transition-transform hover:scale-105 dark:brightness-0 dark:invert" />
         </div>
       </div>
     </div>

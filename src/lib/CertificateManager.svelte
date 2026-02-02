@@ -42,50 +42,71 @@
   }
 </script>
 
-<div class="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4">
+<div class="bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 border-2 border-amber-300 dark:border-amber-700 rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow duration-300">
   <div class="flex-1">
-    <h3 class="font-semibold text-amber-900 dark:text-amber-100 mb-2 flex items-center gap-2">
-      <span class="text-2xl">⚠️</span>
-      <span>Test Certificates (Conformance Testing)</span>
-    </h3>
-    <p class="text-sm text-amber-800 dark:text-amber-200 mb-3">
-      Upload test certificates to include in the Trust List. Test certificates are session-only and clearly marked in results.
-    </p>
-
-      <div class="flex items-center justify-between gap-4">
-        <div>
-          {#if testCertificates.length > 0}
-            <span class="text-sm text-amber-800 dark:text-amber-200 font-medium">
-              {testCertificates.length} test {testCertificates.length === 1 ? 'certificate' : 'certificates'} loaded
-            </span>
-          {/if}
-        </div>
-        <button
-          class="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-lg transition-colors font-medium text-sm whitespace-nowrap"
-          on:click={handleClick}
-        >
-          Upload Test Certificate
-        </button>
+    <div class="flex items-start gap-3 mb-3">
+      <div class="flex-shrink-0 w-10 h-10 bg-amber-600 dark:bg-amber-500 rounded-lg flex items-center justify-center text-white text-xl">
+        🔬
       </div>
+      <div class="flex-1">
+        <h3 class="font-bold text-amber-900 dark:text-amber-100 text-lg">
+          Test Certificates
+        </h3>
+        <p class="text-sm text-amber-800/90 dark:text-amber-200/90 mt-1">
+          Upload test certificates for conformance testing. Session-only and clearly marked in results.
+        </p>
+      </div>
+    </div>
 
-      {#if testCertificates.length > 0}
-        <div class="mt-3 space-y-2">
-          {#each testCertificates as cert, index}
-            <div class="flex items-center justify-between bg-white dark:bg-amber-950 rounded p-2 text-sm">
-              <span class="text-amber-900 dark:text-amber-100 font-mono truncate flex-1">
+    <div class="flex items-center justify-between gap-4 mt-4">
+      <div>
+        {#if testCertificates.length > 0}
+          <span class="inline-flex items-center gap-2 px-3 py-1 bg-amber-200 dark:bg-amber-800/50 text-amber-900 dark:text-amber-100 rounded-full text-sm font-semibold">
+            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M2.166 4.999A11.954 11.954 0 0010 1.944 11.954 11.954 0 0017.834 5c.11.65.166 1.32.166 2.001 0 5.225-3.34 9.67-8 11.317C5.34 16.67 2 12.225 2 7c0-.682.057-1.35.166-2.001zm11.541 3.708a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+            </svg>
+            {testCertificates.length} {testCertificates.length === 1 ? 'certificate' : 'certificates'} loaded
+          </span>
+        {/if}
+      </div>
+      <button
+        class="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 text-white rounded-lg transition-all duration-200 font-semibold text-sm whitespace-nowrap shadow-md hover:shadow-lg transform hover:scale-105"
+        on:click={handleClick}
+      >
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+        </svg>
+        Upload Certificate
+      </button>
+    </div>
+
+    {#if testCertificates.length > 0}
+      <div class="mt-4 space-y-2">
+        {#each testCertificates as cert, index}
+          <div class="flex items-center justify-between bg-white/70 dark:bg-amber-950/50 backdrop-blur-sm rounded-lg p-3 text-sm border border-amber-200 dark:border-amber-800 hover:bg-white dark:hover:bg-amber-950 transition-colors group">
+            <div class="flex items-center gap-3 flex-1">
+              <div class="w-8 h-8 bg-amber-100 dark:bg-amber-800 rounded-lg flex items-center justify-center">
+                <svg class="w-4 h-4 text-amber-700 dark:text-amber-300" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clip-rule="evenodd" />
+                </svg>
+              </div>
+              <span class="text-amber-900 dark:text-amber-100 font-medium">
                 Test Certificate #{index + 1}
               </span>
-              <button
-                class="text-amber-700 dark:text-amber-300 hover:text-amber-900 dark:hover:text-amber-100 ml-2"
-                on:click={() => removeCertificate(index)}
-                title="Remove certificate"
-              >
-                ✕
-              </button>
             </div>
-          {/each}
-        </div>
-      {/if}
+            <button
+              class="flex items-center justify-center w-8 h-8 text-amber-600 dark:text-amber-400 hover:text-white hover:bg-amber-600 dark:hover:bg-amber-700 rounded-lg transition-all duration-200 opacity-0 group-hover:opacity-100"
+              on:click={() => removeCertificate(index)}
+              title="Remove certificate"
+            >
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+        {/each}
+      </div>
+    {/if}
   </div>
 </div>
 

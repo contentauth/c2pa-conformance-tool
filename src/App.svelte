@@ -40,6 +40,14 @@
       }
     }
 
+    // Handle when user drags out of the window completely
+    const handleWindowDragLeave = (e: DragEvent) => {
+      // Only hide if we're leaving the window (no relatedTarget means leaving the browser)
+      if (!e.relatedTarget || e.relatedTarget === null) {
+        globalDragOver = false
+      }
+    }
+
     // Handle file-selected event from ReportViewer
     const handleFileSelectedEvent = (e: Event) => {
       const customEvent = e as CustomEvent<File>
@@ -47,12 +55,14 @@
     }
 
     window.addEventListener('dragover', preventDefaults, false)
+    window.addEventListener('dragleave', handleWindowDragLeave, false)
     window.addEventListener('drop', handleWindowDrop, false)
     window.addEventListener('file-selected', handleFileSelectedEvent as EventListener)
 
     // Cleanup
     return () => {
       window.removeEventListener('dragover', preventDefaults, false)
+      window.removeEventListener('dragleave', handleWindowDragLeave, false)
       window.removeEventListener('drop', handleWindowDrop, false)
       window.removeEventListener('file-selected', handleFileSelectedEvent as EventListener)
     }
@@ -89,6 +99,12 @@
   }
 
   // Global drag and drop handlers
+  function handleGlobalDragEnter(event: DragEvent) {
+    event.preventDefault()
+    event.stopPropagation()
+    globalDragOver = true
+  }
+
   function handleGlobalDragOver(event: DragEvent) {
     event.preventDefault()
     event.stopPropagation()
@@ -101,8 +117,8 @@
   function handleGlobalDragLeave(event: DragEvent) {
     event.preventDefault()
     event.stopPropagation()
-    // Only hide overlay if leaving the window entirely
-    if (event.relatedTarget === null) {
+    // Hide overlay when leaving the document body (leaving the window)
+    if (event.target === document.body || !(event.target instanceof Node) || !document.body.contains(event.relatedTarget as Node)) {
       globalDragOver = false
     }
   }
@@ -116,11 +132,6 @@
     if (files && files.length > 0) {
       handleFileSelect({ detail: files[0] } as CustomEvent<File>)
     }
-  }
-
-  function handleGlobalDragEnter(event: DragEvent) {
-    event.preventDefault()
-    event.stopPropagation()
   }
 
   function resetToHome() {
@@ -140,78 +151,102 @@
   class:pointer-events-none={globalDragOver}
 >
   {#if globalDragOver}
-    <div class="fixed inset-0 z-50 flex items-center justify-center bg-blue-600 dark:bg-blue-700 bg-opacity-95 transition-opacity duration-200">
+    <div class="fixed inset-0 z-50 flex items-center justify-center bg-gradient-to-br from-blue-600 to-purple-600 dark:from-blue-700 dark:to-purple-700 bg-opacity-98 backdrop-blur-md transition-all duration-300 animate-fade-in">
       <div class="text-center text-white">
-        <div class="text-8xl mb-4 animate-bounce">📁</div>
-        <p class="text-3xl font-semibold">Drop file to analyze</p>
+        <div class="mb-8 animate-bounce">
+          <div class="inline-flex items-center justify-center w-32 h-32 bg-white/20 backdrop-blur-sm rounded-3xl shadow-2xl">
+            <svg class="w-20 h-20 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+            </svg>
+          </div>
+        </div>
+        <p class="text-5xl font-bold mb-3">Drop file to analyze</p>
+        <p class="text-2xl opacity-90">We'll validate it instantly</p>
       </div>
     </div>
   {/if}
 
   <!-- Navigation Bar (always shown) -->
-  <nav class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 mb-8">
+  <nav class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 shadow-sm sticky top-0 z-40 backdrop-blur-sm bg-white/95 dark:bg-gray-800/95">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <button
-        on:click={resetToHome}
-        class="grid grid-cols-3 items-center h-16 gap-4 w-full bg-transparent border-none p-0 cursor-pointer hover:opacity-80 transition-opacity text-left"
-        class:cursor-default={!report && !processing}
-        class:hover:opacity-100={!report && !processing}
-        disabled={!report && !processing}
-        aria-label={report || processing ? "Return to home" : "C2PA Verify"}
-      >
+      <div class="flex items-center justify-between h-16 gap-4">
         <!-- Left: Content Credentials Logo -->
         <div class="flex items-center justify-start">
-          <img src="/content_credentials_icon.svg" alt="Content Credentials" class="h-8 w-auto" />
+          <img src="/content_credentials_icon.svg" alt="Content Credentials" class="h-8 w-auto transition-transform hover:scale-105" />
         </div>
 
-        <!-- Center: Title -->
-        <div class="flex items-center justify-center">
-          <h1 class="text-xl font-bold text-gray-900 dark:text-white text-center">C2PA Verify</h1>
+        <!-- Center: Title (clickable when viewing report) -->
+        <div class="flex items-center justify-center flex-1">
+          {#if report || processing}
+            <button
+              on:click={resetToHome}
+              class="text-xl font-bold text-gray-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-200 cursor-pointer"
+              aria-label="Return to home"
+            >
+              C2PA Verify
+            </button>
+          {:else}
+            <h1 class="text-xl font-bold text-gray-900 dark:text-white">C2PA Verify</h1>
+          {/if}
         </div>
 
         <!-- Right: C2PA Logo -->
         <div class="flex items-center justify-end">
-          <img src="/c2pa_icon.svg" alt="C2PA" class="h-8 w-auto" />
+          <img src="/c2pa_icon.svg" alt="C2PA" class="h-8 w-auto transition-transform hover:scale-105" />
         </div>
-      </button>
+      </div>
     </div>
   </nav>
 
   {#if !report && !processing}
     <!-- Hero Section -->
-    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center mb-12">
-      <h2 class="text-4xl font-bold text-gray-900 dark:text-white mb-4">
-        Content Credentials Validator<br />
-        and Conformance Testing Tool
-      </h2>
-      <p class="text-lg text-gray-600 dark:text-gray-400 mb-8">
-        Verify C2PA manifests and test against the official trust lists
-      </p>
+    <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center mb-16 mt-12">
+      <div class="mb-12 animate-fade-in">
+        <h2 class="text-5xl sm:text-6xl font-bold text-gray-900 dark:text-white mb-6 leading-tight">
+          Content Credentials<br />
+          <span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400">
+            Validator & Testing Tool
+          </span>
+        </h2>
+        <p class="text-xl text-gray-600 dark:text-gray-400 max-w-3xl mx-auto">
+          Verify C2PA manifests and test against the official trust lists — all in your browser
+        </p>
+      </div>
 
       <!-- What are Content Credentials -->
-      <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-6 mb-8 text-left">
-        <h3 class="text-lg font-semibold text-blue-900 dark:text-blue-100 mb-3">What are Content Credentials?</h3>
-        <p class="text-gray-700 dark:text-gray-300 mb-3">
-          Content Credentials from The Coalition for Content Provenance and Authenticity (C2PA) is the technical standard for digital provenance. It provides verifiable assertions about the origin and history of digital content including images, video, audio, and documents. Here you can:
+      <div class="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border border-blue-200 dark:border-blue-800 rounded-2xl p-8 mb-10 text-left shadow-sm hover:shadow-md transition-shadow duration-300">
+        <div class="flex items-start gap-3 mb-4">
+          <div class="flex-shrink-0 w-10 h-10 bg-blue-600 dark:bg-blue-500 rounded-lg flex items-center justify-center text-white text-xl">
+            ℹ️
+          </div>
+          <div>
+            <h3 class="text-xl font-bold text-blue-900 dark:text-blue-100">What are Content Credentials?</h3>
+          </div>
+        </div>
+        <p class="text-gray-700 dark:text-gray-300 mb-4 leading-relaxed">
+          Content Credentials from The Coalition for Content Provenance and Authenticity (C2PA) is the technical standard for digital provenance. It provides verifiable assertions about the origin and history of digital content including images, video, audio, and documents.
         </p>
-        <ul class="space-y-2 text-gray-700 dark:text-gray-300">
-          <li class="flex items-start gap-2">
-            <span class="text-blue-600 dark:text-blue-400 mt-1">✓</span>
-            <span><strong>Validate signatures</strong> against the official C2PA Conformance Trust Lists</span>
-          </li>
-          <li class="flex items-start gap-2">
-            <span class="text-blue-600 dark:text-blue-400 mt-1">✓</span>
-            <span><strong>View manifest details</strong> including actions, ingredients, and other assertions</span>
-          </li>
-          <li class="flex items-start gap-2">
-            <span class="text-blue-600 dark:text-blue-400 mt-1">✓</span>
-            <span><strong>Enjoy 100% client-side processing</strong> - your files never leave your device</span>
-          </li>
-        </ul>
+        <div class="grid sm:grid-cols-3 gap-4">
+          <div class="bg-white/50 dark:bg-gray-800/50 rounded-xl p-4 backdrop-blur-sm">
+            <div class="text-3xl mb-2">🔒</div>
+            <h4 class="font-semibold text-gray-900 dark:text-white mb-1">Validate Signatures</h4>
+            <p class="text-sm text-gray-600 dark:text-gray-400">Against official C2PA Trust Lists</p>
+          </div>
+          <div class="bg-white/50 dark:bg-gray-800/50 rounded-xl p-4 backdrop-blur-sm">
+            <div class="text-3xl mb-2">📊</div>
+            <h4 class="font-semibold text-gray-900 dark:text-white mb-1">View Manifest Details</h4>
+            <p class="text-sm text-gray-600 dark:text-gray-400">Actions, ingredients, and assertions</p>
+          </div>
+          <div class="bg-white/50 dark:bg-gray-800/50 rounded-xl p-4 backdrop-blur-sm">
+            <div class="text-3xl mb-2">🔐</div>
+            <h4 class="font-semibold text-gray-900 dark:text-white mb-1">100% Client-Side</h4>
+            <p class="text-sm text-gray-600 dark:text-gray-400">Files never leave your device</p>
+          </div>
+        </div>
       </div>
 
       <!-- Upload Area -->
-      <div class="mb-8">
+      <div class="mb-10">
         <FileUpload on:fileselect={handleFileSelect} compact={false} />
       </div>
 
@@ -235,18 +270,37 @@
     </div>
   {/if}
 
-  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-8">
     {#if processing}
-      <div class="flex flex-col items-center gap-4 py-16">
-        <div class="w-16 h-16 border-4 border-blue-200 dark:border-blue-800 border-t-blue-600 dark:border-t-blue-400 rounded-full animate-spin"></div>
-        <p class="text-lg text-gray-700 dark:text-gray-300">Processing file...</p>
+      <div class="flex flex-col items-center gap-6 py-20">
+        <div class="relative">
+          <div class="w-20 h-20 border-4 border-blue-200 dark:border-blue-800 rounded-full"></div>
+          <div class="w-20 h-20 border-4 border-blue-600 dark:border-blue-400 border-t-transparent rounded-full animate-spin absolute top-0 left-0"></div>
+        </div>
+        <div class="text-center">
+          <p class="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">Processing file...</p>
+          <p class="text-sm text-gray-600 dark:text-gray-400">Validating C2PA manifest and signatures</p>
+        </div>
       </div>
     {/if}
 
     {#if error}
-      <div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-6 my-8">
-        <h2 class="text-2xl font-semibold text-red-700 dark:text-red-400 mb-2">Error</h2>
-        <p class="text-red-600 dark:text-red-300">{error}</p>
+      <div class="bg-gradient-to-br from-red-50 to-orange-50 dark:from-red-900/20 dark:to-orange-900/20 border-2 border-red-300 dark:border-red-700 rounded-2xl p-8 my-8 shadow-lg">
+        <div class="flex items-start gap-4">
+          <div class="flex-shrink-0 w-12 h-12 bg-red-600 dark:bg-red-500 rounded-full flex items-center justify-center text-white text-2xl">
+            ⚠
+          </div>
+          <div class="flex-1">
+            <h2 class="text-2xl font-bold text-red-700 dark:text-red-400 mb-3">Error Processing File</h2>
+            <p class="text-red-600 dark:text-red-300 leading-relaxed">{error}</p>
+            <button
+              on:click={resetToHome}
+              class="mt-4 px-5 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors duration-200 font-medium"
+            >
+              Try Another File
+            </button>
+          </div>
+        </div>
       </div>
     {/if}
 
@@ -257,32 +311,37 @@
 
   {#if !report && !processing}
     <!-- Footer Information -->
-    <div class="max-w-4xl mx-auto mt-16 pt-8 border-t border-gray-200 dark:border-gray-700">
-      <div class="grid md:grid-cols-2 gap-8 text-sm text-gray-600 dark:text-gray-400">
-        <div>
-          <h3 class="font-semibold text-gray-900 dark:text-gray-100 mb-2">About This Tool</h3>
-          <p class="mb-2">
-            This tool validates C2PA manifests using the official <code class="px-1 py-0.5 bg-gray-100 dark:bg-gray-800 rounded text-xs">@contentauth/c2pa-web</code> SDK.
+    <div class="max-w-5xl mx-auto mt-20 pt-8 px-4 sm:px-6 lg:px-8 border-t border-gray-200 dark:border-gray-700">
+      <div class="grid md:grid-cols-2 gap-10 text-sm">
+        <div class="space-y-3">
+          <h3 class="font-bold text-gray-900 dark:text-gray-100 text-base mb-3">About This Tool</h3>
+          <p class="text-gray-600 dark:text-gray-400 leading-relaxed">
+            This tool validates C2PA manifests using the official <code class="px-2 py-1 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded font-mono text-xs">@contentauth/c2pa-web</code> SDK.
           </p>
-          <p>
+          <p class="text-gray-600 dark:text-gray-400 leading-relaxed">
             All processing happens in your browser. Files never leave your device.
           </p>
         </div>
-        <div>
-          <h3 class="font-semibold text-gray-900 dark:text-gray-100 mb-2">Learn More</h3>
-          <ul class="space-y-1">
+        <div class="space-y-3">
+          <h3 class="font-bold text-gray-900 dark:text-gray-100 text-base mb-3">Learn More</h3>
+          <ul class="space-y-2">
             <li>
-              <a href="https://c2pa.org" target="_blank" rel="noopener noreferrer" class="text-blue-600 dark:text-blue-400 hover:underline">
-                C2PA Specification →
+              <a href="https://c2pa.org" target="_blank" rel="noopener noreferrer" class="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors inline-flex items-center gap-2 group">
+                <span>C2PA Specification</span>
+                <span class="transform group-hover:translate-x-1 transition-transform">→</span>
               </a>
             </li>
             <li>
-              <a href="https://c2pa.org/conformance" target="_blank" rel="noopener noreferrer" class="text-blue-600 dark:text-blue-400 hover:underline">
-                Conformance Program →
+              <a href="https://c2pa.org/conformance" target="_blank" rel="noopener noreferrer" class="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors inline-flex items-center gap-2 group">
+                <span>Conformance Program</span>
+                <span class="transform group-hover:translate-x-1 transition-transform">→</span>
               </a>
             </li>
           </ul>
         </div>
+      </div>
+      <div class="text-center mt-10 pb-8 text-gray-500 dark:text-gray-500 text-xs">
+        Built with ❤️ for the C2PA community
       </div>
     </div>
   {/if}

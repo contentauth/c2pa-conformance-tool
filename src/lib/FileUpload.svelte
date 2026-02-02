@@ -42,10 +42,13 @@
 
 {#if compact}
   <button
-    class="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors duration-200 shadow-sm hover:shadow-md whitespace-nowrap"
+    class="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold rounded-lg transition-all duration-200 shadow-md hover:shadow-lg transform hover:scale-105 whitespace-nowrap"
     on:click={handleClick}
   >
-    📁 Browse Files
+    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+    </svg>
+    Browse Files
   </button>
   <input
     bind:this={fileInput}
@@ -56,10 +59,10 @@
   />
 {:else}
   <div
-    class={`border-2 border-dashed rounded-xl p-12 cursor-pointer transition-all duration-300 hover:border-blue-500 hover:bg-blue-50/50 dark:hover:bg-blue-900/10 ${
+    class={`relative border-2 border-dashed rounded-2xl p-16 cursor-pointer transition-all duration-300 group ${
       dragOver
-        ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
-        : 'border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800'
+        ? 'border-blue-500 bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/30 dark:to-indigo-900/30 scale-[1.02] shadow-xl'
+        : 'border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-blue-400 hover:shadow-lg hover:scale-[1.01]'
     }`}
     on:dragover={handleDragOver}
     on:dragleave={handleDragLeave}
@@ -69,9 +72,33 @@
     on:click={handleClick}
     on:keydown={(e) => e.key === 'Enter' && handleClick()}
   >
-    <div class="text-7xl text-center mb-4">📁</div>
-    <p class="text-xl font-medium text-gray-900 dark:text-white text-center mb-2">Drop a file here or click to select</p>
-    <p class="text-sm text-gray-500 dark:text-gray-400 text-center">Supports images, videos, audio, and documents with C2PA manifests</p>
+    <!-- Animated background gradient -->
+    <div class="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-purple-500/5 dark:from-blue-500/10 dark:to-purple-500/10 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+    
+    <!-- Content -->
+    <div class="relative">
+      <div class={`text-8xl text-center mb-6 transition-transform duration-300 ${dragOver ? 'scale-110' : 'group-hover:scale-110'}`}>
+        <div class="inline-flex items-center justify-center w-24 h-24 bg-gradient-to-br from-blue-100 to-indigo-100 dark:from-blue-900/50 dark:to-indigo-900/50 rounded-2xl shadow-inner">
+          <svg class="w-12 h-12 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+          </svg>
+        </div>
+      </div>
+      <p class="text-2xl font-bold text-gray-900 dark:text-white text-center mb-3">
+        {dragOver ? 'Drop it here!' : 'Drop a file or click to browse'}
+      </p>
+      <p class="text-base text-gray-600 dark:text-gray-400 text-center max-w-md mx-auto">
+        Supports images, videos, audio, and PDF documents with C2PA manifests
+      </p>
+      
+      <!-- File type badges -->
+      <div class="flex items-center justify-center gap-2 mt-6 flex-wrap">
+        <span class="px-3 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-full text-xs font-medium">Images</span>
+        <span class="px-3 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-full text-xs font-medium">Videos</span>
+        <span class="px-3 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-full text-xs font-medium">Audio</span>
+        <span class="px-3 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-full text-xs font-medium">PDFs</span>
+      </div>
+    </div>
 
     <input
       bind:this={fileInput}

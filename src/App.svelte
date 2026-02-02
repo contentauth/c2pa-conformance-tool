@@ -235,7 +235,9 @@
       <div class="flex items-center justify-between h-16 gap-4">
         <!-- Left: Content Credentials Logo -->
         <div class="flex items-center justify-start gap-3">
-          <img src="/content_credentials_icon.svg" alt="Content Credentials" class="h-8 w-auto transition-transform hover:scale-105 dark:brightness-0 dark:invert" />
+          <a href="https://contentcredentials.org" target="_blank" rel="noopener noreferrer" aria-label="Visit Content Credentials website">
+            <img src="/content_credentials_icon.svg" alt="Content Credentials" class="h-8 w-auto transition-transform hover:scale-105 dark:brightness-0 dark:invert" />
+          </a>
         </div>
 
         <!-- Center: Title (clickable when viewing report) -->
@@ -273,7 +275,9 @@
               </svg>
             {/if}
           </button>
-          <img src="/c2pa_icon.svg" alt="C2PA" class="h-8 w-auto transition-transform hover:scale-105 dark:brightness-0 dark:invert" />
+          <a href="https://c2pa.org" target="_blank" rel="noopener noreferrer" aria-label="Visit C2PA website">
+            <img src="/c2pa_icon.svg" alt="C2PA" class="h-8 w-auto transition-transform hover:scale-105 dark:brightness-0 dark:invert" />
+          </a>
         </div>
       </div>
     </div>

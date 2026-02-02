@@ -1,11 +1,13 @@
 <script lang="ts">
   import { createEventDispatcher } from 'svelte'
+  import CertificateManager from './CertificateManager.svelte'
 
   export let report: any
   export let usedTestCertificates = false
   export let file: File | null = null
+  export let testCertificates: string[] = []
 
-  const dispatch = createEventDispatcher<{ newfile: void }>()
+  const dispatch = createEventDispatcher<{ newfile: void; certificatesUpdated: string[] }>()
 
   let showRaw = false
   let mediaUrl: string | null = null
@@ -218,6 +220,15 @@
           </p>
         </div>
       </div>
+    </div>
+  {/if}
+
+  {#if testCertificates.length > 0}
+    <div class="mb-8">
+      <CertificateManager
+        bind:testCertificates={testCertificates}
+        on:certificatesUpdated={(e) => dispatch('certificatesUpdated', e.detail)}
+      />
     </div>
   {/if}
 

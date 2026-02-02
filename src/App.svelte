@@ -14,6 +14,7 @@
   let usedTestCertificates = false
   let selectedFile: File | null = null
   let darkMode = false
+  let infoSectionDismissed = false
 
   // Test trust list fetching on component mount
   onMount(async () => {
@@ -39,6 +40,12 @@
       if (prefersDark) {
         document.documentElement.classList.add('dark')
       }
+    }
+
+    // Check if info section was dismissed in this session
+    const infoDismissed = sessionStorage.getItem('infoSectionDismissed')
+    if (infoDismissed === 'true') {
+      infoSectionDismissed = true
     }
 
     // Prevent default drag/drop behavior on the entire window
@@ -169,6 +176,11 @@
       localStorage.setItem('theme', 'light')
     }
   }
+
+  function dismissInfoSection() {
+    infoSectionDismissed = true
+    sessionStorage.setItem('infoSectionDismissed', 'true')
+  }
 </script>
 
 <main
@@ -260,18 +272,31 @@
         </p>
       </div>
 
-      <!-- What are Content Credentials -->
-      <div class="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border border-blue-200 dark:border-blue-800 rounded-2xl p-8 mb-10 text-left shadow-sm hover:shadow-md transition-shadow duration-300">
-        <div class="flex items-start gap-3 mb-4">
-          <div class="flex-shrink-0 w-10 h-10 bg-blue-600 dark:bg-blue-500 rounded-lg flex items-center justify-center">
-            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+      {#if !infoSectionDismissed}
+        <!-- What are Content Credentials -->
+        <div class="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border border-blue-200 dark:border-blue-800 rounded-2xl p-8 mb-10 text-left shadow-sm hover:shadow-md transition-shadow duration-300 relative">
+          <!-- Close button -->
+          <button
+            on:click={dismissInfoSection}
+            class="absolute top-4 right-4 w-8 h-8 flex items-center justify-center text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 hover:bg-blue-100 dark:hover:bg-blue-900/50 rounded-lg transition-all"
+            aria-label="Dismiss"
+            title="Dismiss this message"
+          >
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
             </svg>
+          </button>
+
+          <div class="flex items-start gap-3 mb-4">
+            <div class="flex-shrink-0 w-10 h-10 bg-blue-600 dark:bg-blue-500 rounded-lg flex items-center justify-center">
+              <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <div>
+              <h3 class="text-xl font-bold text-blue-900 dark:text-blue-100">What is this all about?</h3>
+            </div>
           </div>
-          <div>
-            <h3 class="text-xl font-bold text-blue-900 dark:text-blue-100">What is this all about?</h3>
-          </div>
-        </div>
         <p class="text-gray-700 dark:text-gray-300 mb-4 leading-relaxed">
           Content Credentials from The Coalition for Content Provenance and Authenticity (C2PA) is the technical standard for digital provenance. It provides verifiable assertions about the origin and history of digital content including images, video, audio, and documents.
         </p>
@@ -292,7 +317,8 @@
             <p class="text-sm text-gray-600 dark:text-gray-400">Files never leave your device</p>
           </div>
         </div>
-      </div>
+        </div>
+      {/if}
 
       {#if error}
         <div class="bg-gradient-to-br from-red-50 to-orange-50 dark:from-red-900/20 dark:to-orange-900/20 border-2 border-red-300 dark:border-red-700 rounded-2xl p-8 mb-10 shadow-lg text-left">
@@ -329,16 +355,6 @@
     </div>
   {/if}
 
-  <!-- Certificate Manager below nav (when viewing report and certificates exist) -->
-  {#if (report || processing) && testCertificates.length > 0}
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-6">
-      <CertificateManager
-        bind:testCertificates={testCertificates}
-        on:certificatesUpdated={handleCertificatesUpdated}
-      />
-    </div>
-  {/if}
-
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-8">
     {#if processing}
       <div class="flex flex-col items-center gap-6 py-20">
@@ -354,7 +370,7 @@
     {/if}
 
     {#if report}
-      <ReportViewer {report} {usedTestCertificates} file={selectedFile} />
+      <ReportViewer {report} {usedTestCertificates} file={selectedFile} bind:testCertificates={testCertificates} on:certificatesUpdated={handleCertificatesUpdated} />
     {/if}
   </div>
 

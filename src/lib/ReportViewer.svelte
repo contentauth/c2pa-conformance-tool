@@ -20,6 +20,54 @@
   let mediaType: 'image' | 'video' | 'audio' | 'document' | 'unknown' = 'unknown'
   let fileInput: HTMLInputElement
   let validationStatus: any[] = []
+  let expandedIngredients: Set<number> = new Set()
+
+  function toggleIngredient(index: number) {
+    if (expandedIngredients.has(index)) {
+      expandedIngredients.delete(index)
+    } else {
+      expandedIngredients.add(index)
+    }
+    expandedIngredients = expandedIngredients // Trigger reactivity
+  }
+
+  // Get ingredient manifest from the manifests map
+  function getIngredientManifest(ingredient: any) {
+    if (!report.manifests) {
+      return null
+    }
+
+    // Check if ingredient has a c2pa_manifest property
+    if (ingredient.c2pa_manifest) {
+      return ingredient.c2pa_manifest
+    }
+
+    // Check if ingredient has an active_manifest that points to manifests map
+    if (ingredient.active_manifest && report.manifests[ingredient.active_manifest]) {
+      return report.manifests[ingredient.active_manifest]
+    }
+
+    // Check for manifest_data directly
+    if (ingredient.manifest_data) {
+      return ingredient.manifest_data
+    }
+
+    // Look up by instance_id in the manifests map
+    if (ingredient.instance_id && report.manifests[ingredient.instance_id]) {
+      return report.manifests[ingredient.instance_id]
+    }
+
+    // Search through all manifests to find one with matching instance_id
+    for (const [key, manifest] of Object.entries(report.manifests)) {
+      if (manifest && typeof manifest === 'object' && 'instance_id' in manifest) {
+        if ((manifest as any).instance_id === ingredient.instance_id) {
+          return manifest
+        }
+      }
+    }
+
+    return null
+  }
 
   // Create object URL for media preview
   $: if (file) {
@@ -494,12 +542,27 @@
             </div>
             <div class="space-y-4">
               {#each activeManifest.ingredients as ingredient, index}
+                {@const ingredientManifest = getIngredientManifest(ingredient)}
+                {@const isExpanded = expandedIngredients.has(index)}
                 <div class="bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900/50 dark:to-gray-900 rounded-xl p-5 border border-gray-200 dark:border-gray-700 hover:border-orange-300 dark:hover:border-orange-700 transition-colors">
                   <div class="flex items-start gap-3 mb-3">
                     <div class="flex-shrink-0 w-8 h-8 bg-orange-100 dark:bg-orange-900/50 rounded-lg flex items-center justify-center text-orange-700 dark:text-orange-300 font-bold text-sm">
                       {index + 1}
                     </div>
-                    <p class="flex-1 font-bold text-gray-900 dark:text-gray-100 text-lg">{ingredient.title || ingredient.instance_id || 'Unknown'}</p>
+                    <div class="flex-1">
+                      <p class="font-bold text-gray-900 dark:text-gray-100 text-lg">{ingredient.title || ingredient.instance_id || 'Unknown'}</p>
+                      {#if ingredientManifest}
+                        <button
+                          on:click={() => toggleIngredient(index)}
+                          class="mt-1 inline-flex items-center gap-1 text-xs font-semibold text-orange-600 dark:text-orange-400 hover:text-orange-700 dark:hover:text-orange-300 transition-colors"
+                        >
+                          <svg class="w-3 h-3 transition-transform {isExpanded ? 'rotate-90' : ''}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                          </svg>
+                          {isExpanded ? 'Hide' : 'Show'} manifest details
+                        </button>
+                      {/if}
+                    </div>
                   </div>
                   <div class="ml-11 space-y-3">
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -530,8 +593,8 @@
                     {/if}
 
                     <!-- Ingredient Manifest Information -->
-                    {#if ingredient.manifest_data}
-                      <div class="mt-3 pt-3 border-t border-gray-300 dark:border-gray-600">
+                    {#if ingredientManifest && isExpanded}
+                      <div class="mt-3 pt-3 border-t border-gray-300 dark:border-gray-600 animate-fade-in">
                         <div class="flex items-center gap-2 mb-3">
                           <svg class="w-4 h-4 text-orange-600 dark:text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -540,61 +603,72 @@
                         </div>
 
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                          {#if ingredient.manifest_data.claim_generator}
+                          {#if ingredientManifest.claim_generator}
                             <div class="bg-orange-50 dark:bg-orange-900/20 rounded-lg p-3">
                               <div class="text-xs font-semibold text-gray-500 dark:text-gray-500 uppercase tracking-wide mb-1">Claim Generator</div>
-                              <p class="text-sm font-medium text-gray-900 dark:text-gray-100">{ingredient.manifest_data.claim_generator}</p>
+                              <p class="text-sm font-medium text-gray-900 dark:text-gray-100">{ingredientManifest.claim_generator}</p>
                             </div>
                           {/if}
-                          {#if ingredient.manifest_data.signature_info?.common_name}
+                          {#if ingredientManifest.claim_generator_info && ingredientManifest.claim_generator_info.length > 0}
+                            <div class="bg-orange-50 dark:bg-orange-900/20 rounded-lg p-3">
+                              <div class="text-xs font-semibold text-gray-500 dark:text-gray-500 uppercase tracking-wide mb-1">Claim Generator</div>
+                              <p class="text-sm font-medium text-gray-900 dark:text-gray-100">
+                                {ingredientManifest.claim_generator_info[0].name}
+                                {#if ingredientManifest.claim_generator_info[0].version}
+                                  <span class="text-orange-600 dark:text-orange-400">v{ingredientManifest.claim_generator_info[0].version}</span>
+                                {/if}
+                              </p>
+                            </div>
+                          {/if}
+                          {#if ingredientManifest.signature_info?.common_name}
                             <div class="bg-orange-50 dark:bg-orange-900/20 rounded-lg p-3">
                               <div class="text-xs font-semibold text-gray-500 dark:text-gray-500 uppercase tracking-wide mb-1">Signed By</div>
-                              <p class="text-sm font-medium text-gray-900 dark:text-gray-100 break-all">{ingredient.manifest_data.signature_info.common_name}</p>
+                              <p class="text-sm font-medium text-gray-900 dark:text-gray-100 break-all">{ingredientManifest.signature_info.common_name}</p>
                             </div>
                           {/if}
-                          {#if ingredient.manifest_data.signature_info?.time}
+                          {#if ingredientManifest.signature_info?.time}
                             <div class="bg-orange-50 dark:bg-orange-900/20 rounded-lg p-3">
                               <div class="text-xs font-semibold text-gray-500 dark:text-gray-500 uppercase tracking-wide mb-1">Signature Time</div>
-                              <p class="text-sm font-medium text-gray-900 dark:text-gray-100">{ingredient.manifest_data.signature_info.time}</p>
+                              <p class="text-sm font-medium text-gray-900 dark:text-gray-100">{ingredientManifest.signature_info.time}</p>
                             </div>
                           {/if}
-                          {#if ingredient.manifest_data.signature_info?.issuer}
+                          {#if ingredientManifest.signature_info?.issuer}
                             <div class="bg-orange-50 dark:bg-orange-900/20 rounded-lg p-3">
                               <div class="text-xs font-semibold text-gray-500 dark:text-gray-500 uppercase tracking-wide mb-1">Issuer</div>
-                              <p class="text-sm font-medium text-gray-900 dark:text-gray-100 break-all">{ingredient.manifest_data.signature_info.issuer}</p>
+                              <p class="text-sm font-medium text-gray-900 dark:text-gray-100 break-all">{ingredientManifest.signature_info.issuer}</p>
                             </div>
                           {/if}
                         </div>
 
-                        {#if ingredient.manifest_data.assertions && ingredient.manifest_data.assertions.length > 0}
+                        {#if ingredientManifest.assertions && ingredientManifest.assertions.length > 0}
                           <div class="mt-3 bg-orange-50 dark:bg-orange-900/20 rounded-lg p-3">
                             <div class="flex items-center justify-between mb-2">
                               <span class="text-xs font-semibold text-gray-500 dark:text-gray-500 uppercase tracking-wide">Assertions</span>
-                              <span class="px-2 py-1 bg-orange-200 dark:bg-orange-800 text-orange-800 dark:text-orange-200 rounded-full text-xs font-bold">{ingredient.manifest_data.assertions.length}</span>
+                              <span class="px-2 py-1 bg-orange-200 dark:bg-orange-800 text-orange-800 dark:text-orange-200 rounded-full text-xs font-bold">{ingredientManifest.assertions.length}</span>
                             </div>
                             <div class="space-y-1">
-                              {#each ingredient.manifest_data.assertions.slice(0, 5) as assertion}
+                              {#each ingredientManifest.assertions.slice(0, 5) as assertion}
                                 <div class="text-xs text-gray-700 dark:text-gray-300 font-mono">• {assertion.label || assertion.url || 'Unknown'}</div>
                               {/each}
-                              {#if ingredient.manifest_data.assertions.length > 5}
-                                <div class="text-xs text-gray-500 dark:text-gray-500 italic">+ {ingredient.manifest_data.assertions.length - 5} more...</div>
+                              {#if ingredientManifest.assertions.length > 5}
+                                <div class="text-xs text-gray-500 dark:text-gray-500 italic">+ {ingredientManifest.assertions.length - 5} more...</div>
                               {/if}
                             </div>
                           </div>
                         {/if}
 
-                        {#if ingredient.manifest_data.ingredients && ingredient.manifest_data.ingredients.length > 0}
+                        {#if ingredientManifest.ingredients && ingredientManifest.ingredients.length > 0}
                           <div class="mt-3 bg-orange-50 dark:bg-orange-900/20 rounded-lg p-3">
                             <div class="flex items-center justify-between mb-2">
                               <span class="text-xs font-semibold text-gray-500 dark:text-gray-500 uppercase tracking-wide">Nested Ingredients</span>
-                              <span class="px-2 py-1 bg-orange-200 dark:bg-orange-800 text-orange-800 dark:text-orange-200 rounded-full text-xs font-bold">{ingredient.manifest_data.ingredients.length}</span>
+                              <span class="px-2 py-1 bg-orange-200 dark:bg-orange-800 text-orange-800 dark:text-orange-200 rounded-full text-xs font-bold">{ingredientManifest.ingredients.length}</span>
                             </div>
                             <div class="space-y-1">
-                              {#each ingredient.manifest_data.ingredients.slice(0, 3) as nestedIngredient}
+                              {#each ingredientManifest.ingredients.slice(0, 3) as nestedIngredient}
                                 <div class="text-xs text-gray-700 dark:text-gray-300">• {nestedIngredient.title || nestedIngredient.instance_id || 'Unknown'}</div>
                               {/each}
-                              {#if ingredient.manifest_data.ingredients.length > 3}
-                                <div class="text-xs text-gray-500 dark:text-gray-500 italic">+ {ingredient.manifest_data.ingredients.length - 3} more...</div>
+                              {#if ingredientManifest.ingredients.length > 3}
+                                <div class="text-xs text-gray-500 dark:text-gray-500 italic">+ {ingredientManifest.ingredients.length - 3} more...</div>
                               {/if}
                             </div>
                           </div>

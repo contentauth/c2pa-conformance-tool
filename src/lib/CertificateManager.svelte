@@ -3,9 +3,12 @@
   import { X509Certificate } from '@peculiar/x509'
 
   export let testCertificates: string[] = []
+  export let testModeEnabled = false
+  export let testRootLoaded = false
 
   const dispatch = createEventDispatcher<{
     certificatesUpdated: string[]
+    testModeChanged: { enabled: boolean; rootLoaded: boolean }
   }>()
 
   let fileInput: HTMLInputElement
@@ -231,6 +234,12 @@
   }
 
   function removeCertificate(index: number) {
+    // Prevent removing the test root if it's the first certificate and test mode is enabled
+    if (index === 0 && testModeEnabled && testRootLoaded) {
+      alert('Cannot remove the test root certificate. Disable test mode first.')
+      return
+    }
+
     testCertificates = testCertificates.filter((_, i) => i !== index)
     dispatch('certificatesUpdated', testCertificates)
     // Clean up expanded state
@@ -241,6 +250,58 @@
 
   function handleClick() {
     fileInput.click()
+  }
+
+  async function enableTestMode() {
+    try {
+      const response = await fetch('/test-certs/test-root-cert.pem')
+      if (!response.ok) throw new Error('Failed to load test root certificate')
+      const rootCert = await response.text()
+
+      testCertificates = [rootCert, ...testCertificates]
+      testModeEnabled = true
+      testRootLoaded = true
+      dispatch('certificatesUpdated', testCertificates)
+      dispatch('testModeChanged', { enabled: true, rootLoaded: true })
+      console.log('✅ Test mode enabled - test root certificate loaded')
+    } catch (err) {
+      console.error('Failed to enable test mode:', err)
+      alert('Failed to load test root certificate')
+    }
+  }
+
+  function disableTestMode() {
+    // Clear ALL test certificates when disabling test mode
+    if (testModeEnabled) {
+      testCertificates = []
+      testModeEnabled = false
+      testRootLoaded = false
+      dispatch('certificatesUpdated', testCertificates)
+      dispatch('testModeChanged', { enabled: false, rootLoaded: false })
+      console.log('✅ Test mode disabled - all test certificates cleared')
+    }
+  }
+
+  async function downloadTestSigningCert() {
+    try {
+      const response = await fetch('/test-certs/test-signing-bundle.pem')
+      if (!response.ok) throw new Error('Failed to download test signing certificate')
+      const bundle = await response.text()
+
+      const blob = new Blob([bundle], { type: 'application/x-pem-file' })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = 'c2pa-test-signing-bundle.pem'
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      URL.revokeObjectURL(url)
+      console.log('✅ Test signing certificate downloaded')
+    } catch (err) {
+      console.error('Failed to download test signing certificate:', err)
+      alert('Failed to download test signing certificate')
+    }
   }
 </script>
 
@@ -262,6 +323,59 @@
       </div>
     </div>
 
+    <!-- Test Mode Controls -->
+    <div class="mt-4 p-4 bg-blue-50 dark:bg-blue-900/20 border-2 border-blue-200 dark:border-blue-700 rounded-xl">
+      <div class="flex items-start gap-3 mb-3">
+        <div class="flex-shrink-0 w-8 h-8 bg-blue-600 dark:bg-blue-500 rounded-lg flex items-center justify-center">
+          <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
+          </svg>
+        </div>
+        <div class="flex-1">
+          <h4 class="font-bold text-blue-900 dark:text-blue-100 text-base mb-1">
+            C2PA Test Mode
+          </h4>
+          <p class="text-xs text-blue-800 dark:text-blue-200">
+            Load the built-in C2PA conformance test root certificate and download a signing certificate for testing
+          </p>
+        </div>
+      </div>
+
+      <div class="flex flex-wrap items-center gap-2">
+        {#if !testModeEnabled}
+          <button
+            class="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-all duration-200 font-semibold text-sm shadow-md hover:shadow-lg"
+            on:click={enableTestMode}
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+            </svg>
+            Enable Test Mode
+          </button>
+        {:else}
+          <button
+            class="inline-flex items-center gap-2 px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-all duration-200 font-semibold text-sm shadow-md hover:shadow-lg"
+            on:click={disableTestMode}
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+            Disable Test Mode
+          </button>
+          <button
+            class="inline-flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-all duration-200 font-semibold text-sm shadow-md hover:shadow-lg"
+            on:click={downloadTestSigningCert}
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+            </svg>
+            Download Signing Cert
+          </button>
+        {/if}
+      </div>
+    </div>
+
+    <!-- Certificate Status and Add Button -->
     <div class="flex items-center justify-between gap-4 mt-4">
       <div>
         {#if testCertificates.length > 0}
@@ -276,25 +390,29 @@
       <button
         class="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 text-white rounded-lg transition-all duration-200 font-semibold text-sm whitespace-nowrap shadow-md hover:shadow-lg transform hover:scale-105"
         on:click={handleClick}
+        disabled={!testModeEnabled}
+        class:opacity-50={!testModeEnabled}
+        class:cursor-not-allowed={!testModeEnabled}
       >
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
         </svg>
-        Add Certificate
+        Add Custom Certificate
       </button>
     </div>
 
     {#if testCertificates.length > 0}
       <div class="mt-4 space-y-2">
         {#each testCertificates as cert, index}
-          <div class="bg-white/70 dark:bg-amber-950/50 backdrop-blur-sm rounded-lg border border-amber-200 dark:border-amber-800 hover:bg-white dark:hover:bg-amber-950 transition-colors overflow-hidden">
+          {@const isTestRoot = index === 0 && testModeEnabled && testRootLoaded}
+          <div class="bg-white/70 dark:bg-amber-950/50 backdrop-blur-sm rounded-lg border {isTestRoot ? 'border-blue-400 dark:border-blue-600 ring-2 ring-blue-200 dark:ring-blue-800' : 'border-amber-200 dark:border-amber-800'} hover:bg-white dark:hover:bg-amber-950 transition-all overflow-hidden">
             <div class="flex items-center justify-between p-3 text-sm group">
               <button
                 on:click={() => toggleExpand(index)}
                 class="flex items-center gap-3 flex-1 text-left hover:opacity-80 transition-opacity"
               >
-                <div class="w-8 h-8 bg-amber-100 dark:bg-amber-800 rounded-lg flex items-center justify-center flex-shrink-0">
-                  <svg class="w-4 h-4 text-amber-700 dark:text-amber-300" fill="currentColor" viewBox="0 0 20 20">
+                <div class="w-8 h-8 {isTestRoot ? 'bg-blue-100 dark:bg-blue-800' : 'bg-amber-100 dark:bg-amber-800'} rounded-lg flex items-center justify-center flex-shrink-0">
+                  <svg class="w-4 h-4 {isTestRoot ? 'text-blue-700 dark:text-blue-300' : 'text-amber-700 dark:text-amber-300'}" fill="currentColor" viewBox="0 0 20 20">
                     <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clip-rule="evenodd" />
                   </svg>
                 </div>
@@ -302,6 +420,11 @@
                   <span class="text-amber-900 dark:text-amber-100 font-medium block truncate">
                     {extractSubjectFromPEM(cert)}
                   </span>
+                  {#if isTestRoot}
+                    <span class="inline-block mt-0.5 px-2 py-0.5 bg-blue-200 dark:bg-blue-800 text-blue-900 dark:text-blue-100 text-xs font-semibold rounded">
+                      Test Root
+                    </span>
+                  {/if}
                 </div>
                 <svg
                   class="w-5 h-5 text-amber-600 dark:text-amber-400 transition-transform flex-shrink-0 {expandedCerts.has(index) ? 'rotate-180' : ''}"

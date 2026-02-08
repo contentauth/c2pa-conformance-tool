@@ -6,8 +6,14 @@
   export let usedTestCertificates = false
   export let file: File | null = null
   export let testCertificates: string[] = []
+  export let testModeEnabled = false
+  export let testRootLoaded = false
 
-  const dispatch = createEventDispatcher<{ newfile: void; certificatesUpdated: string[] }>()
+  const dispatch = createEventDispatcher<{
+    newfile: void
+    certificatesUpdated: string[]
+    testModeChanged: { enabled: boolean; rootLoaded: boolean }
+  }>()
 
   let showRaw = false
   let mediaUrl: string | null = null
@@ -540,7 +546,10 @@
     </p>
     <CertificateManager
       bind:testCertificates={testCertificates}
+      bind:testModeEnabled={testModeEnabled}
+      bind:testRootLoaded={testRootLoaded}
       on:certificatesUpdated={(e) => dispatch('certificatesUpdated', e.detail)}
+      on:testModeChanged={(e) => dispatch('testModeChanged', e.detail)}
     />
   </div>
 </div>

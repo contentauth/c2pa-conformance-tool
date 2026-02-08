@@ -95,20 +95,11 @@ npm run preview
 
 ## Requirements
 
-None! Just static file hosting with:
+Just static file hosting with:
 - ✅ HTTPS support (recommended for WebAssembly)
 - ✅ No server-side processing needed
 - ✅ No environment variables required
 - ✅ No backend services
-
----
-
-## Custom Domain
-
-All platforms above support custom domains:
-1. Add CNAME record pointing to the platform
-2. Configure in platform settings
-3. Wait for DNS propagation (~24 hours)
 
 ---
 

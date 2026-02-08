@@ -15,6 +15,8 @@
   let selectedFile: File | null = null
   let darkMode = false
   let infoSectionDismissed = false
+  let testModeEnabled = false
+  let testRootLoaded = false
 
   // Test trust list fetching on component mount
   onMount(async () => {
@@ -116,6 +118,43 @@
     } finally {
       console.log('🏁 Processing complete. Report:', !!report, 'Error:', !!error)
       processing = false
+    }
+  }
+
+  async function handleTestModeChanged(event: CustomEvent<{ enabled: boolean; rootLoaded: boolean }>) {
+    testModeEnabled = event.detail.enabled
+    testRootLoaded = event.detail.rootLoaded
+
+    // If we're viewing a report, reprocess the file when test mode changes
+    if (selectedFile && report) {
+      console.log('🔄 Test mode changed, reprocessing file...')
+      processing = true
+      error = null
+      const previousReport = report
+      report = null
+
+      try {
+        // Wait for next tick to ensure testCertificates binding is updated
+        await new Promise(resolve => setTimeout(resolve, 0))
+
+        // Now check the updated certificate list
+        usedTestCertificates = testCertificates.length > 0
+
+        if (testCertificates.length > 0) {
+          console.log('⚠️  Using', testCertificates.length, 'test certificate(s)')
+        } else {
+          console.log('✅ Using production trust list only')
+        }
+        report = await processFile(selectedFile, testCertificates)
+        console.log('✅ File reprocessed successfully')
+      } catch (err) {
+        error = err instanceof Error ? err.message : 'An error occurred processing the file'
+        console.error('❌ Error reprocessing file:', err)
+        // Restore previous report on error
+        report = previousReport
+      } finally {
+        processing = false
+      }
     }
   }
 
@@ -375,7 +414,10 @@
       <div class="mb-8">
         <CertificateManager
           bind:testCertificates={testCertificates}
+          bind:testModeEnabled={testModeEnabled}
+          bind:testRootLoaded={testRootLoaded}
           on:certificatesUpdated={handleCertificatesUpdated}
+          on:testModeChanged={handleTestModeChanged}
         />
       </div>
     </div>
@@ -396,7 +438,16 @@
     {/if}
 
     {#if report}
-      <ReportViewer {report} {usedTestCertificates} file={selectedFile} bind:testCertificates={testCertificates} on:certificatesUpdated={handleCertificatesUpdated} />
+      <ReportViewer
+        {report}
+        {usedTestCertificates}
+        file={selectedFile}
+        bind:testCertificates={testCertificates}
+        bind:testModeEnabled={testModeEnabled}
+        bind:testRootLoaded={testRootLoaded}
+        on:certificatesUpdated={handleCertificatesUpdated}
+        on:testModeChanged={handleTestModeChanged}
+      />
     {/if}
   </div>
 

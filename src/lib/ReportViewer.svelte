@@ -501,13 +501,21 @@
                     </div>
                     <p class="flex-1 font-bold text-gray-900 dark:text-gray-100 text-lg">{ingredient.title || ingredient.instance_id || 'Unknown'}</p>
                   </div>
-                  <div class="ml-11 space-y-2">
-                    {#if ingredient.relationship}
-                      <div class="bg-white dark:bg-gray-800 rounded-lg p-3">
-                        <div class="text-xs font-semibold text-gray-500 dark:text-gray-500 uppercase tracking-wide mb-1">Relationship</div>
-                        <p class="text-sm font-medium text-gray-900 dark:text-gray-100">{ingredient.relationship}</p>
-                      </div>
-                    {/if}
+                  <div class="ml-11 space-y-3">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      {#if ingredient.relationship}
+                        <div class="bg-white dark:bg-gray-800 rounded-lg p-3">
+                          <div class="text-xs font-semibold text-gray-500 dark:text-gray-500 uppercase tracking-wide mb-1">Relationship</div>
+                          <p class="text-sm font-medium text-gray-900 dark:text-gray-100">{ingredient.relationship}</p>
+                        </div>
+                      {/if}
+                      {#if ingredient.format}
+                        <div class="bg-white dark:bg-gray-800 rounded-lg p-3">
+                          <div class="text-xs font-semibold text-gray-500 dark:text-gray-500 uppercase tracking-wide mb-1">Format</div>
+                          <p class="text-sm font-medium text-gray-900 dark:text-gray-100">{ingredient.format}</p>
+                        </div>
+                      {/if}
+                    </div>
                     {#if ingredient.document_id}
                       <div class="bg-white dark:bg-gray-800 rounded-lg p-3">
                         <div class="text-xs font-semibold text-gray-500 dark:text-gray-500 uppercase tracking-wide mb-1">Document ID</div>
@@ -518,6 +526,79 @@
                       <div class="bg-white dark:bg-gray-800 rounded-lg p-3">
                         <div class="text-xs font-semibold text-gray-500 dark:text-gray-500 uppercase tracking-wide mb-1">Instance ID</div>
                         <p class="text-sm font-medium text-gray-900 dark:text-gray-100 break-all font-mono">{ingredient.instance_id}</p>
+                      </div>
+                    {/if}
+
+                    <!-- Ingredient Manifest Information -->
+                    {#if ingredient.manifest_data}
+                      <div class="mt-3 pt-3 border-t border-gray-300 dark:border-gray-600">
+                        <div class="flex items-center gap-2 mb-3">
+                          <svg class="w-4 h-4 text-orange-600 dark:text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                          </svg>
+                          <span class="text-xs font-bold text-orange-700 dark:text-orange-300 uppercase tracking-wide">Manifest Details</span>
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                          {#if ingredient.manifest_data.claim_generator}
+                            <div class="bg-orange-50 dark:bg-orange-900/20 rounded-lg p-3">
+                              <div class="text-xs font-semibold text-gray-500 dark:text-gray-500 uppercase tracking-wide mb-1">Claim Generator</div>
+                              <p class="text-sm font-medium text-gray-900 dark:text-gray-100">{ingredient.manifest_data.claim_generator}</p>
+                            </div>
+                          {/if}
+                          {#if ingredient.manifest_data.signature_info?.common_name}
+                            <div class="bg-orange-50 dark:bg-orange-900/20 rounded-lg p-3">
+                              <div class="text-xs font-semibold text-gray-500 dark:text-gray-500 uppercase tracking-wide mb-1">Signed By</div>
+                              <p class="text-sm font-medium text-gray-900 dark:text-gray-100 break-all">{ingredient.manifest_data.signature_info.common_name}</p>
+                            </div>
+                          {/if}
+                          {#if ingredient.manifest_data.signature_info?.time}
+                            <div class="bg-orange-50 dark:bg-orange-900/20 rounded-lg p-3">
+                              <div class="text-xs font-semibold text-gray-500 dark:text-gray-500 uppercase tracking-wide mb-1">Signature Time</div>
+                              <p class="text-sm font-medium text-gray-900 dark:text-gray-100">{ingredient.manifest_data.signature_info.time}</p>
+                            </div>
+                          {/if}
+                          {#if ingredient.manifest_data.signature_info?.issuer}
+                            <div class="bg-orange-50 dark:bg-orange-900/20 rounded-lg p-3">
+                              <div class="text-xs font-semibold text-gray-500 dark:text-gray-500 uppercase tracking-wide mb-1">Issuer</div>
+                              <p class="text-sm font-medium text-gray-900 dark:text-gray-100 break-all">{ingredient.manifest_data.signature_info.issuer}</p>
+                            </div>
+                          {/if}
+                        </div>
+
+                        {#if ingredient.manifest_data.assertions && ingredient.manifest_data.assertions.length > 0}
+                          <div class="mt-3 bg-orange-50 dark:bg-orange-900/20 rounded-lg p-3">
+                            <div class="flex items-center justify-between mb-2">
+                              <span class="text-xs font-semibold text-gray-500 dark:text-gray-500 uppercase tracking-wide">Assertions</span>
+                              <span class="px-2 py-1 bg-orange-200 dark:bg-orange-800 text-orange-800 dark:text-orange-200 rounded-full text-xs font-bold">{ingredient.manifest_data.assertions.length}</span>
+                            </div>
+                            <div class="space-y-1">
+                              {#each ingredient.manifest_data.assertions.slice(0, 5) as assertion}
+                                <div class="text-xs text-gray-700 dark:text-gray-300 font-mono">• {assertion.label || assertion.url || 'Unknown'}</div>
+                              {/each}
+                              {#if ingredient.manifest_data.assertions.length > 5}
+                                <div class="text-xs text-gray-500 dark:text-gray-500 italic">+ {ingredient.manifest_data.assertions.length - 5} more...</div>
+                              {/if}
+                            </div>
+                          </div>
+                        {/if}
+
+                        {#if ingredient.manifest_data.ingredients && ingredient.manifest_data.ingredients.length > 0}
+                          <div class="mt-3 bg-orange-50 dark:bg-orange-900/20 rounded-lg p-3">
+                            <div class="flex items-center justify-between mb-2">
+                              <span class="text-xs font-semibold text-gray-500 dark:text-gray-500 uppercase tracking-wide">Nested Ingredients</span>
+                              <span class="px-2 py-1 bg-orange-200 dark:bg-orange-800 text-orange-800 dark:text-orange-200 rounded-full text-xs font-bold">{ingredient.manifest_data.ingredients.length}</span>
+                            </div>
+                            <div class="space-y-1">
+                              {#each ingredient.manifest_data.ingredients.slice(0, 3) as nestedIngredient}
+                                <div class="text-xs text-gray-700 dark:text-gray-300">• {nestedIngredient.title || nestedIngredient.instance_id || 'Unknown'}</div>
+                              {/each}
+                              {#if ingredient.manifest_data.ingredients.length > 3}
+                                <div class="text-xs text-gray-500 dark:text-gray-500 italic">+ {ingredient.manifest_data.ingredients.length - 3} more...</div>
+                              {/if}
+                            </div>
+                          </div>
+                        {/if}
                       </div>
                     {/if}
                   </div>
@@ -542,7 +623,7 @@
   <div class="mt-8 pt-8 border-t-2 border-gray-200 dark:border-gray-700">
     <h3 class="text-2xl font-bold text-gray-900 dark:text-white mb-4">Test Certificates</h3>
     <p class="text-gray-600 dark:text-gray-400 mb-6">
-      Add test certificates to revalidate this file. Changes will immediately regenerate the report with updated validation results.
+      Add or remove test certificates to revalidate this file. Changes will immediately regenerate the report with updated validation results.
     </p>
     <CertificateManager
       bind:testCertificates={testCertificates}

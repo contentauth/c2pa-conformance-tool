@@ -2,17 +2,13 @@
   command = "npm run build"
   publish = "dist"
 
-# Don't redirect static assets - serve them as-is
-[[redirects]]
-  from = "/test-certs/*"
-  to = "/test-certs/:splat"
-  status = 200
-
 # Catch-all redirect for SPA routing
+# Force false prevents redirecting files that exist
 [[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200
+  force = false
 
 [build.environment]
   NODE_VERSION = "20"

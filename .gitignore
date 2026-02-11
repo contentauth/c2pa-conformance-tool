@@ -42,6 +42,9 @@ public/c2pa.wasm
 # Claude Code
 .claude
 
+# Auto-generated version file
+src/lib/version.ts
+
 # Test certificates (but allow specific files for distribution)
 public/test-certs/*.pem
 public/test-certs/*.key

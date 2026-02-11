@@ -1,5 +1,6 @@
 import { createC2pa } from '@contentauth/c2pa-web'
 import type { C2paSdk, ManifestStore, SettingsContext } from '@contentauth/c2pa-web'
+import { VERSION_INFO } from './version'
 
 let c2paInstance: C2paSdk | null = null
 let mainTrustListPem: string | null = null
@@ -226,7 +227,17 @@ export async function processFile(file: File, testCertificates: string[] = []): 
 
     console.log('✅ Manifest store retrieved with trust validation')
 
-    return { ...finalManifestStore, usedITL }
+    return {
+      ...finalManifestStore,
+      usedITL,
+      _conformanceToolVersion: {
+        commit: VERSION_INFO.sha,
+        shortCommit: VERSION_INFO.shortSha,
+        date: VERSION_INFO.date,
+        branch: VERSION_INFO.branch,
+        generatedAt: VERSION_INFO.timestamp
+      }
+    }
   } catch (error) {
     console.error('❌ Error in processFile:', error)
     if (error instanceof Error) {

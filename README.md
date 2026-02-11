@@ -9,7 +9,9 @@ A web application for validating C2PA (Coalition for Content Provenance and Auth
 - **Drag & Drop Interface**: Easy file upload via drag-and-drop or file selection
 - **Client-Side Processing**: Uses c2pa-rs compiled to WebAssembly for fast, private processing
 - **Official C2PA Trust List**: Validates signatures against the official [C2PA Conformance Trust List](https://c2pa.org/conformance)
+- **Interim Trust List (ITL)**: Automatically detects and validates signatures against the ITL with distinct visual indicators
 - **Test Certificate Upload**: Upload custom test certificates for conformance testing (session-only, clearly marked)
+- **Version Tracking**: Every report includes git commit SHA and date for reproducibility ([details](VERSION_TRACKING.md))
 - **Modern Tailwind CSS UI**: Clean, responsive design matching verify.contentauthenticity.org
 - **Comprehensive Reports**: View detailed C2PA manifest information including:
   - Signature information with trust validation
@@ -20,7 +22,7 @@ A web application for validating C2PA (Coalition for Content Provenance and Auth
 - **Multiple Output Formats**:
   - Human-readable formatted view
   - Raw JSON display
-  - Downloadable JSON reports
+  - Downloadable JSON reports (with version metadata)
   - Copy to clipboard functionality
 
 ## Prerequisites

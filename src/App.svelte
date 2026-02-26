@@ -1,6 +1,5 @@
 <script lang="ts">
   import { onMount } from 'svelte'
-  import { X509Certificate } from '@peculiar/x509'
   import FileUpload from './lib/FileUpload.svelte'
   import ReportViewer from './lib/ReportViewer.svelte'
   import CertificateManager from './lib/CertificateManager.svelte'
@@ -21,35 +20,6 @@
   let testModeEnabled = false
   let testRootLoaded = false
   let processingStatus = 'Processing file...'
-  let testCertIssuers: string[] = []
-
-  // Extract both subjects and issuers from test certificates
-  // We need both to match against different certificate chain scenarios
-  function extractTestCertIdentifiers(certs: string[]): string[] {
-    console.log('📜 Extracting identifiers from', certs.length, 'certificates')
-    const identifiers: string[] = []
-    for (const cert of certs) {
-      try {
-        // Use the Web Crypto X509Certificate API
-        const x509 = new X509Certificate(cert)
-        // Add both subject and issuer as they might be used in different contexts
-        identifiers.push(x509.subject)
-        identifiers.push(x509.issuer)
-        console.log('📜 Extracted test cert subject:', x509.subject)
-        console.log('📜 Extracted test cert issuer:', x509.issuer)
-      } catch (err) {
-        console.warn('Failed to parse test certificate:', err, cert.substring(0, 100))
-      }
-    }
-    console.log('📜 All test cert identifiers:', identifiers)
-    return identifiers
-  }
-
-  // Update identifier list when test certificates change
-  $: {
-    console.log('📜 Test certificates changed, count:', testCertificates.length)
-    testCertIssuers = extractTestCertIdentifiers(testCertificates)
-  }
 
   // Test trust list fetching on component mount
   onMount(() => {
@@ -543,7 +513,6 @@
       <ReportViewer
         {report}
         {usedTestCertificates}
-        {testCertIssuers}
         file={selectedFile}
         bind:testCertificates={testCertificates}
         bind:testModeEnabled={testModeEnabled}

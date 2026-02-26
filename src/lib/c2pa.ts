@@ -1,5 +1,5 @@
 import { createC2pa } from '@contentauth/c2pa-web'
-import type { C2paSdk, SettingsContext, ValidationStatus } from '@contentauth/c2pa-web'
+import type { C2paSdk, Settings, ValidationStatus } from '@contentauth/c2pa-web'
 import { VERSION_INFO } from './version'
 import type { ConformanceReport } from './types'
 import { VALIDATION_STATUS } from './constants'
@@ -131,7 +131,7 @@ export async function processFile(file: File, testCertificates: string[] = []): 
     ])
 
     console.log('Step 1: Validating with official trust list only...')
-    const officialSettings: SettingsContext = {
+    const officialSettings: Settings = {
       verify: {
         verifyTrust: true,
         verifyAfterReading: true
@@ -167,7 +167,7 @@ export async function processFile(file: File, testCertificates: string[] = []): 
 
     if (testCertificates.length > 0) {
       console.log('Step 2: Validating with test certificates added...')
-      const testSettings: SettingsContext = {
+      const testSettings: Settings = {
         verify: {
           verifyTrust: true,
           verifyAfterReading: true
@@ -222,7 +222,7 @@ export async function processFile(file: File, testCertificates: string[] = []): 
       console.log('⚠️  Signature untrusted on main list, checking ITL...')
 
       // Try with ITL included
-      const itlSettings: SettingsContext = {
+      const itlSettings: Settings = {
         verify: {
           verifyTrust: true,
           verifyAfterReading: true

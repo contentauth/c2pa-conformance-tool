@@ -8,7 +8,6 @@
 
   export let report: ConformanceReport
   export let usedTestCertificates = false
-  export let testCertIssuers: string[] = []
   export let file: File | null = null
   export let testCertificates: string[] = []
   export let testModeEnabled = false

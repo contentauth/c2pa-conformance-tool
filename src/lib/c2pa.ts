@@ -113,8 +113,17 @@ async function initC2pa(): Promise<C2paSdk> {
  * @param file The file to process
  * @param testCertificates Optional array of test certificates (PEM format) to add to trust list
  */
+// Map browser MIME types to SDK-supported equivalents
+const MIME_TYPE_MAP: Record<string, string> = {
+  'audio/x-m4a': 'audio/mp4',
+  'audio/m4a': 'audio/mp4',
+  'video/x-m4v': 'video/mp4',
+  'video/quicktime': 'video/mp4',
+}
+
 export async function processFile(file: File, testCertificates: string[] = []): Promise<ConformanceReport> {
-  console.log('🔍 Starting file processing for:', file.name, 'Type:', file.type)
+  const mimeType = MIME_TYPE_MAP[file.type] ?? file.type
+  console.log('🔍 Starting file processing for:', file.name, 'Type:', file.type, mimeType !== file.type ? `(remapped to ${mimeType})` : '')
 
   // Initialize C2PA SDK if not already initialized
   console.log('Initializing C2PA SDK...')
@@ -142,7 +151,7 @@ export async function processFile(file: File, testCertificates: string[] = []): 
     }
 
     // First validation with official trust list only (no test certs)
-    const reader1 = await c2pa.reader.fromBlob(file.type, file, officialSettings)
+    const reader1 = await c2pa.reader.fromBlob(mimeType, file, officialSettings)
     if (!reader1) {
       throw new Error('No C2PA manifest found in this file')
     }
@@ -177,7 +186,7 @@ export async function processFile(file: File, testCertificates: string[] = []): 
         }
       }
 
-      const reader2 = await c2pa.reader.fromBlob(file.type, file, testSettings)
+      const reader2 = await c2pa.reader.fromBlob(mimeType, file, testSettings)
       if (reader2) {
         const testManifestStore = await reader2.manifestStore()
         await reader2.free()
@@ -232,7 +241,7 @@ export async function processFile(file: File, testCertificates: string[] = []): 
         }
       }
 
-      const reader2 = await c2pa.reader.fromBlob(file.type, file, itlSettings)
+      const reader2 = await c2pa.reader.fromBlob(mimeType, file, itlSettings)
       if (reader2) {
         const itlManifestStore = await reader2.manifestStore()
         await reader2.free()
@@ -291,7 +300,17 @@ export async function processFile(file: File, testCertificates: string[] = []): 
   } catch (error) {
     console.error('❌ Error in processFile:', error)
     if (error instanceof Error) {
-      throw new Error(`Failed to process file: ${error.message}`)
+      const msg = error.message
+      if (msg.includes('UnsupportedFormatError') || msg.includes('Unsupported format')) {
+        throw new Error(`Unsupported file format (${mimeType}). Supported formats include JPEG, PNG, WebP, AVIF, MP4, MOV, MP3, WAV, and PDF.`)
+      }
+      if (msg.includes('InvalidAsset') || msg.includes('Box size extends beyond') || msg.includes('box size')) {
+        throw new Error(`Could not parse this file. It may be corrupted, use an unsupported codec, or the C2PA manifest may be malformed.`)
+      }
+      if (msg.includes('NoManifest') || msg.includes('no manifest')) {
+        throw new Error(`No C2PA manifest found in this file.`)
+      }
+      throw new Error(`Failed to process file: ${msg}`)
     }
     throw error
   }

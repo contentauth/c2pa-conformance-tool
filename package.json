@@ -33,7 +33,7 @@
     "vitest": "^4.0.18"
   },
   "dependencies": {
-    "@contentauth/c2pa-web": "^0.6.0",
+    "@contentauth/c2pa-web": "^0.6.1",
     "@peculiar/x509": "^1.14.3"
   }
 }

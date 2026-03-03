@@ -2,6 +2,7 @@
   import { createEventDispatcher, onDestroy } from 'svelte'
   import type { ValidationStatus } from '@contentauth/c2pa-web'
   import CertificateManager from './CertificateManager.svelte'
+  import ManifestSummary from './ManifestSummary.svelte'
   import type { ConformanceReport, ValidationStatusItem, AssertionSummaryItem } from './types'
   import type { Ingredient, Manifest } from '@contentauth/c2pa-web'
   import { VALIDATION_STATUS } from './constants'
@@ -724,6 +725,12 @@
               {/if}
             </div>
           </div>
+
+          <ManifestSummary
+            manifest={activeManifest}
+            ingredients={activeManifest.ingredients ?? []}
+            mimeType={file?.type ?? ''}
+          />
         {:else}
           <div class="text-center py-12 text-gray-500 dark:text-gray-400">
             <div class="text-6xl mb-4">📁</div>

@@ -271,10 +271,12 @@ export function generateManifestSummary(
       parts.push(modifications.join(' and '))
     }
 
-    // --- Signer info ---
-    if (signerName) {
-      details.push(`Signed by ${signerName}`)
-    }
+  }
+
+  // --- Certificate issuer ---
+  const issuer = (manifest.signature_info as { issuer?: string } | undefined)?.issuer
+  if (issuer) {
+    details.push(`Certificate issued by ${issuer}`)
   }
 
   // --- Ingredient provenance ---

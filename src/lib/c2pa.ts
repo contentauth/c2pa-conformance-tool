@@ -32,9 +32,10 @@ let itlTrustListPem: string | null = null
 // Official C2PA trust list URLs
 const TRUST_LIST_URL = 'https://raw.githubusercontent.com/c2pa-org/conformance-public/main/trust-list/C2PA-TRUST-LIST.pem'
 const TSA_TRUST_LIST_URL = 'https://raw.githubusercontent.com/c2pa-org/conformance-public/main/trust-list/C2PA-TSA-TRUST-LIST.pem'
-// ITL (Interim Trust List) - stored locally, consists of two files
-const ITL_ALLOWED_URL = '/trust/allowed.pem'  // leaf certificates
-const ITL_ANCHORS_URL = '/trust/anchors.pem'  // root certificates
+// ITL (Interim Trust List) - stored locally; use base URL for deployed (e.g. GitHub Pages)
+const base = typeof import.meta.env?.BASE_URL === 'string' ? import.meta.env.BASE_URL : '/'
+const ITL_ALLOWED_URL = `${base}trust/allowed.pem`   // leaf certificates
+const ITL_ANCHORS_URL = `${base}trust/anchors.pem`   // root certificates
 
 function toLocalSettingsJson(settings?: Settings): string | undefined {
   if (!settings) {
@@ -58,7 +59,7 @@ function toLocalSettingsJson(settings?: Settings): string | undefined {
 
 async function createLocalC2pa(): Promise<C2paInstance | null> {
   try {
-    const localModule = await importModule('/local-c2pa/c2pa_local.js')
+    const localModule = await importModule(`${base}local-c2pa/c2pa_local.js`)
     await localModule.default()
 
     return {
@@ -174,7 +175,7 @@ async function initC2pa(): Promise<C2paInstance> {
 
     if (!c2paInstance) {
       const fallbackSdk = await createC2pa({
-        wasmSrc: '/c2pa.wasm'
+        wasmSrc: `${base}c2pa.wasm`
       })
 
       c2paInstance = {

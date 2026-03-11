@@ -307,7 +307,7 @@
         <!-- Left: Content Credentials Logo -->
         <div class="flex items-center justify-start gap-3">
           <a href="https://contentcredentials.org" target="_blank" rel="noopener noreferrer" aria-label="Visit Content Credentials website">
-            <img src="/content_credentials_icon.svg" alt="Content Credentials" class="h-8 w-auto transition-transform hover:scale-105 dark:brightness-0 dark:invert" />
+            <img src="{import.meta.env.BASE_URL}content_credentials_icon.svg" alt="Content Credentials" class="h-8 w-auto transition-transform hover:scale-105 dark:brightness-0 dark:invert" />
           </a>
         </div>
 
@@ -367,7 +367,7 @@
             {/if}
           </button>
           <a href="https://c2pa.org" target="_blank" rel="noopener noreferrer" aria-label="Visit C2PA website">
-            <img src="/c2pa_icon.svg" alt="C2PA" class="h-8 w-auto transition-transform hover:scale-105 dark:brightness-0 dark:invert" />
+            <img src="{import.meta.env.BASE_URL}c2pa_icon.svg" alt="C2PA" class="h-8 w-auto transition-transform hover:scale-105 dark:brightness-0 dark:invert" />
           </a>
         </div>
       </div>

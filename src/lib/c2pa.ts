@@ -59,7 +59,16 @@ function toLocalSettingsJson(settings?: Settings): string | undefined {
 
 async function createLocalC2pa(): Promise<C2paInstance | null> {
   try {
-    const localModule = await importModule(`${base}local-c2pa/c2pa_local.js`)
+    // Probe the file before importing — on SPA hosts (e.g. Netlify) missing paths
+    // return index.html with text/html, which the browser rejects as a module script.
+    const moduleUrl = `${base}local-c2pa/c2pa_local.js`
+    const probe = await fetch(moduleUrl, { method: 'HEAD' })
+    const contentType = probe.headers.get('content-type') ?? ''
+    if (!probe.ok || (!contentType.includes('javascript') && !contentType.includes('ecmascript'))) {
+      return null
+    }
+
+    const localModule = await importModule(moduleUrl)
     await localModule.default()
 
     return {

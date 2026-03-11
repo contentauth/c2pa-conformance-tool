@@ -1,10 +1,12 @@
 import { defineConfig } from 'vite'
 import { svelte } from '@sveltejs/vite-plugin-svelte'
 
-// GitHub Pages serves at https://<user>.github.io/<repo-name>/
-// In CI GITHUB_REPOSITORY is set (e.g. "owner/repo"); NODE_ENV may not be set during config load
+// Netlify sets NETLIFY=true automatically — serve from root
+// GitHub Pages sets GITHUB_REPOSITORY — serve from /<repo-name>/
+// Local dev / unknown — serve from root
+const isNetlify = !!process.env.NETLIFY
 const repoName = process.env.GITHUB_REPOSITORY?.split('/')[1]
-const base = repoName ? `/${repoName}/` : (process.env.NODE_ENV === 'production' ? '/c2pa-conformance-tool/' : '/')
+const base = isNetlify ? '/' : (repoName ? `/${repoName}/` : '/')
 
 export default defineConfig({
   base,

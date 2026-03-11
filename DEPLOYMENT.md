@@ -13,7 +13,7 @@ This is a **100% static site** with no server-side code. All C2PA processing hap
    - Source: **GitHub Actions**
 4. Push to `main` branch - auto-deploys!
 
-**URL:** `https://<username>.github.io/<repo-name>/`
+**URL:** Open **`https://<username>.github.io/c2pa-conformance-tool/`** in your browser (use your GitHub username). You don’t need to add `index.html`—GitHub Pages serves it at that path. The app is built with this base path so JS, CSS, and WASM load correctly.
 
 **Features:**
 - ✅ Free hosting

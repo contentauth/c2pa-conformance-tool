@@ -41,26 +41,18 @@ npm run test:coverage
 
 ### Component Tests
 
-**`src/lib/FileUpload.test.ts`**
-- Tests for FileUpload component in both compact and full modes
-- Validates drag-and-drop functionality
-- Tests file selection events
-- Tests keyboard accessibility
-
-**`src/lib/CertificateManager.test.ts`**
-- Tests for CertificateManager component
-- Validates certificate upload and validation
-- Tests certificate removal functionality
-- Tests file type restrictions
+**`src/lib/ReportViewer.test.ts`**
+- Tests for ReportViewer component
+- Validates report display and user interactions
 
 ## Test Coverage
 
-Current test suite includes:
-- 33 test cases
-- Unit tests for core utilities
-- Component interaction tests
-- Error handling tests
-- Accessibility tests
+The test suite includes:
+- Unit tests for core utilities (c2pa, trust list)
+- Component tests for ReportViewer
+- Error handling and mocked dependencies
+
+Run `npm run test:coverage` to see current coverage.
 
 ## Writing New Tests
 

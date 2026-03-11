@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "node scripts/generate-version.js && vite",
     "build": "node scripts/generate-version.js && vite build",
+    "build:local-wasm": "node scripts/build-local-wasm.mjs",
     "preview": "vite preview",
     "check": "svelte-check --tsconfig ./tsconfig.json",
     "test": "vitest",
@@ -34,6 +35,7 @@
   },
   "dependencies": {
     "@contentauth/c2pa-web": "^0.6.1",
-    "@peculiar/x509": "^1.14.3"
+    "@peculiar/x509": "^1.14.3",
+    "highlight.js": "^11.11.1"
   }
 }

@@ -86,8 +86,7 @@ npm run preview
 
 - `index.html` - Main page
 - `assets/` - JS and CSS bundles
-- `c2pa.wasm` - WebAssembly module (7.7MB)
-- `wasm/` - Additional WASM resources
+- `c2pa.wasm` - WebAssembly module (copied from `@contentauth/c2pa-web` at build time)
 
 **Total size:** ~8MB (mostly the WASM module)
 

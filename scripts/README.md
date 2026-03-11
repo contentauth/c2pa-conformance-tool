@@ -1,5 +1,26 @@
 # Build Scripts
 
+## build-local-wasm.mjs
+
+Builds a browser-targeted wasm reader from the local `../c2pa-rs` checkout and writes the generated loader plus `.wasm` binary to `public/local-c2pa/`.
+
+### What it does:
+- Uses `wasm-pack` to build the wrapper crate in the project's `wasm/` directory
+- Links that wrapper crate against the local `../c2pa-rs/sdk` source tree
+- Generates `public/local-c2pa/c2pa_local.js` and `public/local-c2pa/c2pa_local_bg.wasm`
+
+### When it runs:
+- Manually via `npm run build:local-wasm`
+
+### Runtime behavior:
+- If `public/local-c2pa/c2pa_local.js` exists, the app prefers that locally built wasm at runtime
+- If it does not exist, the app falls back to the packaged `@contentauth/c2pa-web` wasm
+
+### Prerequisites:
+- A local checkout at `../c2pa-rs`
+- `wasm-pack`
+- Rust target `wasm32-unknown-unknown`
+
 ## generate-version.js
 
 This script automatically generates `src/lib/version.ts` with git version information at build time.

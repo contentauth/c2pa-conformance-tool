@@ -1,9 +1,11 @@
 /**
  * Generates a human-readable summary of a C2PA manifest.
  * e.g. "This photo was taken with a Sony camera and edited in Adobe Photoshop."
+ * Reads directly from crJSON manifest entry via getters.
  */
 
-import type { Manifest, Ingredient } from '@contentauth/c2pa-web'
+import type { CrJsonManifestEntry, CrJsonIngredientItem } from './types'
+import { getAssertionDataByLabel, getClaimInfo, getSignatureInfo, getAssertionsList } from './crjson'
 
 // IPTC digital source types
 const SOURCE_TYPE = {
@@ -69,12 +71,12 @@ interface AssertionData {
   softwareAgent?: string | { name?: string }
 }
 
-function getAssertionData(manifest: Manifest, label: string): AssertionData | null {
-  const assertion = manifest.assertions?.find((a: { label: string; data: unknown }) => a.label === label)
-  return assertion?.data as AssertionData ?? null
+function getAssertionData(manifest: CrJsonManifestEntry, label: string): AssertionData | null {
+  const data = getAssertionDataByLabel(manifest, label)
+  return (data as AssertionData) ?? null
 }
 
-function getAllActions(manifest: Manifest): Array<{ action: string; digitalSourceType?: string; softwareAgent?: string }> {
+function getAllActions(manifest: CrJsonManifestEntry): Array<{ action: string; digitalSourceType?: string; softwareAgent?: string }> {
   const actionsAssertion = getAssertionData(manifest, 'c2pa.actions')
   if (!actionsAssertion?.actions) return []
   return actionsAssertion.actions.map(a => ({
@@ -86,7 +88,7 @@ function getAllActions(manifest: Manifest): Array<{ action: string; digitalSourc
   }))
 }
 
-function getPrimaryDigitalSourceType(manifest: Manifest): string {
+function getPrimaryDigitalSourceType(manifest: CrJsonManifestEntry): string {
   // Check top-level assertion first
   const actionsData = getAssertionData(manifest, 'c2pa.actions')
   if (actionsData?.digitalSourceType) {
@@ -116,7 +118,7 @@ function getSoftwareAgentName(agent: string | { name?: string } | undefined): st
   return cleanName(agent.name ?? '')
 }
 
-function getEditingSoftware(manifest: Manifest): string[] {
+function getEditingSoftware(manifest: CrJsonManifestEntry): string[] {
   const tools = new Set<string>()
   const actions = getAllActions(manifest)
   for (const action of actions) {
@@ -128,13 +130,12 @@ function getEditingSoftware(manifest: Manifest): string[] {
   return [...tools]
 }
 
-function getCameraInfo(manifest: Manifest): string {
-  // Check EXIF-like data in assertions
-  for (const assertion of (manifest.assertions ?? []) as Array<{ label: string; data: unknown }>) {
-    const data = assertion.data as AssertionData
-    if (data?.make || data?.model) {
-      const make = data.make ?? ''
-      const model = data.model ?? ''
+function getCameraInfo(manifest: CrJsonManifestEntry): string {
+  for (const { data } of getAssertionsList(manifest)) {
+    const d = data as AssertionData
+    if (d?.make || d?.model) {
+      const make = d.make ?? ''
+      const model = d.model ?? ''
       if (make && model) return `${make} ${model}`
       if (make) return `${make} camera`
       if (model) return model
@@ -143,34 +144,33 @@ function getCameraInfo(manifest: Manifest): string {
   return ''
 }
 
-function getSignerName(manifest: Manifest, usedITL: boolean): string {
+function getSignerName(manifest: CrJsonManifestEntry, usedITL: boolean): string {
+  const claimInfo = getClaimInfo(manifest)
+  const sigInfo = getSignatureInfo(manifest)
   if (usedITL) {
-    // ITL: use claim generator name (the software/device that created the manifest)
-    const generators = manifest.claim_generator_info as Array<{ name?: string }> | undefined
-    const generatorName = generators?.[0]?.name
+    const generatorName = claimInfo?.claim_generator_info?.[0]?.name
     if (generatorName) return cleanName(generatorName)
   }
-  // Official TL: use the certificate common name (the certified entity)
-  return (manifest.signature_info as { common_name?: string } | undefined)?.common_name ?? ''
+  return sigInfo?.common_name ?? ''
 }
 
-function getClaimGeneratorName(manifest: Manifest): string {
-  const generators = manifest.claim_generator_info as Array<{ name?: string }> | undefined
-  const generatorName = generators?.[0]?.name
+function getClaimGeneratorName(manifest: CrJsonManifestEntry): string {
+  const claimInfo = getClaimInfo(manifest)
+  const generatorName = claimInfo?.claim_generator_info?.[0]?.name
   if (generatorName) return cleanName(generatorName)
   return ''
 }
 
-function getCommonName(manifest: Manifest): string {
-  return (manifest.signature_info as { common_name?: string } | undefined)?.common_name ?? ''
+function getCommonName(manifest: CrJsonManifestEntry): string {
+  return getSignatureInfo(manifest)?.common_name ?? ''
 }
 
-function hasAIActions(manifest: Manifest): boolean {
+function hasAIActions(manifest: CrJsonManifestEntry): boolean {
   const actions = getAllActions(manifest)
   return actions.some(a => a.action === ACTION.AI_GENERATED)
 }
 
-function getHumanReadableActions(manifest: Manifest): string[] {
+function getHumanReadableActions(manifest: CrJsonManifestEntry): string[] {
   const actions = getAllActions(manifest)
   const descriptions: string[] = []
 
@@ -191,8 +191,8 @@ export interface ManifestSummary {
 }
 
 export function generateManifestSummary(
-  manifest: Manifest | null | undefined,
-  ingredients: Ingredient[],
+  manifest: CrJsonManifestEntry | null | undefined,
+  ingredients: CrJsonIngredientItem[],
   mimeType: string,
   usedITL: boolean = false,
   isTrusted: boolean = true,
@@ -273,8 +273,8 @@ export function generateManifestSummary(
 
   }
 
-  // --- Certificate issuer ---
-  const issuer = (manifest.signature_info as { issuer?: string } | undefined)?.issuer
+  // --- Certificate issuer (from crJSON manifest.signature) ---
+  const issuer = getSignatureInfo(manifest)?.issuer
   if (issuer) {
     details.push(`Certificate issued by ${issuer}`)
   }

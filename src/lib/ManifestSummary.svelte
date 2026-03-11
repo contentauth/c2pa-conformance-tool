@@ -1,9 +1,9 @@
 <script lang="ts">
-  import type { Manifest, Ingredient } from '@contentauth/c2pa-web'
+  import type { CrJsonManifestEntry, CrJsonIngredientItem } from './types'
   import { generateManifestSummary } from './generateSummary'
 
-  export let manifest: Manifest | null = null
-  export let ingredients: Ingredient[] = []
+  export let manifest: CrJsonManifestEntry | null = null
+  export let ingredients: CrJsonIngredientItem[] = []
   export let mimeType: string = ''
   export let usedITL: boolean = false
   export let isTrusted: boolean = true

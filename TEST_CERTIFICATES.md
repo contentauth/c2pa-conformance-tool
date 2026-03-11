@@ -23,11 +23,9 @@ This will:
 
 ### 2. Download the Test Signing Certificate
 
-Click **"Download Signing Cert"** to download `c2pa-test-signing-bundle.pem`.
+Click **"Download Signing Cert (ZIP)"** to download `c2pa-test-signing-bundle.zip`.
 
-This bundle contains:
-- The test signing certificate
-- The private key (for testing only!)
+The ZIP contains PEM files (e.g. the test signing certificate and private key). Extract and use the bundle for signing. **For testing only!**
 
 ⚠️ **Security Warning**: This private key is publicly available in the repository. Never use it for production content.
 
@@ -37,9 +35,10 @@ Use the C2PA tool or SDK to sign your test content:
 
 ```bash
 # Using the c2pa CLI tool
+# After extracting c2pa-test-signing-bundle.zip
 c2pa your-image.jpg \
   --manifest manifest.json \
-  --signer-path c2pa-test-signing-bundle.pem \
+  --signer-path /path/to/extracted-signing-bundle.pem \
   --output signed-image.jpg
 ```
 
@@ -76,7 +75,7 @@ Click **"Disable Test Mode"** to:
 - **Extended Key Usage**: 1.3.6.1.5.5.7.3.36 (C2PA)
 - **Validity**: 10 years
 - **Issuer**: C2PA Conformance Test Root
-- **Location**: `/public/test-certs/test-signing-bundle.pem` (includes private key)
+- **Download**: Signing cert is distributed as **ZIP** (`test-signing-bundle.zip`) from the UI; extract to get PEMs (certificate and private key)
 
 ## Use Cases
 
@@ -137,10 +136,10 @@ cat > manifest.json << EOF
 }
 EOF
 
-# 3. Sign an image
+# 3. Sign an image (use the .pem from the extracted ZIP)
 c2pa input.jpg \
   --manifest manifest.json \
-  --signer-path c2pa-test-signing-bundle.pem \
+  --signer-path /path/to/extracted-signing-bundle.pem \
   --output output.jpg
 
 # 4. Upload output.jpg to the C2PA Verify tool with test mode enabled
@@ -175,4 +174,4 @@ C2PA Conformance Test Root (CA)
   └── C2PA Conformance Test Signing (End Entity)
 ```
 
-For more information about the certificates, see `/public/test-certs/README.md`.
+For more information about the certificates, see `public/test-certs/README.md` (if present in the repo).

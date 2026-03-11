@@ -1,10 +1,31 @@
 import { createC2pa } from '@contentauth/c2pa-web'
-import type { C2paSdk, Settings, ValidationStatus } from '@contentauth/c2pa-web'
+import type { Settings, ValidationStatus } from '@contentauth/c2pa-web'
 import { VERSION_INFO } from './version'
 import type { ConformanceReport } from './types'
 import { VALIDATION_STATUS } from './constants'
+import { isCrJson, legacyToCrJson, type CrJson } from './crjson'
 
-let c2paInstance: C2paSdk | null = null
+type ReaderHandle = {
+  manifestStore: () => Promise<CrJson>
+  free: () => Promise<void>
+}
+
+type C2paInstance = {
+  reader: {
+    fromBlob: (format: string, file: Blob, settings?: Settings) => Promise<ReaderHandle | null>
+  }
+  getVersion?: () => Promise<string> | string
+}
+
+type LocalC2paModule = {
+  default: () => Promise<unknown>
+  get_version: () => string
+  read_manifest_store: (fileBytes: Uint8Array, format: string, settingsJson?: string) => Promise<string>
+}
+
+const importModule = new Function('modulePath', 'return import(modulePath)') as (modulePath: string) => Promise<LocalC2paModule>
+
+let c2paInstance: C2paInstance | null = null
 let mainTrustListPem: string | null = null
 let itlTrustListPem: string | null = null
 
@@ -14,6 +35,58 @@ const TSA_TRUST_LIST_URL = 'https://raw.githubusercontent.com/c2pa-org/conforman
 // ITL (Interim Trust List) - stored locally, consists of two files
 const ITL_ALLOWED_URL = '/trust/allowed.pem'  // leaf certificates
 const ITL_ANCHORS_URL = '/trust/anchors.pem'  // root certificates
+
+function toLocalSettingsJson(settings?: Settings): string | undefined {
+  if (!settings) {
+    return undefined
+  }
+
+  const localSettings = {
+    verify: {
+      verify_after_reading: settings.verify?.verifyAfterReading ?? true,
+      verify_trust: settings.verify?.verifyTrust ?? true,
+    },
+    trust: settings.trust?.trustAnchors
+      ? {
+          trust_anchors: settings.trust.trustAnchors,
+        }
+      : undefined,
+  }
+
+  return JSON.stringify(localSettings)
+}
+
+async function createLocalC2pa(): Promise<C2paInstance | null> {
+  try {
+    const localModule = await importModule('/local-c2pa/c2pa_local.js')
+    await localModule.default()
+
+    return {
+      reader: {
+        fromBlob: async (format: string, file: Blob, settings?: Settings) => ({
+          manifestStore: async () => {
+            const fileBytes = new Uint8Array(await file.arrayBuffer())
+            const manifestStoreJson = await localModule.read_manifest_store(
+              fileBytes,
+              format,
+              toLocalSettingsJson(settings)
+            )
+            const parsed = JSON.parse(manifestStoreJson) as CrJson
+            if (!isCrJson(parsed)) {
+              throw new Error('Local WASM returned non-crJSON format')
+            }
+            return parsed
+          },
+          free: async () => {},
+        }),
+      },
+      getVersion: () => localModule.get_version(),
+    }
+  } catch (error) {
+    console.info('Local c2pa-rs wasm not available, using packaged SDK', error)
+    return null
+  }
+}
 
 /**
  * Fetch the main C2PA trust lists (without ITL)
@@ -91,16 +164,43 @@ async function fetchITL(): Promise<string> {
 /**
  * Initialize the C2PA SDK
  */
-async function initC2pa(): Promise<C2paSdk> {
+async function initC2pa(): Promise<C2paInstance> {
   if (c2paInstance) {
     return c2paInstance
   }
 
   try {
-    // Initialize the C2PA SDK with WASM source
-    c2paInstance = await createC2pa({
-      wasmSrc: '/c2pa.wasm'
-    })
+    c2paInstance = await createLocalC2pa()
+
+    if (!c2paInstance) {
+      const fallbackSdk = await createC2pa({
+        wasmSrc: '/c2pa.wasm'
+      })
+
+      c2paInstance = {
+        reader: {
+          fromBlob: async (format: string, file: Blob, settings?: Settings) => {
+            const reader = await fallbackSdk.reader.fromBlob(format, file, settings)
+
+            if (!reader) {
+              return null
+            }
+
+            return {
+              manifestStore: async () => {
+                const legacy = await reader.manifestStore() as Record<string, unknown>
+                return legacyToCrJson(legacy)
+              },
+              free: async () => {
+                await reader.free()
+              },
+            }
+          },
+        },
+        getVersion: () => '@contentauth/c2pa-web v0.6.1',
+      }
+    }
+
     return c2paInstance
   } catch (error) {
     console.error('Failed to initialize C2PA SDK:', error)
@@ -156,22 +256,21 @@ export async function processFile(file: File, testCertificates: string[] = []): 
       throw new Error('No C2PA manifest found in this file')
     }
 
-    const officialManifestStore = await reader1.manifestStore()
+    const officialCrJson = await reader1.manifestStore()
     await reader1.free()
 
-    // Check if signature is untrusted with official TL
-    const officialUntrusted = officialManifestStore.validation_results?.activeManifest?.failure?.some(
+    const vr = officialCrJson.validationResults?.activeManifest
+    const officialUntrusted = vr?.failure?.some(
       (status: ValidationStatus) => status.code === VALIDATION_STATUS.SIGNING_CREDENTIAL_UNTRUSTED
     )
 
     console.log('Official TL validation results:', {
       isUntrusted: officialUntrusted,
-      success: officialManifestStore.validation_results?.activeManifest?.success?.map((s: ValidationStatus) => s.code),
-      failure: officialManifestStore.validation_results?.activeManifest?.failure?.map((f: ValidationStatus) => f.code)
+      success: vr?.success?.map((s: ValidationStatus) => s.code),
+      failure: vr?.failure?.map((f: ValidationStatus) => f.code)
     })
 
-    // Now validate with test certificates if provided
-    let manifestStore = officialManifestStore
+    let crJson = officialCrJson
     let usedTestCerts = false
 
     if (testCertificates.length > 0) {
@@ -188,49 +287,47 @@ export async function processFile(file: File, testCertificates: string[] = []): 
 
       const reader2 = await c2pa.reader.fromBlob(mimeType, file, testSettings)
       if (reader2) {
-        const testManifestStore = await reader2.manifestStore()
+        const testCrJson = await reader2.manifestStore()
         await reader2.free()
 
-        const testUntrusted = testManifestStore.validation_results?.activeManifest?.failure?.some(
+        const testVr = testCrJson.validationResults?.activeManifest
+        const testUntrusted = testVr?.failure?.some(
           (status: ValidationStatus) => status.code === VALIDATION_STATUS.SIGNING_CREDENTIAL_UNTRUSTED
         )
 
         console.log('Test cert validation results:', {
           isUntrusted: testUntrusted,
-          success: testManifestStore.validation_results?.activeManifest?.success?.map((s: ValidationStatus) => s.code),
-          failure: testManifestStore.validation_results?.activeManifest?.failure?.map((f: ValidationStatus) => f.code)
+          success: testVr?.success?.map((s: ValidationStatus) => s.code),
+          failure: testVr?.failure?.map((f: ValidationStatus) => f.code)
         })
 
-        // If it was untrusted with official TL but trusted with test certs, test certs were used
         if (officialUntrusted && !testUntrusted) {
           console.log('✅ Test certificates made the difference - signature now trusted')
           usedTestCerts = true
-          manifestStore = testManifestStore
+          crJson = testCrJson
         } else {
           console.log('ℹ️  Test certificates loaded but not needed for validation')
-          // Use official validation results
         }
       }
     }
 
-    // Check if signature is untrusted
-    const isUntrusted = manifestStore.validation_results?.activeManifest?.failure?.some(
+    const mainVr = crJson.validationResults?.activeManifest
+    const isUntrusted = mainVr?.failure?.some(
       (status: ValidationStatus) => status.code === VALIDATION_STATUS.SIGNING_CREDENTIAL_UNTRUSTED
     )
 
     console.log('Main validation results:', {
       isUntrusted,
-      success: manifestStore.validation_results?.activeManifest?.success?.map((s: ValidationStatus) => s.code),
-      failure: manifestStore.validation_results?.activeManifest?.failure?.map((f: ValidationStatus) => f.code)
+      success: mainVr?.success?.map((s: ValidationStatus) => s.code),
+      failure: mainVr?.failure?.map((f: ValidationStatus) => f.code)
     })
 
     let usedITL = false
-    let finalManifestStore = manifestStore
+    let finalCrJson = crJson
 
     if (isUntrusted) {
       console.log('⚠️  Signature untrusted on main list, checking ITL...')
 
-      // Try with ITL included
       const itlSettings: Settings = {
         verify: {
           verifyTrust: true,
@@ -243,30 +340,25 @@ export async function processFile(file: File, testCertificates: string[] = []): 
 
       const reader2 = await c2pa.reader.fromBlob(mimeType, file, itlSettings)
       if (reader2) {
-        const itlManifestStore = await reader2.manifestStore()
+        const itlCrJson = await reader2.manifestStore()
         await reader2.free()
 
+        const itlVr = itlCrJson.validationResults?.activeManifest
         console.log('ITL validation results:', {
-          success: itlManifestStore.validation_results?.activeManifest?.success?.map((s: ValidationStatus) => s.code),
-          failure: itlManifestStore.validation_results?.activeManifest?.failure?.map((f: ValidationStatus) => ({
-            code: f.code,
-            explanation: f.explanation
-          }))
+          success: itlVr?.success?.map((s: ValidationStatus) => s.code),
+          failure: itlVr?.failure?.map((f: ValidationStatus) => ({ code: f.code, explanation: f.explanation }))
         })
 
-        // Check if ITL validation succeeded
-        const itlTrusted = itlManifestStore.validation_results?.activeManifest?.success?.some(
+        const itlTrusted = itlVr?.success?.some(
           (status: ValidationStatus) => status.code === VALIDATION_STATUS.SIGNING_CREDENTIAL_TRUSTED
         )
-
-        const itlStillUntrusted = itlManifestStore.validation_results?.activeManifest?.failure?.some(
+        const itlStillUntrusted = itlVr?.failure?.some(
           (status: ValidationStatus) => status.code === VALIDATION_STATUS.SIGNING_CREDENTIAL_UNTRUSTED
         )
 
         console.log('ITL validation check:', { itlTrusted, itlStillUntrusted })
 
-        // Log the untrusted failure details
-        const untrustedFailure = itlManifestStore.validation_results?.activeManifest?.failure?.find(
+        const untrustedFailure = itlVr?.failure?.find(
           (status: ValidationStatus) => status.code === VALIDATION_STATUS.SIGNING_CREDENTIAL_UNTRUSTED
         )
         if (untrustedFailure) {
@@ -276,7 +368,7 @@ export async function processFile(file: File, testCertificates: string[] = []): 
         if (itlTrusted && !itlStillUntrusted) {
           console.log('✅ Signature validated by ITL')
           usedITL = true
-          finalManifestStore = itlManifestStore
+          finalCrJson = itlCrJson
         } else {
           console.log('❌ Signature still not trusted even with ITL')
         }
@@ -286,7 +378,7 @@ export async function processFile(file: File, testCertificates: string[] = []): 
     console.log('✅ Manifest store retrieved with trust validation')
 
     return {
-      ...finalManifestStore,
+      ...finalCrJson,
       usedITL,
       usedTestCerts,
       _conformanceToolVersion: {
@@ -320,7 +412,7 @@ export async function processFile(file: File, testCertificates: string[] = []): 
  * Get the C2PA library version
  */
 export async function getVersion(): Promise<string> {
-  // The SDK doesn't expose a version property directly
-  // Return the package version we're using
-  return '@contentauth/c2pa-web v0.5.6'
+  const c2pa = await initC2pa()
+  const version = await c2pa.getVersion?.()
+  return version ?? '@contentauth/c2pa-web v0.6.1'
 }

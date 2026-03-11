@@ -13,15 +13,21 @@ vi.mock('@contentauth/c2pa-web', () => ({
       fromBlob: vi.fn((type: string, file: File, settings: { trust?: { trustAnchors?: string } }) => {
         validationCallCount++
 
+        // Legacy shape returned by packaged SDK; c2pa.ts converts to crJSON via legacyToCrJson
+        const legacyManifest = {
+          title: 'Test Manifest',
+          format: 'image/jpeg',
+          instance_id: 'test-instance-id',
+          assertions: [],
+          claim_generator_info: [{ name: 'Test' }]
+        }
+
         // First call (main trust list) - untrusted signature
         if (validationCallCount === 1) {
           return Promise.resolve({
             manifestStore: vi.fn(() => Promise.resolve({
-              activeManifest: {
-                title: 'Test Manifest',
-                format: 'image/jpeg',
-                instanceId: 'test-instance-id'
-              },
+              manifests: { 'urn:uuid:test': legacyManifest },
+              active_manifest: 'urn:uuid:test',
               validation_results: {
                 activeManifest: {
                   success: [
@@ -44,11 +50,8 @@ vi.mock('@contentauth/c2pa-web', () => ({
 
           return Promise.resolve({
             manifestStore: vi.fn(() => Promise.resolve({
-              activeManifest: {
-                title: 'Test Manifest',
-                format: 'image/jpeg',
-                instanceId: 'test-instance-id'
-              },
+              manifests: { 'urn:uuid:test': legacyManifest },
+              active_manifest: 'urn:uuid:test',
               validation_results: {
                 activeManifest: {
                   success: hasITL ? [
@@ -72,11 +75,8 @@ vi.mock('@contentauth/c2pa-web', () => ({
         // Default case - trusted signature
         return Promise.resolve({
           manifestStore: vi.fn(() => Promise.resolve({
-            activeManifest: {
-              title: 'Test Manifest',
-              format: 'image/jpeg',
-              instanceId: 'test-instance-id'
-            },
+            manifests: { 'urn:uuid:test': legacyManifest },
+            active_manifest: 'urn:uuid:test',
             validation_results: {
               activeManifest: {
                 success: [
@@ -129,7 +129,7 @@ describe('c2pa utilities', () => {
   describe('getVersion', () => {
     it('should return the SDK version', async () => {
       const version = await getVersion()
-      expect(version).toBe('@contentauth/c2pa-web v0.5.6')
+      expect(version).toBe('@contentauth/c2pa-web v0.6.1')
     })
   })
 
@@ -142,9 +142,9 @@ describe('c2pa utilities', () => {
       const result = await processFile(mockFile)
 
       expect(result).toBeDefined()
-      expect(result.activeManifest).toBeDefined()
-      // Mock returns camelCase activeManifest; real SDK uses active_manifest
-      expect((result as ConformanceReport & { activeManifest?: { title?: string } }).activeManifest?.title).toBe('Test Manifest')
+      expect(result.manifests).toBeDefined()
+      expect(result.manifests?.length).toBeGreaterThan(0)
+      expect(result.manifests?.[0]?.label).toBe('urn:uuid:test')
       expect(result.usedITL).toBe(false)
     })
 
@@ -157,7 +157,7 @@ describe('c2pa utilities', () => {
       const result = await processFile(mockFile, [testCert])
 
       expect(result).toBeDefined()
-      expect(result.activeManifest).toBeDefined()
+      expect(result.manifests?.length).toBeGreaterThan(0)
     })
 
     it('should handle different file types', async () => {
@@ -167,7 +167,7 @@ describe('c2pa utilities', () => {
       const result = await processFile(mockFile)
 
       expect(result).toBeDefined()
-      expect(result.activeManifest).toBeDefined()
+      expect(result.manifests?.length).toBeGreaterThan(0)
     })
   })
 
@@ -191,10 +191,10 @@ describe('c2pa utilities', () => {
 
       expect(result).toBeDefined()
       // Check if ITL validation succeeded
-      const hasUntrusted = result.validation_results?.activeManifest?.failure?.some(
+      const hasUntrusted = result.validationResults?.activeManifest?.failure?.some(
         (f: ValidationStatus) => f.code === 'signingCredential.untrusted'
       )
-      const hasTrusted = result.validation_results?.activeManifest?.success?.some(
+      const hasTrusted = result.validationResults?.activeManifest?.success?.some(
         (s: ValidationStatus) => s.code === 'signingCredential.trusted'
       )
 
@@ -210,7 +210,7 @@ describe('c2pa utilities', () => {
       const result = await processFile(mockFile)
 
       expect(result).toBeDefined()
-      expect(result.validation_results).toBeDefined()
+      expect(result.validationResults).toBeDefined()
     })
 
     it('should not set usedITL flag when signature is trusted on main list', async () => {

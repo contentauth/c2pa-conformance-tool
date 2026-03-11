@@ -27,12 +27,14 @@ dist-ssr
 # Rust / WASM
 wasm/target
 wasm/Cargo.lock
+.cargo-home/
 public/wasm/*.wasm
 public/wasm/*.js
 public/wasm/*.ts
 public/wasm/package.json
 public/wasm/.gitignore
 public/c2pa.wasm
+public/local-c2pa/
 
 # Environment
 .env

@@ -1,16 +1,15 @@
 [package]
-name = "c2pa-wasm"
+name = "c2pa-local-wasm"
 version = "0.1.0"
 edition = "2021"
 
 [lib]
-crate-type = ["cdylib", "rlib"]
+crate-type = ["cdylib"]
 
 [dependencies]
-c2pa = { version = "0.75", default-features = false, features = ["rust_native_crypto", "file_io"] }
-wasm-bindgen = "0.2"
-serde = { version = "1.0", features = ["derive"] }
-serde_json = "1.0"
+c2pa = { path = "../../c2pa-rs/sdk", default-features = false, features = ["fetch_remote_manifests", "http_reqwest", "pdf", "rust_native_crypto"] }
+wasm-bindgen = "0.2.112"
+wasm-bindgen-futures = "0.4.31"
 console_error_panic_hook = "0.1"
 
 [dev-dependencies]

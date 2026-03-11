@@ -52,6 +52,9 @@ npm run build
 | `npm run dev` | Start development server |
 | `npm run build` | Build for production |
 | `npm run preview` | Preview production build |
+| `npm run check` | Run Svelte type checking |
+| `npm run test:run` | Run tests once |
+| `npm run build:local-wasm` | Build the C2PA WebAssembly module locally |
 
 ## Browser Support
 

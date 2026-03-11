@@ -1,11 +1,29 @@
 <script lang="ts">
   import { createEventDispatcher, onDestroy } from 'svelte'
   import type { ValidationStatus } from '@contentauth/c2pa-web'
+  import hljs from 'highlight.js'
   import CertificateManager from './CertificateManager.svelte'
   import ManifestSummary from './ManifestSummary.svelte'
-  import type { ConformanceReport, ValidationStatusItem, AssertionSummaryItem } from './types'
-  import type { Ingredient, Manifest } from '@contentauth/c2pa-web'
+  import type { ConformanceReport, ValidationStatusItem, AssertionSummaryItem, CrJsonManifestEntry } from './types'
+  import {
+    getAssertionsList,
+    getIngredientsFromManifest,
+    getSignatureInfo,
+    getClaimInfo,
+    getActiveManifestValidationStatus
+  } from './crjson'
   import { VALIDATION_STATUS } from './constants'
+
+  $: rawJsonHighlighted = (() => {
+    try {
+      return hljs.highlight(JSON.stringify(report, null, 2), { language: 'json' }).value
+    } catch {
+      return ''
+    }
+  })()
+  $: if (rawJsonCodeEl && rawJsonHighlighted) {
+    rawJsonCodeEl.innerHTML = rawJsonHighlighted
+  }
 
   export let report: ConformanceReport
   export let usedTestCertificates = false
@@ -21,6 +39,7 @@
   }>()
 
   let showRaw = false
+  let rawJsonCodeEl: HTMLElement | null = null
   let copied = false
   let copyTimeout: ReturnType<typeof setTimeout> | null = null
   let mediaUrl: string | null = null
@@ -55,10 +74,8 @@
   }
 
   function expandAllAssertions() {
-    const manifest = activeManifest
-    if (manifest?.assertions) {
-      expandedAssertions = new Set(manifest.assertions.map((_, i) => i))
-    }
+    const list = activeManifest ? getAssertionsList(activeManifest) : []
+    expandedAssertions = new Set(list.map((_, i) => i))
   }
 
   function collapseAllAssertions() {
@@ -66,10 +83,8 @@
   }
 
   function expandAllIngredients() {
-    const manifest = activeManifest
-    if (manifest?.ingredients) {
-      expandedIngredients = new Set(manifest.ingredients.map((_, i) => i))
-    }
+    const list = activeManifest ? getIngredientsFromManifest(activeManifest) : []
+    expandedIngredients = new Set(list.map((_, i) => i))
   }
 
   function collapseAllIngredients() {
@@ -80,35 +95,23 @@
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
-  // Get ingredient manifest from the manifests map (returns Manifest for template typing)
-  function getIngredientManifest(ingredient: Ingredient): Manifest | null {
-    if (!report.manifests) {
-      return null
+  // Get ingredient manifest from crJSON manifests array (returns crJSON entry for UI getters)
+  function getIngredientManifest(ingredient: { active_manifest?: string; instance_id?: string; [key: string]: unknown }): CrJsonManifestEntry | null {
+    const manifests = report.manifests
+    if (!manifests || !Array.isArray(manifests)) return null
+
+    const label = ingredient.active_manifest ?? ingredient.instance_id
+    if (label) {
+      const entry = manifests.find((m: { label: string }) => m.label === label)
+      if (entry) return entry
     }
 
-    const ing = ingredient as Ingredient & { c2pa_manifest?: unknown }
-    if (ing.c2pa_manifest) {
-      return ing.c2pa_manifest as Manifest
-    }
-
-    if (ingredient.active_manifest && report.manifests[ingredient.active_manifest]) {
-      return report.manifests[ingredient.active_manifest]
-    }
-
-    if (ingredient.manifest_data) {
-      return ingredient.manifest_data as unknown as Manifest
-    }
-
-    if (ingredient.instance_id && report.manifests[ingredient.instance_id]) {
-      return report.manifests[ingredient.instance_id]
-    }
-
-    for (const manifest of Object.values(report.manifests)) {
-      if (manifest && typeof manifest === 'object' && 'instance_id' in manifest) {
-        if ((manifest as Manifest).instance_id === ingredient.instance_id) {
-          return manifest
-        }
-      }
+    if (ingredient.instance_id) {
+      const entry = manifests.find((m: CrJsonManifestEntry) => {
+        const claim = (m.claim ?? m['claim.v2']) as Record<string, unknown> | undefined
+        return claim && (claim.instanceID === ingredient.instance_id || claim.instance_id === ingredient.instance_id) || m.label === ingredient.instance_id
+      })
+      if (entry) return entry
     }
 
     return null
@@ -150,19 +153,22 @@
     window.addEventListener('scroll', handleScroll)
   }
 
-  // Get the active manifest object from the manifests map
-  $: activeManifest = report.active_manifest && report.manifests
-    ? report.manifests[report.active_manifest]
-    : null
+  // Active manifest: crJSON puts it first in the array (raw crJSON entry)
+  $: activeManifest = report.manifests?.[0] ?? null
 
-  // Get validation results from the correct location
-  $: validationResults = report.validation_results?.activeManifest
+  // Read from crJSON locations via getters
+  $: assertionsList = activeManifest ? getAssertionsList(activeManifest) : []
+  $: ingredientsList = activeManifest ? getIngredientsFromManifest(activeManifest) : []
+  $: signatureInfo = activeManifest ? getSignatureInfo(activeManifest) : undefined
+  $: claimInfo = activeManifest ? getClaimInfo(activeManifest) : undefined
 
-  // Check if trusted based on validation_state or signingCredential.trusted status
-  $: isTrusted = report.validation_state === 'Trusted' ||
-    validationResults?.success?.some((status: ValidationStatus) =>
-      status.code === VALIDATION_STATUS.SIGNING_CREDENTIAL_TRUSTED
-    )
+  // Get validation results from crJSON (document-level or per-manifest from c2pa-rs)
+  $: validationResults = getActiveManifestValidationStatus(report)
+
+  // Check if trusted from crJSON validationResults
+  $: isTrusted = validationResults?.success?.some((status: ValidationStatus) =>
+    status.code === VALIDATION_STATUS.SIGNING_CREDENTIAL_TRUSTED
+  ) ?? false
 
   // Check if signature is using Interim Trust List
   $: usedITL = report.usedITL === true
@@ -614,14 +620,14 @@
         <a href="#validation-status" class="text-sm px-3 py-1 bg-white dark:bg-gray-800 hover:bg-blue-100 dark:hover:bg-blue-900/50 text-blue-700 dark:text-blue-300 rounded-lg transition-colors">Validation</a>
         <a href="#signature-info" class="text-sm px-3 py-1 bg-white dark:bg-gray-800 hover:bg-blue-100 dark:hover:bg-blue-900/50 text-blue-700 dark:text-blue-300 rounded-lg transition-colors">Signature</a>
         <a href="#manifest-details" class="text-sm px-3 py-1 bg-white dark:bg-gray-800 hover:bg-blue-100 dark:hover:bg-blue-900/50 text-blue-700 dark:text-blue-300 rounded-lg transition-colors">Manifest</a>
-        {#if activeManifest.assertions && activeManifest.assertions.length > 0}
+        {#if assertionsList.length > 0}
           <a href="#assertions" class="text-sm px-3 py-1 bg-white dark:bg-gray-800 hover:bg-blue-100 dark:hover:bg-blue-900/50 text-blue-700 dark:text-blue-300 rounded-lg transition-colors">
-            Assertions ({activeManifest.assertions.length})
+            Assertions ({assertionsList.length})
           </a>
         {/if}
-        {#if activeManifest.ingredients && activeManifest.ingredients.length > 0}
+        {#if ingredientsList.length > 0}
           <a href="#ingredients" class="text-sm px-3 py-1 bg-white dark:bg-gray-800 hover:bg-blue-100 dark:hover:bg-blue-900/50 text-blue-700 dark:text-blue-300 rounded-lg transition-colors">
-            Ingredients ({activeManifest.ingredients.length})
+            Ingredients ({ingredientsList.length})
           </a>
         {/if}
         <a href="#test-certificates" class="text-sm px-3 py-1 bg-white dark:bg-gray-800 hover:bg-blue-100 dark:hover:bg-blue-900/50 text-blue-700 dark:text-blue-300 rounded-lg transition-colors">Test Certs</a>
@@ -653,7 +659,7 @@
         </div>
         <h3 class="text-2xl font-bold text-gray-900 dark:text-white">Raw JSON Report</h3>
       </div>
-      <pre class="bg-gray-900 dark:bg-black border-2 border-gray-700 dark:border-gray-600 rounded-xl p-6 overflow-x-auto text-sm leading-relaxed text-gray-100 shadow-inner">{JSON.stringify(report, null, 2)}</pre>
+      <pre class="hljs bg-gray-900 dark:bg-black border-2 border-gray-700 dark:border-gray-600 rounded-xl p-6 overflow-x-auto text-sm leading-relaxed shadow-inner"><code class="language-json" bind:this={rawJsonCodeEl}></code></pre>
     </div>
   {:else}
     <!-- Media Preview and Validation Status -->
@@ -728,7 +734,7 @@
 
           <ManifestSummary
             manifest={activeManifest}
-            ingredients={activeManifest.ingredients ?? []}
+            ingredients={ingredientsList}
             mimeType={file?.type ?? ''}
             {usedITL}
             {isTrusted}
@@ -803,7 +809,7 @@
           {/if}
         </section>
 
-        {#if activeManifest.signature_info}
+        {#if signatureInfo}
           <section class="bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 rounded-2xl p-8 shadow-lg hover:shadow-xl transition-shadow duration-300" id="signature-info">
             <div class="flex items-center gap-3 mb-6 pb-4 border-b-2 border-blue-200 dark:border-blue-800">
               <div class="w-10 h-10 bg-gradient-to-br from-indigo-600 to-purple-600 dark:from-indigo-500 dark:to-purple-500 rounded-lg flex items-center justify-center text-white shadow-md">
@@ -814,28 +820,28 @@
               <h3 class="text-2xl font-bold text-gray-900 dark:text-white">Signature Information</h3>
             </div>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-              {#if activeManifest.signature_info.common_name}
+              {#if signatureInfo.common_name}
                 <div class="bg-gray-50 dark:bg-gray-900/50 rounded-xl p-4">
                   <div class="text-xs font-semibold text-gray-500 dark:text-gray-500 uppercase tracking-wide mb-2">Common Name</div>
-                  <p class="text-sm font-medium text-gray-900 dark:text-gray-100 break-all">{activeManifest.signature_info.common_name}</p>
+                  <p class="text-sm font-medium text-gray-900 dark:text-gray-100 break-all">{signatureInfo.common_name}</p>
                 </div>
               {/if}
-              {#if activeManifest.signature_info.issuer}
+              {#if signatureInfo.issuer}
                 <div class="bg-gray-50 dark:bg-gray-900/50 rounded-xl p-4">
                   <div class="text-xs font-semibold text-gray-500 dark:text-gray-500 uppercase tracking-wide mb-2">Issuer</div>
-                  <p class="text-sm font-medium text-gray-900 dark:text-gray-100 break-all">{activeManifest.signature_info.issuer}</p>
+                  <p class="text-sm font-medium text-gray-900 dark:text-gray-100 break-all">{signatureInfo.issuer}</p>
                 </div>
               {/if}
-              {#if activeManifest.signature_info.time}
+              {#if signatureInfo.time}
                 <div class="bg-gray-50 dark:bg-gray-900/50 rounded-xl p-4">
                   <div class="text-xs font-semibold text-gray-500 dark:text-gray-500 uppercase tracking-wide mb-2">Signed</div>
-                  <p class="text-sm font-medium text-gray-900 dark:text-gray-100">{activeManifest.signature_info.time}</p>
+                  <p class="text-sm font-medium text-gray-900 dark:text-gray-100">{signatureInfo.time}</p>
                 </div>
               {/if}
-              {#if activeManifest.signature_info.alg}
+              {#if signatureInfo.alg}
                 <div class="bg-gray-50 dark:bg-gray-900/50 rounded-xl p-4">
                   <div class="text-xs font-semibold text-gray-500 dark:text-gray-500 uppercase tracking-wide mb-2">Algorithm</div>
-                  <p class="text-sm font-medium text-gray-900 dark:text-gray-100">{activeManifest.signature_info.alg}</p>
+                  <p class="text-sm font-medium text-gray-900 dark:text-gray-100">{signatureInfo.alg}</p>
                 </div>
               {/if}
             </div>
@@ -855,13 +861,13 @@
             <div class="bg-gray-50 dark:bg-gray-900/50 rounded-xl p-4">
               <div class="text-xs font-semibold text-gray-500 dark:text-gray-500 uppercase tracking-wide mb-2">Claim Generator</div>
               <p class="text-sm font-medium text-gray-900 dark:text-gray-100">
-                {#if activeManifest.claim_generator_info && activeManifest.claim_generator_info.length > 0}
-                  {activeManifest.claim_generator_info[0].name}
-                  {#if activeManifest.claim_generator_info[0].version}
-                    <span class="text-blue-600 dark:text-blue-400">v{activeManifest.claim_generator_info[0].version}</span>
+                {#if claimInfo?.claim_generator_info?.length > 0}
+                  {claimInfo.claim_generator_info[0].name}
+                  {#if claimInfo.claim_generator_info[0].version}
+                    <span class="text-blue-600 dark:text-blue-400">v{claimInfo.claim_generator_info[0].version}</span>
                   {/if}
-                {:else if activeManifest.claim_generator}
-                  {activeManifest.claim_generator}
+                {:else if claimInfo?.claim_generator}
+                  {claimInfo.claim_generator}
                 {:else}
                   N/A
                 {/if}
@@ -869,9 +875,9 @@
             </div>
             <div class="bg-gray-50 dark:bg-gray-900/50 rounded-xl p-4">
               <div class="text-xs font-semibold text-gray-500 dark:text-gray-500 uppercase tracking-wide mb-2">Instance ID</div>
-              <p class="text-sm font-medium text-gray-900 dark:text-gray-100 break-all font-mono">{activeManifest.instance_id || 'N/A'}</p>
+              <p class="text-sm font-medium text-gray-900 dark:text-gray-100 break-all font-mono">{claimInfo?.instance_id ?? activeManifest?.label ?? 'N/A'}</p>
             </div>
-            {#if activeManifest.label}
+            {#if activeManifest?.label}
               <div class="bg-gray-50 dark:bg-gray-900/50 rounded-xl p-4 md:col-span-2">
                 <div class="text-xs font-semibold text-gray-500 dark:text-gray-500 uppercase tracking-wide mb-2">Label</div>
                 <p class="text-sm font-medium text-gray-900 dark:text-gray-100 break-all">{activeManifest.label}</p>
@@ -880,7 +886,7 @@
           </div>
         </section>
 
-        {#if activeManifest.assertions && activeManifest.assertions.length > 0}
+        {#if assertionsList.length > 0}
           <section class="bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 rounded-2xl p-8 shadow-lg hover:shadow-xl transition-shadow duration-300" id="assertions">
             <div class="flex items-center gap-3 mb-6 pb-4 border-b-2 border-blue-200 dark:border-blue-800">
               <div class="w-10 h-10 bg-gradient-to-br from-purple-600 to-pink-600 dark:from-purple-500 dark:to-pink-500 rounded-lg flex items-center justify-center text-white shadow-md">
@@ -907,12 +913,12 @@
                   Collapse All
                 </button>
                 <div class="px-3 py-1 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded-full text-sm font-bold">
-                  {activeManifest.assertions.length}
+                  {assertionsList.length}
                 </div>
               </div>
             </div>
             <div class="space-y-4">
-              {#each activeManifest.assertions as assertion, index}
+              {#each assertionsList as assertion, index}
                 {@const isExpanded = expandedAssertions.has(index)}
                 {@const summary = assertion.data ? extractAssertionSummary(assertion.data) : []}
                 <div class="bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900/50 dark:to-gray-900 rounded-xl p-5 border border-gray-200 dark:border-gray-700 hover:border-purple-300 dark:hover:border-purple-700 transition-colors">
@@ -1014,7 +1020,7 @@
           </section>
         {/if}
 
-        {#if activeManifest.ingredients && activeManifest.ingredients.length > 0}
+        {#if ingredientsList.length > 0}
           <section class="bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 rounded-2xl p-8 shadow-lg hover:shadow-xl transition-shadow duration-300" id="ingredients">
             <div class="flex items-center gap-3 mb-6 pb-4 border-b-2 border-blue-200 dark:border-blue-800">
               <div class="w-10 h-10 bg-gradient-to-br from-orange-600 to-red-600 dark:from-orange-500 dark:to-red-500 rounded-lg flex items-center justify-center text-white shadow-md">
@@ -1041,12 +1047,12 @@
                   Collapse All
                 </button>
                 <div class="px-3 py-1 bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 rounded-full text-sm font-bold">
-                  {activeManifest.ingredients.length}
+                  {ingredientsList.length}
                 </div>
               </div>
             </div>
             <div class="space-y-4">
-              {#each activeManifest.ingredients as ingredient, index}
+              {#each ingredientsList as ingredient, index}
                 {@const ingredientManifest = getIngredientManifest(ingredient)}
                 {@const isExpanded = expandedIngredients.has(index)}
                 <div class="bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900/50 dark:to-gray-900 rounded-xl p-5 border border-gray-200 dark:border-gray-700 hover:border-orange-300 dark:hover:border-orange-700 transition-colors">
@@ -1097,8 +1103,12 @@
                       </div>
                     {/if}
 
-                    <!-- Ingredient Manifest Information -->
+                    <!-- Ingredient Manifest Information (read from crJSON via getters) -->
                     {#if ingredientManifest && isExpanded}
+                      {@const ingClaim = getClaimInfo(ingredientManifest)}
+                      {@const ingSig = getSignatureInfo(ingredientManifest)}
+                      {@const ingAssertions = getAssertionsList(ingredientManifest)}
+                      {@const ingIngredients = getIngredientsFromManifest(ingredientManifest)}
                       <div class="mt-3 pt-3 border-t border-gray-300 dark:border-gray-600 animate-fade-in">
                         <div class="flex items-center gap-2 mb-3">
                           <svg class="w-4 h-4 text-orange-600 dark:text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1108,72 +1118,72 @@
                         </div>
 
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                          {#if ingredientManifest.claim_generator}
+                          {#if ingClaim?.claim_generator}
                             <div class="bg-orange-50 dark:bg-orange-900/20 rounded-lg p-3">
                               <div class="text-xs font-semibold text-gray-500 dark:text-gray-500 uppercase tracking-wide mb-1">Claim Generator</div>
-                              <p class="text-sm font-medium text-gray-900 dark:text-gray-100">{ingredientManifest.claim_generator}</p>
+                              <p class="text-sm font-medium text-gray-900 dark:text-gray-100">{ingClaim.claim_generator}</p>
                             </div>
                           {/if}
-                          {#if ingredientManifest.claim_generator_info && ingredientManifest.claim_generator_info.length > 0}
+                          {#if ingClaim?.claim_generator_info?.length > 0}
                             <div class="bg-orange-50 dark:bg-orange-900/20 rounded-lg p-3">
                               <div class="text-xs font-semibold text-gray-500 dark:text-gray-500 uppercase tracking-wide mb-1">Claim Generator</div>
                               <p class="text-sm font-medium text-gray-900 dark:text-gray-100">
-                                {ingredientManifest.claim_generator_info[0].name}
-                                {#if ingredientManifest.claim_generator_info[0].version}
-                                  <span class="text-orange-600 dark:text-orange-400">v{ingredientManifest.claim_generator_info[0].version}</span>
+                                {ingClaim.claim_generator_info[0].name}
+                                {#if ingClaim.claim_generator_info[0].version}
+                                  <span class="text-orange-600 dark:text-orange-400">v{ingClaim.claim_generator_info[0].version}</span>
                                 {/if}
                               </p>
                             </div>
                           {/if}
-                          {#if ingredientManifest.signature_info?.common_name}
+                          {#if ingSig?.common_name}
                             <div class="bg-orange-50 dark:bg-orange-900/20 rounded-lg p-3">
                               <div class="text-xs font-semibold text-gray-500 dark:text-gray-500 uppercase tracking-wide mb-1">Signed By</div>
-                              <p class="text-sm font-medium text-gray-900 dark:text-gray-100 break-all">{ingredientManifest.signature_info.common_name}</p>
+                              <p class="text-sm font-medium text-gray-900 dark:text-gray-100 break-all">{ingSig.common_name}</p>
                             </div>
                           {/if}
-                          {#if ingredientManifest.signature_info?.time}
+                          {#if ingSig?.time}
                             <div class="bg-orange-50 dark:bg-orange-900/20 rounded-lg p-3">
                               <div class="text-xs font-semibold text-gray-500 dark:text-gray-500 uppercase tracking-wide mb-1">Signature Time</div>
-                              <p class="text-sm font-medium text-gray-900 dark:text-gray-100">{ingredientManifest.signature_info.time}</p>
+                              <p class="text-sm font-medium text-gray-900 dark:text-gray-100">{ingSig.time}</p>
                             </div>
                           {/if}
-                          {#if ingredientManifest.signature_info?.issuer}
+                          {#if ingSig?.issuer}
                             <div class="bg-orange-50 dark:bg-orange-900/20 rounded-lg p-3">
                               <div class="text-xs font-semibold text-gray-500 dark:text-gray-500 uppercase tracking-wide mb-1">Issuer</div>
-                              <p class="text-sm font-medium text-gray-900 dark:text-gray-100 break-all">{ingredientManifest.signature_info.issuer}</p>
+                              <p class="text-sm font-medium text-gray-900 dark:text-gray-100 break-all">{ingSig.issuer}</p>
                             </div>
                           {/if}
                         </div>
 
-                        {#if ingredientManifest.assertions && ingredientManifest.assertions.length > 0}
+                        {#if ingAssertions.length > 0}
                           <div class="mt-3 bg-orange-50 dark:bg-orange-900/20 rounded-lg p-3">
                             <div class="flex items-center justify-between mb-2">
                               <span class="text-xs font-semibold text-gray-500 dark:text-gray-500 uppercase tracking-wide">Assertions</span>
-                              <span class="px-2 py-1 bg-orange-200 dark:bg-orange-800 text-orange-800 dark:text-orange-200 rounded-full text-xs font-bold">{ingredientManifest.assertions.length}</span>
+                              <span class="px-2 py-1 bg-orange-200 dark:bg-orange-800 text-orange-800 dark:text-orange-200 rounded-full text-xs font-bold">{ingAssertions.length}</span>
                             </div>
                             <div class="space-y-1">
-                              {#each ingredientManifest.assertions.slice(0, 5) as assertion}
-                                <div class="text-xs text-gray-700 dark:text-gray-300 font-mono">• {assertion.label || assertion.url || 'Unknown'}</div>
+                              {#each ingAssertions.slice(0, 5) as assertion}
+                                <div class="text-xs text-gray-700 dark:text-gray-300 font-mono">• {assertion.label || 'Unknown'}</div>
                               {/each}
-                              {#if ingredientManifest.assertions.length > 5}
-                                <div class="text-xs text-gray-500 dark:text-gray-500 italic">+ {ingredientManifest.assertions.length - 5} more...</div>
+                              {#if ingAssertions.length > 5}
+                                <div class="text-xs text-gray-500 dark:text-gray-500 italic">+ {ingAssertions.length - 5} more...</div>
                               {/if}
                             </div>
                           </div>
                         {/if}
 
-                        {#if ingredientManifest.ingredients && ingredientManifest.ingredients.length > 0}
+                        {#if ingIngredients.length > 0}
                           <div class="mt-3 bg-orange-50 dark:bg-orange-900/20 rounded-lg p-3">
                             <div class="flex items-center justify-between mb-2">
                               <span class="text-xs font-semibold text-gray-500 dark:text-gray-500 uppercase tracking-wide">Nested Ingredients</span>
-                              <span class="px-2 py-1 bg-orange-200 dark:bg-orange-800 text-orange-800 dark:text-orange-200 rounded-full text-xs font-bold">{ingredientManifest.ingredients.length}</span>
+                              <span class="px-2 py-1 bg-orange-200 dark:bg-orange-800 text-orange-800 dark:text-orange-200 rounded-full text-xs font-bold">{ingIngredients.length}</span>
                             </div>
                             <div class="space-y-1">
-                              {#each ingredientManifest.ingredients.slice(0, 3) as nestedIngredient}
+                              {#each ingIngredients.slice(0, 3) as nestedIngredient}
                                 <div class="text-xs text-gray-700 dark:text-gray-300">• {nestedIngredient.title || nestedIngredient.instance_id || 'Unknown'}</div>
                               {/each}
-                              {#if ingredientManifest.ingredients.length > 3}
-                                <div class="text-xs text-gray-500 dark:text-gray-500 italic">+ {ingredientManifest.ingredients.length - 3} more...</div>
+                              {#if ingIngredients.length > 3}
+                                <div class="text-xs text-gray-500 dark:text-gray-500 italic">+ {ingIngredients.length - 3} more...</div>
                               {/if}
                             </div>
                           </div>
@@ -1213,4 +1223,3 @@
     />
   </div>
 </div>
-

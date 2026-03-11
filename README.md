@@ -7,21 +7,23 @@ A web application for validating C2PA (Coalition for Content Provenance and Auth
 ## Features
 
 - **Drag & Drop Interface**: Easy file upload via drag-and-drop or file selection
-- **Client-Side Processing**: Uses c2pa-rs compiled to WebAssembly for fast, private processing
+- **Client-Side Processing**: Uses the official C2PA SDK compiled to WebAssembly for fast, private processing
 - **Official C2PA Trust List**: Validates signatures against the official [C2PA Conformance Trust List](https://c2pa.org/conformance)
 - **Interim Trust List (ITL)**: Automatically detects and validates signatures against the ITL with distinct visual indicators
-- **Test Certificate Upload**: Upload custom test certificates for conformance testing (session-only, clearly marked)
+- **Test Certificate Mode**: Enable test mode to load the C2PA Conformance Test Root, download the test signing cert (ZIP), and add custom test certificates (session-only, clearly marked)
 - **Version Tracking**: Every report includes git commit SHA and date for reproducibility ([details](VERSION_TRACKING.md))
 - **Modern Tailwind CSS UI**: Clean, responsive design matching verify.contentauthenticity.org
 - **Comprehensive Reports**: View detailed C2PA manifest information including:
+  - Manifest summary (claim generator, trust status)
   - Signature information with trust validation
   - Active manifest details
   - Assertions and claims
   - Ingredient information
   - Validation status with clear test/production indicators
-- **Multiple Output Formats**:
+- **crJSON Reports**: Reports use the Content Credentials JSON (crJSON) format from the C2PA SDK, with syntax-highlighted raw JSON
+- **Multiple Output Options**:
   - Human-readable formatted view
-  - Raw JSON display
+  - Raw JSON display (syntax highlighted)
   - Downloadable JSON reports (with version metadata)
   - Copy to clipboard functionality
 
@@ -92,12 +94,21 @@ See [DEPLOYMENT.md](./DEPLOYMENT.md) for detailed instructions for:
 conformance-tool/
 ├── src/
 │   ├── lib/
-│   │   ├── FileUpload.svelte    # Drag-and-drop file upload component
-│   │   ├── ReportViewer.svelte  # C2PA report display component
-│   │   └── c2pa.ts              # TypeScript interface to @contentauth/c2pa-web
-│   ├── App.svelte               # Main application component
-│   ├── main.ts                  # Application entry point
-│   └── app.css                  # Global styles
+│   │   ├── FileUpload.svelte       # Drag-and-drop file upload component
+│   │   ├── ReportViewer.svelte     # C2PA report display (crJSON, highlight.js)
+│   │   ├── ManifestSummary.svelte  # Summary (claim generator, trust status)
+│   │   ├── CertificateManager.svelte  # Test mode and custom certificate upload
+│   │   ├── c2pa.ts                 # TypeScript interface to @contentauth/c2pa-web
+│   │   ├── crjson.ts               # crJSON types and helpers
+│   │   ├── generateSummary.ts      # Report summary generation
+│   │   ├── trustListTest.ts        # Trust list (C2PA vs ITL) detection
+│   │   └── types.ts                # Shared types
+│   ├── App.svelte                  # Main application component
+│   ├── main.ts                     # Application entry point
+│   └── app.css                     # Global styles
+├── scripts/
+│   ├── generate-version.js        # Build-time git version (see VERSION_TRACKING.md)
+│   └── build-local-wasm.mjs       # Optional local WASM build (see scripts/README.md)
 ├── index.html
 ├── package.json
 └── vite.config.ts
@@ -121,13 +132,14 @@ conformance-tool/
    - Copy the JSON to clipboard
    - Upload another file
 
-### Conformance Testing with Custom Certificates
+### Conformance Testing with Test Certificates
 
-1. Click **"Upload Test Certificate"** in the amber warning box
-2. Select your test certificate (.pem, .crt, or .cer file)
-3. Upload a C2PA file - it will validate against both official + test certificates
-4. Reports will show a clear **⚠️ Test Certificate Mode Active** warning
-5. Test certificates are **session-only** (cleared on refresh)
+1. In the **Test Certificates** section, click **"Enable Test Mode"** to load the C2PA Conformance Test Root
+2. Optionally click **"Download Signing Cert (ZIP)"** to get the test signing certificate bundle
+3. Optionally click **"Add Custom Certificate"** to upload additional test certificates (.pem, .crt, .cer)
+4. Upload a C2PA file — it will validate against the official trust list plus any test certificates
+5. Reports show a clear **⚠️ Test Certificate Mode Active** warning when test certs are used
+6. Test certificates are **session-only** (cleared on refresh). See [TEST_CERTIFICATES.md](TEST_CERTIFICATES.md) for details
 
 ## Supported File Types
 
@@ -189,10 +201,12 @@ Clear your browser cache and reload the page. The WASM module is loaded from the
 ## Dependencies
 
 ### Frontend
-- **Svelte** - Reactive UI framework
+- **Svelte** (v5) - Reactive UI framework
 - **TypeScript** - Type-safe JavaScript
-- **Vite** - Fast build tool and dev server
+- **Vite** - Build tool and dev server
 - **@contentauth/c2pa-web** - Official C2PA JavaScript/WASM SDK from Content Authenticity Initiative
+- **highlight.js** - Syntax highlighting for raw JSON in reports
+- **@peculiar/x509** - Certificate parsing (e.g. in CertificateManager)
 
 ## License
 
@@ -209,7 +223,7 @@ Contributions are welcome! Please ensure that:
 
 Potential features to add:
 - Batch file processing
-- Export reports in multiple formats (PDF, HTML)
+- Export reports as PDF or HTML
 - Detailed validation error explanations
 - Visual manifest relationship graphs
 - Support for manifest signing and editing

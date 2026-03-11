@@ -1,0 +1,57 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Dependencies
+node_modules
+dist
+dist-ssr
+*.local
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Rust / WASM
+wasm/target
+wasm/Cargo.lock
+.cargo-home/
+public/wasm/*.wasm
+public/wasm/*.js
+public/wasm/*.ts
+public/wasm/package.json
+public/wasm/.gitignore
+public/c2pa.wasm
+public/local-c2pa/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Claude Code
+.claude
+
+# Auto-generated version file
+src/lib/version.ts
+
+# Test certificates (but allow specific files for distribution)
+public/test-certs/*.pem
+public/test-certs/*.key
+public/test-certs/*.cnf
+public/test-certs/*.csr
+public/test-certs/*.srl
+public/test-certs/README.md
+test-cert.pem

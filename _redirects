@@ -1,0 +1,5 @@
+# Serve static files directly (don't redirect to SPA)
+/test-certs/*  /test-certs/:splat  200!
+
+# SPA fallback for all other routes
+/*  /index.html  200

@@ -479,7 +479,7 @@
         </h3>
         <p class="text-sm {isTrusted ? 'text-green-700 dark:text-green-300' : 'text-red-700 dark:text-red-300'}">
           {#if usedITL && isTrusted}
-            Validated using Interim Trust List - pending C2PA official certification
+            Validated using Interim Trust List 
             <a
               href="https://c2pa.org/conformance/"
               target="_blank"
@@ -557,7 +557,7 @@
           class="inline-flex items-center gap-1.5 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors {showRaw ? 'bg-gray-100 dark:bg-gray-700 font-medium' : ''}"
           on:click={() => showRaw = true}
         >
-          Raw JSON
+          crJSON
         </button>
       </div>
       <button
@@ -657,7 +657,7 @@
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
           </svg>
         </div>
-        <h3 class="text-2xl font-bold text-gray-900 dark:text-white">Raw JSON Report</h3>
+        <h3 class="text-2xl font-bold text-gray-900 dark:text-white">crJSON Report</h3>
       </div>
       <pre class="hljs bg-gray-900 dark:bg-black border-2 border-gray-700 dark:border-gray-600 rounded-xl p-6 overflow-x-auto text-sm leading-relaxed shadow-inner"><code class="language-json" bind:this={rawJsonCodeEl}></code></pre>
     </div>

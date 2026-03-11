@@ -9,6 +9,7 @@
 
   let report: ConformanceReport | null = null
   let error: string | null = null
+  let noManifest = false
   let processing = false
   let globalDragOver = false
   let testCertificates: string[] = []
@@ -107,6 +108,7 @@
 
     processing = true
     error = null
+    noManifest = false
     report = null
     selectedFile = file
     usedTestCertificates = testCertificates.length > 0
@@ -131,7 +133,12 @@
 
       console.log('✅ File processed successfully:', report)
     } catch (err) {
-      error = err instanceof Error ? err.message : 'An error occurred processing the file'
+      const msg = err instanceof Error ? err.message : 'An error occurred processing the file'
+      if (msg.includes('No C2PA manifest')) {
+        noManifest = true
+      } else {
+        error = msg
+      }
       console.error('❌ Error processing file:', err)
     } finally {
       console.log('🏁 Processing complete. Report:', !!report, 'Error:', !!error)
@@ -149,6 +156,7 @@
       console.log('🔄 Test mode changed, reprocessing file...')
       processing = true
       error = null
+      noManifest = false
       const previousReport = report
       report = null
 
@@ -187,6 +195,7 @@
       console.log('🔄 Reprocessing file with updated certificates...')
       processing = true
       error = null
+      noManifest = false
       report = null
       usedTestCertificates = testCertificates.length > 0
       
@@ -244,6 +253,7 @@
   function resetToHome() {
     report = null
     error = null
+    noManifest = false
     processing = false
     selectedFile = null
   }
@@ -429,6 +439,26 @@
           </div>
         {/if}
       </div>
+
+      {#if noManifest}
+        <div class="bg-gradient-to-br from-gray-50 to-blue-50 dark:from-gray-800/40 dark:to-blue-900/20 border-2 border-gray-300 dark:border-gray-600 rounded-2xl p-8 mb-10 shadow-lg text-left">
+          <div class="flex items-start gap-4">
+            <div class="flex-shrink-0 w-12 h-12 bg-gray-400 dark:bg-gray-500 rounded-full flex items-center justify-center text-white text-2xl">
+              🔍
+            </div>
+            <div class="flex-1">
+              <h2 class="text-2xl font-bold text-gray-700 dark:text-gray-200 mb-3">No C2PA Content Credentials Found</h2>
+              <p class="text-gray-600 dark:text-gray-300 leading-relaxed mb-4">This file doesn't appear to contain C2PA content credentials.</p>
+              <button
+                on:click={resetToHome}
+                class="px-5 py-2.5 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors duration-200 font-semibold shadow-md hover:shadow-lg"
+              >
+                Try Another File
+              </button>
+            </div>
+          </div>
+        </div>
+      {/if}
 
       {#if error}
         <div class="bg-gradient-to-br from-red-50 to-orange-50 dark:from-red-900/20 dark:to-orange-900/20 border-2 border-red-300 dark:border-red-700 rounded-2xl p-8 mb-10 shadow-lg text-left">

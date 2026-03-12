@@ -403,7 +403,7 @@
       <div class="mb-6">
         <button
           on:click={toggleInfoSection}
-          class="inline-flex items-center gap-2 px-4 py-2 bg-blue-100 dark:bg-blue-900/30 hover:bg-blue-200 dark:hover:bg-blue-900/50 text-blue-900 dark:text-blue-100 rounded-lg transition-colors text-sm font-semibold"
+          class="inline-flex items-center gap-2 px-4 py-2 bg-blue-100 dark:bg-blue-950 hover:bg-blue-200 dark:hover:bg-blue-900 text-blue-900 dark:text-blue-100 rounded-lg transition-colors text-sm font-semibold"
         >
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
             <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -415,22 +415,22 @@
         </button>
 
         {#if infoSectionExpanded}
-          <div class="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border border-blue-200 dark:border-blue-800 rounded-2xl p-8 mt-4 text-left shadow-sm animate-fade-in">
+          <div class="bg-blue-50 dark:bg-gray-900 border border-blue-200 dark:border-gray-700 rounded-2xl p-8 mt-4 text-left shadow-sm animate-fade-in">
             <p class="text-gray-700 dark:text-gray-300 mb-4 leading-relaxed">
               Content Credentials from The Coalition for Content Provenance and Authenticity (C2PA) is the technical standard for digital provenance. It provides verifiable assertions about the origin and history of digital content including images, video, audio, and documents.
             </p>
             <div class="grid sm:grid-cols-3 gap-4">
-              <div class="bg-white/50 dark:bg-gray-800/50 rounded-xl p-4 backdrop-blur-sm">
+              <div class="bg-white/50 dark:bg-gray-800 rounded-xl p-4 backdrop-blur-sm">
                 <div class="text-3xl mb-2">🔒</div>
                 <h4 class="font-semibold text-gray-900 dark:text-white mb-1">Validate Signatures</h4>
                 <p class="text-sm text-gray-600 dark:text-gray-400">Against official C2PA Trust Lists</p>
               </div>
-              <div class="bg-white/50 dark:bg-gray-800/50 rounded-xl p-4 backdrop-blur-sm">
+              <div class="bg-white/50 dark:bg-gray-800 rounded-xl p-4 backdrop-blur-sm">
                 <div class="text-3xl mb-2">📊</div>
                 <h4 class="font-semibold text-gray-900 dark:text-white mb-1">View Manifest Details</h4>
                 <p class="text-sm text-gray-600 dark:text-gray-400">Actions, ingredients, and assertions</p>
               </div>
-              <div class="bg-white/50 dark:bg-gray-800/50 rounded-xl p-4 backdrop-blur-sm">
+              <div class="bg-white/50 dark:bg-gray-800 rounded-xl p-4 backdrop-blur-sm">
                 <div class="text-3xl mb-2">🔐</div>
                 <h4 class="font-semibold text-gray-900 dark:text-white mb-1">100% Client-Side</h4>
                 <p class="text-sm text-gray-600 dark:text-gray-400">Files never leave your device</p>
@@ -441,7 +441,7 @@
       </div>
 
       {#if noManifest}
-        <div class="bg-gradient-to-br from-gray-50 to-blue-50 dark:from-gray-800/40 dark:to-blue-900/20 border-2 border-gray-300 dark:border-gray-600 rounded-2xl p-8 mb-10 shadow-lg text-left">
+        <div class="bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-2xl p-8 mb-10 shadow-sm text-left">
           <div class="flex items-start gap-4">
             <div class="flex-shrink-0 w-12 h-12 bg-gray-400 dark:bg-gray-500 rounded-full flex items-center justify-center text-white text-2xl">
               🔍
@@ -451,7 +451,7 @@
               <p class="text-gray-600 dark:text-gray-300 leading-relaxed mb-4">This file doesn't appear to contain C2PA content credentials.</p>
               <button
                 on:click={resetToHome}
-                class="px-5 py-2.5 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors duration-200 font-semibold shadow-md hover:shadow-lg"
+                class="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white text-sm font-semibold rounded-lg transition-colors"
               >
                 Try Another File
               </button>
@@ -461,7 +461,7 @@
       {/if}
 
       {#if error}
-        <div class="bg-gradient-to-br from-red-50 to-orange-50 dark:from-red-900/20 dark:to-orange-900/20 border-2 border-red-300 dark:border-red-700 rounded-2xl p-8 mb-10 shadow-lg text-left">
+        <div class="bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 rounded-2xl p-8 mb-10 shadow-sm text-left">
           <div class="flex items-start gap-4">
             <div class="flex-shrink-0 w-12 h-12 bg-red-600 dark:bg-red-500 rounded-full flex items-center justify-center text-white text-2xl">
               ⚠
@@ -471,7 +471,7 @@
               <p class="text-red-600 dark:text-red-300 leading-relaxed mb-4">{error}</p>
               <button
                 on:click={resetToHome}
-                class="px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors duration-200 font-semibold shadow-md hover:shadow-lg"
+                class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-semibold rounded-lg transition-colors"
               >
                 Try Another File
               </button>
@@ -489,7 +489,7 @@
       <div class="mb-8" id="test-cert-section">
         <button
           on:click={toggleTestCertSection}
-          class="inline-flex items-center gap-2 px-4 py-2 bg-amber-100 dark:bg-amber-900/30 hover:bg-amber-200 dark:hover:bg-amber-900/50 text-amber-900 dark:text-amber-100 rounded-lg transition-colors text-sm font-semibold"
+          class="inline-flex items-center gap-2 px-4 py-2 bg-amber-100 dark:bg-amber-950 hover:bg-amber-200 dark:hover:bg-amber-900 text-amber-900 dark:text-amber-100 rounded-lg transition-colors text-sm font-semibold"
         >
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
             <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
@@ -560,7 +560,8 @@
         <div class="space-y-3">
           <h3 class="font-bold text-gray-900 dark:text-gray-100 text-base mb-3">About This Tool</h3>
           <p class="text-gray-600 dark:text-gray-400 leading-relaxed">
-            This tool validates C2PA manifests using the official <code class="px-2 py-1 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded font-mono text-xs">@contentauth/c2pa-web</code> SDK.
+            This tool validates C2PA manifests using the <a href="https://github.com/contentauth/c2pa-rs" target="_blank" rel="noopener noreferrer" class="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors inline-flex items-center gap-2 group">
+c2pa-rs</a> SDK.
           </p>
           <p class="text-gray-600 dark:text-gray-400 leading-relaxed">
             All processing happens in your browser. Files never leave your device.

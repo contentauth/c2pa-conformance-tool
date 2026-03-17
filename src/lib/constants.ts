@@ -6,12 +6,18 @@
 export const VALIDATION_STATUS = {
   SIGNING_CREDENTIAL_TRUSTED: 'signingCredential.trusted',
   SIGNING_CREDENTIAL_UNTRUSTED: 'signingCredential.untrusted',
+  SIGNING_CREDENTIAL_EXPIRED: 'signingCredential.expired',
+  SIGNING_CREDENTIAL_OCSP_NOT_REVOKED: 'signingCredential.ocsp.notRevoked',
+  SIGNING_CREDENTIAL_OCSP_REVOKED: 'signingCredential.ocsp.revoked',
+  SIGNING_CREDENTIAL_OCSP_SKIPPED: 'signingCredential.ocsp.skipped',
+  SIGNING_CREDENTIAL_OCSP_INACCESSIBLE: 'signingCredential.ocsp.inaccessible',
   TIMESTAMP_TRUSTED: 'timeStamp.trusted',
   TIMESTAMP_UNTRUSTED: 'timeStamp.untrusted',
   TIMESTAMP_VALIDATED: 'timeStamp.validated',
   CLAIM_SIGNATURE_VALIDATED: 'claimSignature.validated',
   CLAIM_SIGNATURE_INVALID: 'claimSignature.invalid',
   CLAIM_SIGNATURE_INSIDE_VALIDITY: 'claimSignature.insideValidity',
+  TIME_OF_SIGNING_INSIDE_VALIDITY: 'timeOfSigning.insideValidity',
   ASSERTION_HASHED_URI_MATCH: 'assertion.hashedURI.match',
   ASSERTION_DATA_HASH_MATCH: 'assertion.dataHash.match',
   CAWG_ICA_CREDENTIAL_VALID: 'cawg.ica.credential_valid'

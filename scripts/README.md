@@ -1,5 +1,28 @@
 # Build Scripts
 
+## copy-profile-evaluator.mjs
+
+Copies the profile-evaluator WASM pkg from a sibling `../profile-evaluator-rs` repo into `public/profile-evaluator/` so the app loads it locally (no runtime path to the sibling repo).
+
+### What it does:
+- Copies the contents of `../profile-evaluator-rs/ui/pkg/` (wasm-pack output) into `public/profile-evaluator/`
+- The app loads `profile_evaluator_rs.js` from the base URL at runtime, same pattern as local C2PA WASM
+
+### When it runs:
+- Manually via `npm run copy:profile-evaluator` whenever you want to update the profile evaluator (e.g. after changes in profile-evaluator-rs).
+
+### Deployment:
+- `public/profile-evaluator/` is **committed** to the repo (not gitignored). That way GitHub Pages, Netlify, etc. include the WASM and the Asset Profiles page works in production. After running the copy script, commit the updated files so deployments have the latest evaluator.
+- If the directory is missing (e.g. fresh clone before first copy), the Asset Profiles page still loads; evaluation returns a message to run the copy script.
+
+### Prerequisites:
+- A sibling checkout at `../profile-evaluator-rs` with the UI crate built (`wasm-pack build` in `profile-evaluator-rs/ui/`)
+
+### Runtime behavior:
+- If `public/profile-evaluator/profile_evaluator_rs.js` exists (e.g. after copy and deploy), the Asset Profiles page uses it for profile evaluation. If it does not exist, evaluation returns a clear message.
+
+---
+
 ## build-local-wasm.mjs
 
 Builds a browser-targeted wasm reader from the local `../c2pa-rs` checkout and writes the generated loader plus `.wasm` binary to `public/local-c2pa/`.

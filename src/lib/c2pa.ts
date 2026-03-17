@@ -23,6 +23,12 @@ type LocalC2paModule = {
   read_manifest_store: (fileBytes: Uint8Array, format: string, settingsJson?: string) => Promise<string>
 }
 
+type ExtractedCrJsonResult = {
+  crJson: CrJson
+  usedITL: boolean
+  usedTestCerts: boolean
+}
+
 const importModule = new Function('modulePath', 'return import(modulePath)') as (modulePath: string) => Promise<LocalC2paModule>
 
 let c2paInstance: C2paInstance | null = null
@@ -252,7 +258,7 @@ function resolveMimeType(file: File): string {
   return EXTENSION_MIME_MAP[ext] ?? file.type
 }
 
-export async function processFile(file: File, testCertificates: string[] = []): Promise<ConformanceReport> {
+async function extractCrJsonWithMetadata(file: File, testCertificates: string[] = []): Promise<ExtractedCrJsonResult> {
   const mimeType = resolveMimeType(file)
   console.log('🔍 Starting file processing for:', file.name, 'Type:', file.type, mimeType !== file.type ? `(remapped to ${mimeType})` : '')
 
@@ -409,16 +415,9 @@ export async function processFile(file: File, testCertificates: string[] = []): 
     console.log('✅ Manifest store retrieved with trust validation')
 
     return {
-      ...finalCrJson,
+      crJson: finalCrJson,
       usedITL,
       usedTestCerts,
-      _conformanceToolVersion: {
-        commit: VERSION_INFO.sha,
-        shortCommit: VERSION_INFO.shortSha,
-        date: VERSION_INFO.date,
-        branch: VERSION_INFO.branch,
-        generatedAt: VERSION_INFO.timestamp
-      }
     }
   } catch (error) {
     console.error('❌ Error in processFile:', error)
@@ -436,6 +435,28 @@ export async function processFile(file: File, testCertificates: string[] = []): 
       throw new Error(`Failed to process file: ${msg}`)
     }
     throw error
+  }
+}
+
+export async function extractCrJson(file: File, testCertificates: string[] = []): Promise<CrJson> {
+  const { crJson } = await extractCrJsonWithMetadata(file, testCertificates)
+  return crJson
+}
+
+export async function processFile(file: File, testCertificates: string[] = []): Promise<ConformanceReport> {
+  const { crJson, usedITL, usedTestCerts } = await extractCrJsonWithMetadata(file, testCertificates)
+
+  return {
+    ...crJson,
+    usedITL,
+    usedTestCerts,
+    _conformanceToolVersion: {
+      commit: VERSION_INFO.sha,
+      shortCommit: VERSION_INFO.shortSha,
+      date: VERSION_INFO.date,
+      branch: VERSION_INFO.branch,
+      generatedAt: VERSION_INFO.timestamp
+    }
   }
 }
 

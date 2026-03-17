@@ -97,9 +97,10 @@ npm run deploy
 
 - `index.html` - Main page
 - `assets/` - JS and CSS bundles
-- `c2pa.wasm` - WebAssembly module (copied from `@contentauth/c2pa-web` at build time)
+- `c2pa.wasm` - WebAssembly module (copied from `@contentauth/c2pa-web` at **build time** via `postinstall`)
+- `profile-evaluator/` - Profile evaluator WASM (committed in repo; update by running `npm run copy:profile-evaluator` from a sibling `profile-evaluator-rs` checkout, then commit)
 
-**Total size:** ~8MB (mostly the WASM module)
+**Total size:** ~8MB+ (mostly the C2PA WASM; profile-evaluator adds some size if present)
 
 ---
 

@@ -9,6 +9,7 @@
   import FileUpload from './lib/FileUpload.svelte'
   import ReportViewer from './lib/ReportViewer.svelte'
   import CertificateManager from './lib/CertificateManager.svelte'
+  import AssetProfilePage from './lib/AssetProfilePage.svelte'
   import { processFile } from './lib/c2pa'
   import { testTrustListFetch } from './lib/trustListTest'
   import type { ConformanceReport } from './lib/types'
@@ -30,6 +31,7 @@
   let processingStatus = 'Processing file...'
   let currentPage: Page = 'main'
   let menuOpen = false
+  let assetProfilePage: { handleExternalAssetFile: (file: File) => Promise<void> } | null = null
 
   // Test trust list fetching on component mount
   onMount(() => {
@@ -68,7 +70,11 @@
       globalDragOver = false
       const files = e.dataTransfer?.files
       if (files && files.length > 0) {
-        handleFileSelect({ detail: files[0] } as CustomEvent<File>)
+        if (currentPage === 'asset-profiles') {
+          void handleAssetProfileFileSelect(files[0])
+        } else {
+          void handleFileSelect({ detail: files[0] } as CustomEvent<File>)
+        }
       }
     }
 
@@ -80,7 +86,11 @@
 
     const handleFileSelectedEvent = (e: Event) => {
       const customEvent = e as CustomEvent<File>
-      handleFileSelect({ detail: customEvent.detail } as CustomEvent<File>)
+      if (currentPage === 'asset-profiles') {
+        void handleAssetProfileFileSelect(customEvent.detail)
+      } else {
+        void handleFileSelect({ detail: customEvent.detail } as CustomEvent<File>)
+      }
     }
 
     window.addEventListener('dragover', preventDefaults, false)
@@ -143,6 +153,12 @@
       processing = false
       processingStatus = 'Processing file...'
     }
+  }
+
+  async function handleAssetProfileFileSelect(file: File) {
+    currentPage = 'asset-profiles'
+    menuOpen = false
+    await assetProfilePage?.handleExternalAssetFile(file)
   }
 
   async function handleTestModeChanged(event: CustomEvent<{ enabled: boolean; rootLoaded: boolean }>) {
@@ -231,7 +247,11 @@
     globalDragOver = false
     const files = event.dataTransfer?.files
     if (files && files.length > 0) {
-      handleFileSelect({ detail: files[0] } as CustomEvent<File>)
+      if (currentPage === 'asset-profiles') {
+        void handleAssetProfileFileSelect(files[0])
+      } else {
+        void handleFileSelect({ detail: files[0] } as CustomEvent<File>)
+      }
     }
   }
 
@@ -388,7 +408,6 @@
                 >
                   <svg class="w-4 h-4 text-blue-600 dark:text-gray-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M14 3v4a1 1 0 0 0 1 1h4" /><path d="M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2" /><path d="M9 9l1 0" /><path d="M9 13l6 0" /><path d="M9 17l6 0" /></svg>
                   <span>Asset Profiles</span>
-                  <span class="ml-auto text-xs text-gray-400 dark:text-gray-500">Soon</span>
                 </button>
               </div>
             {/if}
@@ -454,6 +473,7 @@
           Asset profiles will let you define and validate C2PA manifests against expected content structures.
         </p>
       </div>
+      <AssetProfilePage bind:this={assetProfilePage} {testCertificates} />
     </div>
 
   <!-- ── Main page ── -->

@@ -1,0 +1,15 @@
+{
+  "name": "c2pa-local-wasm",
+  "type": "module",
+  "version": "0.1.0",
+  "files": [
+    "c2pa_local_bg.wasm",
+    "c2pa_local.js",
+    "c2pa_local.d.ts"
+  ],
+  "main": "c2pa_local.js",
+  "types": "c2pa_local.d.ts",
+  "sideEffects": [
+    "./snippets/*"
+  ]
+}

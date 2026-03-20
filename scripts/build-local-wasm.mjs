@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync, rmSync } from 'node:fs'
+import { existsSync, mkdirSync, rmSync, unlinkSync } from 'node:fs'
 import { spawnSync } from 'node:child_process'
 import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -45,6 +45,13 @@ const result = spawnSync(
 
 if (result.status !== 0) {
   process.exit(result.status ?? 1)
+}
+
+// wasm-pack generates a .gitignore that ignores everything — remove it so the
+// output files can be committed and deployed.
+const wasmPackGitignore = resolve(outDir, '.gitignore')
+if (existsSync(wasmPackGitignore)) {
+  unlinkSync(wasmPackGitignore)
 }
 
 console.log(`Local C2PA wasm build is ready at ${outDir}`)

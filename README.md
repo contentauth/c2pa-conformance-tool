@@ -80,6 +80,8 @@ npm run preview
 
 See [DEPLOYMENT.md](./DEPLOYMENT.md) for full instructions and other platforms (Vercel, Netlify, Cloudflare Pages).
 
+**Asset Profiles on deployed sites:** The profile evaluator lives in `public/profile-evaluator/` and is committed so GitHub Pages/Netlify include it. To update it, run `npm run copy:profile-evaluator` (with a built sibling `profile-evaluator-rs` repo), then commit the changes.
+
 **Live URL:** `https://<username>.github.io/c2pa-conformance-tool/`
 
 ## Project Structure
@@ -191,6 +193,8 @@ Clear your browser cache and reload the page. The WASM module is loaded from the
 - `npm run build` - Build for production
 - `npm run preview` - Preview production build
 - `npm run check` - Run Svelte type checking
+- `npm run build:local-wasm` - Build C2PA WASM from a local `../c2pa-rs` checkout into `public/local-c2pa/` (see [scripts/README.md](scripts/README.md))
+- `npm run copy:profile-evaluator` - Copy profile-evaluator WASM from a sibling `../profile-evaluator-rs/ui/pkg` into `public/profile-evaluator/` so Asset Profiles evaluation works locally
 
 ## Dependencies
 

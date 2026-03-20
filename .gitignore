@@ -34,7 +34,6 @@ public/wasm/*.ts
 public/wasm/package.json
 public/wasm/.gitignore
 public/c2pa.wasm
-public/local-c2pa/
 
 # Environment
 .env
@@ -55,3 +54,8 @@ public/test-certs/*.csr
 public/test-certs/*.srl
 public/test-certs/README.md
 test-cert.pem
+
+# Adobe's Cursor rules
+.cursor/rules/manifest.json
+.cursor/rules/security-global/*
+.cursor/rules/security-lang/*

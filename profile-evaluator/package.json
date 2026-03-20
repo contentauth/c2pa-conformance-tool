@@ -1,0 +1,16 @@
+{
+  "name": "profile_evaluator_rs",
+  "type": "module",
+  "version": "0.1.0",
+  "license": "Apache-2.0",
+  "files": [
+    "profile_evaluator_rs_bg.wasm",
+    "profile_evaluator_rs.js",
+    "profile_evaluator_rs.d.ts"
+  ],
+  "main": "profile_evaluator_rs.js",
+  "types": "profile_evaluator_rs.d.ts",
+  "sideEffects": [
+    "./snippets/*"
+  ]
+}

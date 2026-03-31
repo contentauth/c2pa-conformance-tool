@@ -43,6 +43,12 @@ public/c2pa.wasm
 # Claude Code
 .claude
 
+# Internal notes (not for public repo)
+CODE_REVIEW.md
+CODE_REVIEW_RESPONSE.md
+UX_RECOMMENDATIONS.md
+TEST_README.md
+
 # Auto-generated version file
 src/lib/version.ts
 

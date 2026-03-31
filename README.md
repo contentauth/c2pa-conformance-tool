@@ -208,7 +208,11 @@ Clear your browser cache and reload the page. The WASM module is loaded from the
 
 ## License
 
-This project uses the [@contentauth/c2pa-web](https://github.com/contentauth/c2pa-js) library from the Content Authenticity Initiative. Please refer to their repository for license terms.
+Copyright 2026 Content Authenticity Initiative
+
+Licensed under the Apache License, Version 2.0. See [LICENSE](./LICENSE) for the full text.
+
+This project uses the [@contentauth/c2pa-web](https://github.com/contentauth/c2pa-js) library, also from the Content Authenticity Initiative and also licensed under Apache 2.0.
 
 ## Contributing
 

@@ -1,3 +1,5 @@
+import colors from 'tailwindcss/colors'
+
 /** @type {import('tailwindcss').Config} */
 export default {
   content: ['./index.html', './src/**/*.{svelte,js,ts,jsx,tsx}'],
@@ -5,6 +7,8 @@ export default {
   theme: {
     extend: {
       colors: {
+        // Override gray with neutral so dark mode backgrounds have no blue tint
+        gray: colors.neutral,
         'ca-blue': {
           50: '#E6F2FF',
           100: '#CCE5FF',

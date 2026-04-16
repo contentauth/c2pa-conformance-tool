@@ -12,7 +12,7 @@
 </script>
 
 {#if summary.sentence}
-  <div class="mt-4 px-4 py-3 bg-white/70 dark:bg-gray-900/70 backdrop-blur-sm rounded-xl border border-gray-200 dark:border-gray-700 text-center">
+  <div class="mt-4 px-4 py-3 bg-white/70 dark:bg-gray-900/70 backdrop-blur-sm rounded-xl border-2 border-gray-200 dark:border-gray-700 text-center">
     <p class="text-sm font-medium text-gray-800 dark:text-gray-200 leading-relaxed">
       {summary.sentence}
     </p>

@@ -324,37 +324,35 @@ MCZvLxXCtwIgCxkR0Gbdwef8k0bf1tC3dz+4NDe0S8wdCx5ZgeRPkq4=
   }
 </script>
 
-<div class="bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 border-2 border-amber-300 dark:border-amber-700 rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow duration-300">
+<div class="bg-gradient-to-br from-amber-50 to-orange-50 dark:from-gray-800/50 dark:to-gray-800/50 border-2 border-amber-300 dark:border-gray-700 rounded-2xl p-6 shadow-sm">
   <div class="flex-1">
     <div class="flex items-start gap-3 mb-3">
-      <div class="flex-shrink-0 w-10 h-10 bg-amber-600 dark:bg-amber-500 rounded-lg flex items-center justify-center">
-        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-        </svg>
+      <div class="flex-shrink-0 w-10 h-10 bg-amber-600 dark:bg-gray-600 rounded-lg flex items-center justify-center">
+        <svg class="w-6 h-6 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M11.46 20.846a12 12 0 0 1 -7.96 -14.846a12 12 0 0 0 8.5 -3a12 12 0 0 0 8.5 3a12 12 0 0 1 -.09 7.06" /><path d="M15 19l2 2l4 -4" /></svg>
       </div>
       <div class="flex-1">
-        <h3 class="font-bold text-amber-900 dark:text-amber-100 text-lg">
+        <h3 class="font-bold text-amber-900 dark:text-gray-100 text-lg">
           Test Certificates
         </h3>
-        <p class="text-sm text-amber-800/90 dark:text-amber-200/90 mt-1">
+        <p class="text-sm text-amber-800/90 dark:text-gray-400 mt-1">
           Add test certificates for conformance testing. Session-only and clearly marked in results.
         </p>
       </div>
     </div>
 
     <!-- Test Mode Controls -->
-    <div class="mt-4 p-4 bg-blue-50 dark:bg-blue-900/20 border-2 border-blue-200 dark:border-blue-700 rounded-xl">
+    <div class="mt-4 p-4 bg-blue-50 dark:bg-gray-800/50 border-2 border-blue-200 dark:border-gray-600 rounded-xl">
       <div class="flex items-start gap-3 mb-3">
-        <div class="flex-shrink-0 w-8 h-8 bg-blue-600 dark:bg-blue-500 rounded-lg flex items-center justify-center">
+        <div class="flex-shrink-0 w-8 h-8 bg-blue-600 dark:bg-gray-600 rounded-lg flex items-center justify-center">
           <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
           </svg>
         </div>
         <div class="flex-1">
-          <h4 class="font-bold text-blue-900 dark:text-blue-100 text-base mb-1">
+          <h4 class="font-bold text-blue-900 dark:text-gray-100 text-base mb-1">
             C2PA Test Mode
           </h4>
-          <p class="text-xs text-blue-800 dark:text-blue-200">
+          <p class="text-xs text-blue-800 dark:text-gray-300">
             Load the built-in C2PA conformance test root certificate and download a signing certificate for testing
           </p>
         </div>
@@ -366,9 +364,7 @@ MCZvLxXCtwIgCxkR0Gbdwef8k0bf1tC3dz+4NDe0S8wdCx5ZgeRPkq4=
             class="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-all duration-200 font-semibold text-sm shadow-md hover:shadow-lg"
             on:click={enableTestMode}
           >
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
-            </svg>
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M20 8.04l-12.122 12.124a2.857 2.857 0 1 1 -4.041 -4.04l12.122 -12.124" /><path d="M7 13h8" /><path d="M19 15l1.5 1.6a2 2 0 1 1 -3 0l1.5 -1.6" /><path d="M15 3l6 6" /></svg>
             Enable Test Mode
           </button>
         {:else}
@@ -376,18 +372,14 @@ MCZvLxXCtwIgCxkR0Gbdwef8k0bf1tC3dz+4NDe0S8wdCx5ZgeRPkq4=
             class="inline-flex items-center gap-2 px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-all duration-200 font-semibold text-sm shadow-md hover:shadow-lg"
             on:click={disableTestMode}
           >
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-            </svg>
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M18 6l-12 12" /><path d="M6 6l12 12" /></svg>
             Disable Test Mode
           </button>
           <button
             class="inline-flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-all duration-200 font-semibold text-sm shadow-md hover:shadow-lg"
             on:click={downloadTestSigningCert}
           >
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-            </svg>
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2 -2v-2" /><path d="M7 11l5 5l5 -5" /><path d="M12 4l0 12" /></svg>
             Download Signing Cert (ZIP)
           </button>
         {/if}
@@ -398,24 +390,20 @@ MCZvLxXCtwIgCxkR0Gbdwef8k0bf1tC3dz+4NDe0S8wdCx5ZgeRPkq4=
     <div class="flex items-center justify-between gap-4 mt-4">
       <div>
         {#if testCertificates.length > 0}
-          <span class="inline-flex items-center gap-2 px-3 py-1 bg-amber-200 dark:bg-amber-800/50 text-amber-900 dark:text-amber-100 rounded-full text-sm font-semibold">
-            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-              <path fill-rule="evenodd" d="M2.166 4.999A11.954 11.954 0 0010 1.944 11.954 11.954 0 0017.834 5c.11.65.166 1.32.166 2.001 0 5.225-3.34 9.67-8 11.317C5.34 16.67 2 12.225 2 7c0-.682.057-1.35.166-2.001zm11.541 3.708a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
-            </svg>
+          <span class="inline-flex items-center gap-2 px-3 py-1 bg-amber-200 dark:bg-gray-700/50 text-amber-900 dark:text-gray-100 rounded-full text-sm font-semibold">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M11.998 2l.118 .007l.059 .008l.061 .013l.111 .034a.993 .993 0 0 1 .217 .112l.104 .082l.255 .218a11 11 0 0 0 7.189 2.537l.342 -.01a1 1 0 0 1 1.005 .717a13 13 0 0 1 -9.208 16.25a1 1 0 0 1 -.502 0a13 13 0 0 1 -9.209 -16.25a1 1 0 0 1 1.005 -.717a11 11 0 0 0 7.531 -2.527l.263 -.225l.096 -.075a.993 .993 0 0 1 .217 -.112l.112 -.034a.97 .97 0 0 1 .119 -.021l.115 -.007zm3.71 7.293a1 1 0 0 0 -1.415 0l-3.293 3.292l-1.293 -1.292l-.094 -.083a1 1 0 0 0 -1.32 1.497l2 2l.094 .083a1 1 0 0 0 1.32 -.083l4 -4l.083 -.094a1 1 0 0 0 -.083 -1.32z" /></svg>
             {testCertificates.length} {testCertificates.length === 1 ? 'certificate' : 'certificates'} loaded
           </span>
         {/if}
       </div>
       <button
-        class="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 text-white rounded-lg transition-all duration-200 font-semibold text-sm whitespace-nowrap shadow-md hover:shadow-lg transform hover:scale-105"
+        class="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 text-white rounded-lg transition-all duration-200 font-semibold text-sm whitespace-nowrap shadow-md hover:shadow-lg transform"
         on:click={handleClick}
         disabled={!testModeEnabled}
         class:opacity-50={!testModeEnabled}
         class:cursor-not-allowed={!testModeEnabled}
       >
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-        </svg>
+        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 5l0 14" /><path d="M5 12l14 0" /></svg>
         Add Custom Certificate
       </button>
     </div>
@@ -424,29 +412,27 @@ MCZvLxXCtwIgCxkR0Gbdwef8k0bf1tC3dz+4NDe0S8wdCx5ZgeRPkq4=
       <div class="mt-4 space-y-2">
         {#each testCertificates as cert, index}
           {@const isTestRoot = index === 0 && testModeEnabled && testRootLoaded}
-          <div class="bg-white/70 dark:bg-amber-950/50 backdrop-blur-sm rounded-lg border {isTestRoot ? 'border-blue-400 dark:border-blue-600 ring-2 ring-blue-200 dark:ring-blue-800' : 'border-amber-200 dark:border-amber-800'} hover:bg-white dark:hover:bg-amber-950 transition-all overflow-hidden">
+          <div class="bg-white/70 dark:bg-gray-800/50 backdrop-blur-sm rounded-lg border {isTestRoot ? 'border-blue-400 dark:border-gray-600 ring-2 ring-blue-200 dark:ring-gray-700' : 'border-amber-200 dark:border-gray-700'} hover:bg-white dark:hover:bg-gray-800 transition-all overflow-hidden">
             <div class="flex items-center justify-between p-3 text-sm group">
               <button
                 on:click={() => toggleExpand(index)}
                 class="flex items-center gap-3 flex-1 text-left hover:opacity-80 transition-opacity"
               >
-                <div class="w-8 h-8 {isTestRoot ? 'bg-blue-100 dark:bg-blue-800' : 'bg-amber-100 dark:bg-amber-800'} rounded-lg flex items-center justify-center flex-shrink-0">
-                  <svg class="w-4 h-4 {isTestRoot ? 'text-blue-700 dark:text-blue-300' : 'text-amber-700 dark:text-amber-300'}" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clip-rule="evenodd" />
-                  </svg>
+                <div class="w-8 h-8 {isTestRoot ? 'bg-blue-100 dark:bg-gray-700' : 'bg-amber-100 dark:bg-gray-700'} rounded-lg flex items-center justify-center flex-shrink-0">
+                  <svg class="w-4 h-4 {isTestRoot ? 'text-blue-700 dark:text-gray-300' : 'text-amber-700 dark:text-gray-300'}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M14 3v4a1 1 0 0 0 1 1h4" /><path d="M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2" /><path d="M9 9l1 0" /><path d="M9 13l6 0" /><path d="M9 17l6 0" /></svg>
                 </div>
                 <div class="flex-1 min-w-0">
-                  <span class="text-amber-900 dark:text-amber-100 font-medium block truncate">
+                  <span class="text-amber-900 dark:text-gray-100 font-medium block truncate">
                     {extractSubjectFromPEM(cert)}
                   </span>
                   {#if isTestRoot}
-                    <span class="inline-block mt-0.5 px-2 py-0.5 bg-blue-200 dark:bg-blue-800 text-blue-900 dark:text-blue-100 text-xs font-semibold rounded">
+                    <span class="inline-block mt-0.5 px-2 py-0.5 bg-blue-200 dark:bg-gray-700 text-blue-900 dark:text-gray-100 text-xs font-semibold rounded">
                       Test Root
                     </span>
                   {/if}
                 </div>
                 <svg
-                  class="w-5 h-5 text-amber-600 dark:text-amber-400 transition-transform flex-shrink-0 {expandedCerts.has(index) ? 'rotate-180' : ''}"
+                  class="w-5 h-5 text-amber-600 dark:text-gray-400 transition-transform flex-shrink-0 {expandedCerts.has(index) ? 'rotate-180' : ''}"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -455,56 +441,54 @@ MCZvLxXCtwIgCxkR0Gbdwef8k0bf1tC3dz+4NDe0S8wdCx5ZgeRPkq4=
                 </svg>
               </button>
               <button
-                class="flex items-center justify-center w-8 h-8 text-amber-600 dark:text-amber-400 hover:text-white hover:bg-amber-600 dark:hover:bg-amber-700 rounded-lg transition-all duration-200 opacity-0 group-hover:opacity-100 ml-2 flex-shrink-0"
+                class="flex items-center justify-center w-8 h-8 text-amber-600 dark:text-gray-400 hover:text-white hover:bg-amber-600 dark:hover:bg-gray-600 rounded-lg transition-all duration-200 opacity-0 group-hover:opacity-100 ml-2 flex-shrink-0"
                 on:click={() => removeCertificate(index)}
                 title="Remove certificate"
               >
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                </svg>
+                <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M18 6l-12 12" /><path d="M6 6l12 12" /></svg>
               </button>
             </div>
             
             {#if expandedCerts.has(index)}
               {@const certInfo = parseCertificate(cert)}
-              <div class="px-4 py-3 border-t border-amber-200 dark:border-amber-800 bg-white/50 dark:bg-amber-950/20">
+              <div class="px-4 py-3 border-t border-amber-200 dark:border-gray-700 bg-white/50 dark:bg-gray-800/20">
                 {#if certInfo}
                   <div class="space-y-2 text-xs">
                     <div class="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 items-start">
-                      <div class="font-semibold text-amber-800 dark:text-amber-400 text-left">Subject:</div>
-                      <div class="text-amber-900 dark:text-amber-100 font-mono break-all text-left">{certInfo.subject}</div>
+                      <div class="font-semibold text-amber-800 dark:text-gray-400 text-left">Subject:</div>
+                      <div class="text-amber-900 dark:text-gray-100 font-mono break-all text-left">{certInfo.subject}</div>
                       
-                      <div class="font-semibold text-amber-800 dark:text-amber-400 text-left">Issuer:</div>
-                      <div class="text-amber-900 dark:text-amber-100 font-mono break-all text-left">{certInfo.issuer}</div>
+                      <div class="font-semibold text-amber-800 dark:text-gray-400 text-left">Issuer:</div>
+                      <div class="text-amber-900 dark:text-gray-100 font-mono break-all text-left">{certInfo.issuer}</div>
                       
-                      <div class="font-semibold text-amber-800 dark:text-amber-400 text-left">Valid From:</div>
-                      <div class="text-amber-900 dark:text-amber-100 text-left">{certInfo.validFrom}</div>
+                      <div class="font-semibold text-amber-800 dark:text-gray-400 text-left">Valid From:</div>
+                      <div class="text-amber-900 dark:text-gray-100 text-left">{certInfo.validFrom}</div>
                       
-                      <div class="font-semibold text-amber-800 dark:text-amber-400 text-left">Valid To:</div>
-                      <div class="text-amber-900 dark:text-amber-100 text-left">{certInfo.validTo}</div>
+                      <div class="font-semibold text-amber-800 dark:text-gray-400 text-left">Valid To:</div>
+                      <div class="text-amber-900 dark:text-gray-100 text-left">{certInfo.validTo}</div>
                       
-                      <div class="font-semibold text-amber-800 dark:text-amber-400 text-left">Serial Number:</div>
-                      <div class="text-amber-900 dark:text-amber-100 font-mono break-all text-left">{certInfo.serialNumber}</div>
+                      <div class="font-semibold text-amber-800 dark:text-gray-400 text-left">Serial Number:</div>
+                      <div class="text-amber-900 dark:text-gray-100 font-mono break-all text-left">{certInfo.serialNumber}</div>
                       
-                      <div class="font-semibold text-amber-800 dark:text-amber-400 text-left">Signature Algorithm:</div>
-                      <div class="text-amber-900 dark:text-amber-100 text-left">{certInfo.signatureAlgorithm}</div>
+                      <div class="font-semibold text-amber-800 dark:text-gray-400 text-left">Signature Algorithm:</div>
+                      <div class="text-amber-900 dark:text-gray-100 text-left">{certInfo.signatureAlgorithm}</div>
                       
-                      <div class="font-semibold text-amber-800 dark:text-amber-400 text-left">Public Key Algorithm:</div>
-                      <div class="text-amber-900 dark:text-amber-100 text-left">{certInfo.publicKeyAlgorithm}</div>
+                      <div class="font-semibold text-amber-800 dark:text-gray-400 text-left">Public Key Algorithm:</div>
+                      <div class="text-amber-900 dark:text-gray-100 text-left">{certInfo.publicKeyAlgorithm}</div>
                       
                       {#if certInfo.keyUsage.length > 0}
-                        <div class="font-semibold text-amber-800 dark:text-amber-400 text-left">Key Usage:</div>
-                        <div class="text-amber-900 dark:text-amber-100 text-left">{certInfo.keyUsage.join(', ')}</div>
+                        <div class="font-semibold text-amber-800 dark:text-gray-400 text-left">Key Usage:</div>
+                        <div class="text-amber-900 dark:text-gray-100 text-left">{certInfo.keyUsage.join(', ')}</div>
                       {/if}
                       
                       {#if certInfo.extendedKeyUsage.length > 0}
-                        <div class="font-semibold text-amber-800 dark:text-amber-400 text-left">Extended Key Usage:</div>
-                        <div class="text-amber-900 dark:text-amber-100 text-left">{certInfo.extendedKeyUsage.join(', ')}</div>
+                        <div class="font-semibold text-amber-800 dark:text-gray-400 text-left">Extended Key Usage:</div>
+                        <div class="text-amber-900 dark:text-gray-100 text-left">{certInfo.extendedKeyUsage.join(', ')}</div>
                       {/if}
                     </div>
                   </div>
                 {:else}
-                  <div class="text-red-700 dark:text-red-300 text-xs py-1">
+                  <div class="text-red-700 dark:text-gray-400 text-xs py-1">
                     Failed to parse certificate
                   </div>
                 {/if}

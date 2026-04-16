@@ -9,7 +9,7 @@
     "build:local-wasm": "node scripts/build-local-wasm.mjs",
     "copy:profile-evaluator": "node scripts/copy-profile-evaluator.mjs",
     "preview": "vite preview",
-    "deploy": "npm run build && npx gh-pages -d dist",
+    "deploy": "GITHUB_REPOSITORY=$(git remote get-url origin | sed -E 's#^.*github\\.com[:/]##; s#\\.git$##') npm run build && npx gh-pages -d dist",
     "check": "svelte-check --tsconfig ./tsconfig.json",
     "test": "vitest",
     "test:ui": "vitest --ui",

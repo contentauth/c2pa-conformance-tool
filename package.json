@@ -9,7 +9,6 @@
     "build:local-wasm": "node scripts/build-local-wasm.mjs",
     "copy:profile-evaluator": "node scripts/copy-profile-evaluator.mjs",
     "preview": "vite preview",
-    "deploy": "GITHUB_REPOSITORY=$(git remote get-url origin | sed -E 's#^.*github\\.com[:/]##; s#\\.git$##') npm run build && npx gh-pages -d dist",
     "check": "svelte-check --tsconfig ./tsconfig.json",
     "test": "vitest",
     "test:ui": "vitest --ui",
@@ -34,8 +33,7 @@
     "tslib": "^2.6.2",
     "typescript": "^5.3.3",
     "vite": "^6.4.1",
-    "vitest": "^4.0.18",
-    "gh-pages": "^6.2.0"
+    "vitest": "^4.0.18"
   },
   "dependencies": {
     "@contentauth/c2pa-web": "^0.6.1",

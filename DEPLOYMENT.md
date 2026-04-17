@@ -6,28 +6,33 @@ This is a **100% static site** with no server-side code. All C2PA processing hap
 
 ### 1. GitHub Pages (Recommended)
 
-Deploy by building locally and pushing the built site to the `gh-pages` branch. No build runs in CI, so you avoid environment/base-path issues.
+Deploys automatically via the `.github/workflows/deploy.yml` GitHub Actions workflow. The workflow builds the site in CI and publishes it to GitHub Pages.
+
+**Triggers:**
+- Every push to `main`
+- Manual runs via **Actions → Build and Deploy to GitHub Pages → Run workflow** (`workflow_dispatch`)
 
 **One-time setup:**
 1. Push your code to GitHub.
 2. Go to **Settings → Pages**.
-3. Under "Build and deployment", set:
-   - **Source:** Deploy from a **branch**
-   - **Branch:** `gh-pages` / `/(root)`
-4. Save.
+3. Under "Build and deployment", set **Source** to **GitHub Actions**.
+4. (Optional) Go to **Settings → Environments → github-pages** to configure branch protection for the deploy environment.
 
-**Deploy (whenever you want to publish):**
-```bash
-npm run deploy
-```
-This runs `npm run build` (with the correct base path for GitHub Pages) and pushes the contents of `dist/` to the `gh-pages` branch. No GitHub Action is used.
+After the first successful workflow run, the site is live.
 
 **URL:** **`https://<username>.github.io/c2pa-conformance-tool/`** (use your GitHub username; no `index.html` needed).
 
+**What the workflow does:**
+1. Checks out the repo
+2. Installs Node 24 and runs `npm ci`
+3. Runs `npm run build` with `GITHUB_REPOSITORY` set so Vite uses the correct base path
+4. Uploads `dist/` as a Pages artifact and deploys it with `actions/deploy-pages`
+
 **Features:**
 - ✅ Free hosting, HTTPS, custom domain
-- ✅ Same build locally and on the site (no CI surprises)
-- ✅ No Actions or build step in the repo
+- ✅ Automatic deploys on push to `main`
+- ✅ Manual deploys via `workflow_dispatch`
+- ✅ No `gh-pages` branch to manage
 
 ---
 
@@ -84,10 +89,9 @@ npm run build
 
 # Preview the build (open http://localhost:4173/c2pa-conformance-tool/)
 npm run preview
-
-# Build and deploy to GitHub Pages (pushes dist/ to gh-pages branch)
-npm run deploy
 ```
+
+Deployments to GitHub Pages are handled by the `Build and Deploy to GitHub Pages` GitHub Actions workflow — no local `deploy` script is needed.
 
 **Output:** `dist/` folder contains all static files
 

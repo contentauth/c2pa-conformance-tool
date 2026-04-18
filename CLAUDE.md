@@ -66,4 +66,4 @@ Two WASM binaries are committed to `public/`:
 - **Test certificates**: Session-only, stored in memory, clearly flagged in reports
 
 ### Deployment
-Base URL is dynamically set in `vite.config.ts` — `/` for Netlify, `/<repo-name>/` for GitHub Pages. Deploy via `npm run deploy` (gh-pages branch) or push to Netlify.
+Merging to `main` automatically triggers a Netlify build and deploy. The base URL is always `/` (set in `vite.config.ts` via the `NETLIFY` env var). See `netlify.toml` for the build configuration.

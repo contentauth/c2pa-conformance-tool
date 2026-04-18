@@ -71,18 +71,9 @@ npm run preview
 
 ## Deployment
 
-**This is a 100% static site** - no server-side code required! Deploy to any static hosting platform.
+Merging a pull request to `main` automatically triggers a Netlify build and deploys to production. No manual steps required.
 
-### Quick Deploy to GitHub Pages
-
-1. One-time: In repo **Settings → Pages**, set source to **Deploy from a branch**, branch **gh-pages** / root.
-2. From your machine: **`npm run deploy`** (builds and pushes `dist/` to `gh-pages`).
-
-See [DEPLOYMENT.md](./DEPLOYMENT.md) for full instructions and other platforms (Vercel, Netlify, Cloudflare Pages).
-
-**Asset Profiles on deployed sites:** The profile evaluator lives in `public/profile-evaluator/` and is committed so GitHub Pages/Netlify include it. To update it, run `npm run copy:profile-evaluator` (with a built sibling `profile-evaluator-rs` repo), then commit the changes.
-
-**Live URL:** `https://<username>.github.io/c2pa-conformance-tool/`
+See [DEPLOYMENT.md](./DEPLOYMENT.md) for details on the build process and preview deployments.
 
 ## Project Structure
 

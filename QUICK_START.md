@@ -1,76 +1,39 @@
-# Quick Start Guide
+# Quick Start
 
-## For Users
+## Running locally
 
-Visit the deployed app and drag-drop any media file with C2PA data to validate it instantly!
-
-## For Developers
-
-### Run Locally
 ```bash
 npm install
 npm run dev
 ```
-Open http://localhost:5173/
 
-### Deploy to Production
-```bash
-# Build
-npm run build
+Open http://localhost:5173/ and drop any media file with C2PA content credentials onto the page.
 
-# The dist/ folder is ready to deploy!
-```
+## Common commands
 
-### Deploy to GitHub Pages
-1. Push code to GitHub
-2. Settings → Pages → Source: **GitHub Actions**
-3. Done! Auto-deploys on every push to `main`
+| Command | Description |
+|---|---|
+| `npm run dev` | Start development server with hot reload |
+| `npm run build` | Production build → `dist/` |
+| `npm run preview` | Preview the production build locally |
+| `npm run check` | Svelte type checking |
+| `npm run test:run` | Run tests once |
+| `npm run build:local-wasm` | Build C2PA WASM from a local `../c2pa-rs` checkout |
+| `npm run copy:profile-evaluator` | Copy profile evaluator WASM from a sibling `../profile-evaluator-rs` checkout |
+
+## Deployment
+
+Merging to `main` automatically triggers a Netlify build and deploy. See [DEPLOYMENT.md](./DEPLOYMENT.md) for details.
 
 ## Architecture
 
-**100% Static Site**
-- ✅ No backend needed
-- ✅ No API keys required
-- ✅ No environment variables
-- ✅ All processing happens in the browser via WebAssembly
+All C2PA processing happens client-side via WebAssembly — files never leave the browser. The app is a 100% static site with no backend.
 
-**What You're Deploying:**
-- Single HTML page
-- JavaScript/CSS bundles (~70KB)
-- C2PA WebAssembly module (7.7MB)
-- Total: ~8MB
+## Browser support
 
-**Hosting Requirements:**
-- Static file hosting only
-- HTTPS recommended (for WebAssembly)
-- No server-side processing
-
-## Quick Commands
-
-| Command | Description |
-|---------|-------------|
-| `npm run dev` | Start development server |
-| `npm run build` | Build for production |
-| `npm run preview` | Preview production build |
-| `npm run check` | Run Svelte type checking |
-| `npm run test:run` | Run tests once |
-| `npm run build:local-wasm` | Build the C2PA WebAssembly module locally |
-
-## Browser Support
+Requires WebAssembly and ES2020 support:
 
 - Chrome 80+ ✅
 - Firefox 75+ ✅
 - Safari 13.1+ ✅
 - Edge 80+ ✅
-
-Requires WebAssembly and ES2020 support (all modern browsers).
-
-## Cost
-
-**Free Forever** on:
-- GitHub Pages
-- Vercel (100GB/month free)
-- Netlify (100GB/month free)
-- Cloudflare Pages (unlimited free)
-
-No ongoing costs, no credit card required!

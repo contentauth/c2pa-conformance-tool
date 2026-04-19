@@ -9,12 +9,11 @@
   import FileUpload from './lib/FileUpload.svelte'
   import ReportViewer from './lib/ReportViewer.svelte'
   import CertificateManager from './lib/CertificateManager.svelte'
-  import AssetProfilePage from './lib/AssetProfilePage.svelte'
   import { processFile } from './lib/c2pa'
   import { testTrustListFetch } from './lib/trustListTest'
   import type { ConformanceReport } from './lib/types'
 
-  type Page = 'main' | 'test-certificates' | 'asset-profiles'
+  type Page = 'main' | 'test-certificates' | 'asset-rubrics'
 
   let report: ConformanceReport | null = null
   let error: string | null = null
@@ -31,8 +30,6 @@
   let processingStatus = 'Processing file...'
   let currentPage: Page = 'main'
   let menuOpen = false
-  let assetProfilePage: { handleExternalAssetFile: (file: File) => Promise<void> } | null = null
-
   // Test trust list fetching on component mount
   onMount(() => {
     console.log('=== C2PA Conformance Tool Initialized ===')
@@ -70,11 +67,7 @@
       globalDragOver = false
       const files = e.dataTransfer?.files
       if (files && files.length > 0) {
-        if (currentPage === 'asset-profiles') {
-          void handleAssetProfileFileSelect(files[0])
-        } else {
-          void handleFileSelect({ detail: files[0] } as CustomEvent<File>)
-        }
+        void handleFileSelect({ detail: files[0] } as CustomEvent<File>)
       }
     }
 
@@ -86,11 +79,7 @@
 
     const handleFileSelectedEvent = (e: Event) => {
       const customEvent = e as CustomEvent<File>
-      if (currentPage === 'asset-profiles') {
-        void handleAssetProfileFileSelect(customEvent.detail)
-      } else {
-        void handleFileSelect({ detail: customEvent.detail } as CustomEvent<File>)
-      }
+      void handleFileSelect({ detail: customEvent.detail } as CustomEvent<File>)
     }
 
     window.addEventListener('dragover', preventDefaults, false)
@@ -153,12 +142,6 @@
       processing = false
       processingStatus = 'Processing file...'
     }
-  }
-
-  async function handleAssetProfileFileSelect(file: File) {
-    currentPage = 'asset-profiles'
-    menuOpen = false
-    await assetProfilePage?.handleExternalAssetFile(file)
   }
 
   async function handleTestModeChanged(event: CustomEvent<{ enabled: boolean; rootLoaded: boolean }>) {
@@ -247,11 +230,7 @@
     globalDragOver = false
     const files = event.dataTransfer?.files
     if (files && files.length > 0) {
-      if (currentPage === 'asset-profiles') {
-        void handleAssetProfileFileSelect(files[0])
-      } else {
-        void handleFileSelect({ detail: files[0] } as CustomEvent<File>)
-      }
+      void handleFileSelect({ detail: files[0] } as CustomEvent<File>)
     }
   }
 
@@ -403,11 +382,11 @@
                   {/if}
                 </button>
                 <button
-                  on:click={() => navigateTo('asset-profiles')}
+                  on:click={() => navigateTo('asset-rubrics')}
                   class="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-left"
                 >
-                  <svg class="w-4 h-4 text-blue-600 dark:text-gray-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M14 3v4a1 1 0 0 0 1 1h4" /><path d="M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2" /><path d="M9 9l1 0" /><path d="M9 13l6 0" /><path d="M9 17l6 0" /></svg>
-                  <span>Asset Profiles</span>
+                  <svg class="w-4 h-4 text-blue-600 dark:text-gray-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M9 5h-2a2 2 0 0 0 -2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-12a2 2 0 0 0 -2 -2h-2" /><path d="M9 3m0 2a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v0a2 2 0 0 1 -2 2h-2a2 2 0 0 1 -2 -2z" /><path d="M9 12l.01 0" /><path d="M13 12l2 0" /><path d="M9 16l.01 0" /><path d="M13 16l2 0" /></svg>
+                  <span>Asset Rubrics</span>
                 </button>
               </div>
             {/if}
@@ -444,8 +423,8 @@
       />
     </div>
 
-  <!-- ── Asset Profiles page ── -->
-  {:else if currentPage === 'asset-profiles'}
+  <!-- ── Asset Rubrics page ── -->
+  {:else if currentPage === 'asset-rubrics'}
     <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
       <div class="mb-8">
         <button
@@ -457,23 +436,22 @@
           </svg>
           Back to main view
         </button>
-        <h2 class="mt-4 text-2xl font-bold text-gray-900 dark:text-white">Asset Profiles</h2>
+        <h2 class="mt-4 text-2xl font-bold text-gray-900 dark:text-white">Asset Rubrics</h2>
         <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">
-          Define expected manifest shapes to validate assets against a specific profile.
+          Define criteria to evaluate C2PA assets against a specific rubric.
         </p>
       </div>
       <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl p-12 text-center shadow-sm">
-        <div class="inline-flex items-center justify-center w-16 h-16 bg-blue-50 dark:bg-gray-800 rounded-2xl mb-4">
-          <svg class="w-8 h-8 text-blue-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+        <div class="inline-flex items-center justify-center w-16 h-16 bg-blue-50 dark:bg-blue-950 rounded-2xl mb-4">
+          <svg class="w-8 h-8 text-blue-500 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
           </svg>
         </div>
         <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">Coming soon</h3>
         <p class="text-sm text-gray-500 dark:text-gray-400 max-w-sm mx-auto">
-          Asset profiles will let you define and validate C2PA manifests against expected content structures.
+          Asset rubrics will let you define pass/fail criteria and score C2PA assets against them.
         </p>
       </div>
-      <AssetProfilePage bind:this={assetProfilePage} {testCertificates} />
     </div>
 
   <!-- ── Main page ── -->

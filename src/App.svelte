@@ -271,62 +271,44 @@
     void handleFileSelect({ detail: sidecar } as CustomEvent<File>)
   }
 
+  async function reprocessCurrentFile() {
+    if (!selectedFile || !report) return
+    processing = true
+    error = null
+    noManifest = false
+    report = null
+    usedTestCertificates = testCertificates.length > 0
+    try {
+      await new Promise(resolve => setTimeout(resolve, 0))
+      if (validationMode === 'sidecar+asset' && sidecarFile) {
+        report = await processSidecarWithAsset(sidecarFile, selectedFile, testCertificates)
+      } else {
+        report = await processFile(selectedFile, testCertificates)
+      }
+      console.log('✅ File reprocessed successfully')
+    } catch (err) {
+      error = err instanceof Error ? err.message : 'An error occurred processing the file'
+      console.error('❌ Error reprocessing file:', err)
+    } finally {
+      processing = false
+    }
+  }
+
   async function handleTestModeChanged(event: CustomEvent<{ enabled: boolean; rootLoaded: boolean }>) {
     testModeEnabled = event.detail.enabled
     testRootLoaded = event.detail.rootLoaded
-
     if (selectedFile && report) {
       console.log('🔄 Test mode changed, reprocessing file...')
-      processing = true
-      error = null
-      noManifest = false
-      const previousReport = report
-      report = null
-
-      try {
-        await new Promise(resolve => setTimeout(resolve, 0))
-        usedTestCertificates = testCertificates.length > 0
-        if (testCertificates.length > 0) {
-          console.log('⚠️  Using', testCertificates.length, 'test certificate(s)')
-        } else {
-          console.log('✅ Using production trust list only')
-        }
-        report = await processFile(selectedFile, testCertificates)
-        console.log('✅ File reprocessed successfully')
-      } catch (err) {
-        error = err instanceof Error ? err.message : 'An error occurred processing the file'
-        console.error('❌ Error reprocessing file:', err)
-        report = previousReport
-      } finally {
-        processing = false
-      }
+      await reprocessCurrentFile()
     }
   }
 
   async function handleCertificatesUpdated(event: CustomEvent<string[]>) {
     console.log('🔔 handleCertificatesUpdated called with', event.detail.length, 'certificates')
     testCertificates = event.detail
-
     if (selectedFile && report) {
       console.log('🔄 Reprocessing file with updated certificates...')
-      processing = true
-      error = null
-      noManifest = false
-      report = null
-      usedTestCertificates = testCertificates.length > 0
-
-      try {
-        if (testCertificates.length > 0) {
-          console.log('⚠️  Using', testCertificates.length, 'test certificate(s)')
-        }
-        report = await processFile(selectedFile, testCertificates)
-        console.log('✅ File reprocessed successfully')
-      } catch (err) {
-        error = err instanceof Error ? err.message : 'An error occurred processing the file'
-        console.error('❌ Error reprocessing file:', err)
-      } finally {
-        processing = false
-      }
+      await reprocessCurrentFile()
     }
   }
 
@@ -645,10 +627,49 @@
           </div>
         {/if}
 
-        <!-- Upload Area -->
-        <div class="mb-6">
-          <FileUpload on:fileselect={handleFileSelect} compact={false} />
-        </div>
+        {#if pendingSidecar}
+          <!-- Pending sidecar: waiting for the matching asset to be dropped -->
+          <div class="bg-blue-50 dark:bg-gray-900 border-2 border-blue-400 dark:border-gray-600 border-dashed rounded-2xl p-8 mb-6 text-left shadow-sm">
+            <div class="flex items-start gap-4">
+              <div class="flex-shrink-0 w-12 h-12 bg-blue-600 dark:bg-gray-600 rounded-full flex items-center justify-center text-white">
+                <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M15 13l-3.5 3.5a1.5 1.5 0 0 1 -2 0l-.5 -.5a1.5 1.5 0 0 1 0 -2l3.5 -3.5" /><path d="M9 11l-1.5 -1.5a1.5 1.5 0 0 1 0 -2l.5 -.5a1.5 1.5 0 0 1 2 0l1.5 1.5" /><path d="M13 11l1 1" /><path d="M11 13l1 1" /><path d="M14 4l-2 2" /><path d="M5 13l-1 1" /><path d="M4 14l-1 2l1 3l3 1l2 -1" /><path d="M14 20l2 1l3 -1l1 -3l-1 -2" /><path d="M20 10l1 -2l-1 -3l-3 -1l-2 1" /></svg>
+              </div>
+              <div class="flex-1 min-w-0">
+                <h3 class="text-lg font-bold text-blue-900 dark:text-white mb-1">Sidecar received — now drop the matching asset</h3>
+                <p class="text-sm text-blue-700 dark:text-gray-300 mb-1 truncate">
+                  <span class="font-mono">{pendingSidecar.name}</span>
+                </p>
+                <p class="text-sm text-blue-600 dark:text-gray-400 mb-4">
+                  Drop or select the asset file this sidecar belongs to. The sidecar's hash bindings will be verified against the asset bytes.
+                </p>
+                <div class="flex flex-wrap gap-3">
+                  <FileUpload on:fileselect={(e) => handleFilesDropped([e.detail])} compact={true} label="Select asset file" />
+                  <button
+                    on:click={inspectSidecarWithoutAsset}
+                    class="inline-flex items-center gap-2 px-4 py-2 bg-white dark:bg-gray-700 border border-blue-300 dark:border-gray-500 text-blue-700 dark:text-gray-200 text-sm font-semibold rounded-lg hover:bg-blue-50 dark:hover:bg-gray-600 transition-colors"
+                  >
+                    Inspect sidecar only (no asset)
+                  </button>
+                  <button
+                    on:click={cancelPendingSidecar}
+                    class="inline-flex items-center gap-2 px-4 py-2 text-gray-500 dark:text-gray-400 text-sm font-semibold hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        {:else}
+          <!-- Upload Area -->
+          <div class="mb-6">
+            <FileUpload
+              on:fileselect={handleFileSelect}
+              on:filesselect={(e) => handleFilesDropped(e.detail)}
+              compact={false}
+            />
+          </div>
+        {/if}
       </div>
     {/if}
 

@@ -2,8 +2,9 @@
   import { createEventDispatcher } from 'svelte'
 
   export let compact = false
+  export let label = 'Browse Files'
 
-  const dispatch = createEventDispatcher<{ fileselect: File }>()
+  const dispatch = createEventDispatcher<{ fileselect: File; filesselect: File[] }>()
 
   let dragOver = false
   let fileInput: HTMLInputElement
@@ -22,16 +23,24 @@
     dragOver = false
 
     const files = event.dataTransfer?.files
-    if (files && files.length > 0) {
-      dispatch('fileselect', files[0])
+    if (!files || files.length === 0) return
+    const arr = Array.from(files)
+    if (arr.length > 1) {
+      dispatch('filesselect', arr)
+    } else {
+      dispatch('fileselect', arr[0])
     }
   }
 
   function handleFileInput(event: Event) {
     const target = event.target as HTMLInputElement
     const files = target.files
-    if (files && files.length > 0) {
-      dispatch('fileselect', files[0])
+    if (!files || files.length === 0) return
+    const arr = Array.from(files)
+    if (arr.length > 1) {
+      dispatch('filesselect', arr)
+    } else {
+      dispatch('fileselect', arr[0])
     }
   }
 
@@ -48,7 +57,7 @@
     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
     </svg>
-    Browse Files
+    {label}
   </button>
   <input
     bind:this={fileInput}
@@ -102,6 +111,7 @@
       type="file"
       on:change={handleFileInput}
       accept="image/*,video/*,audio/*,.pdf,.dng,.arw,.cr2,.cr3,.nef,.orf,.rw2,.c2pa,application/c2pa"
+      multiple
       class="hidden"
     />
   </div>

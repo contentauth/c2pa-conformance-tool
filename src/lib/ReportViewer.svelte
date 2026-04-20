@@ -3,6 +3,7 @@
   import type { ValidationStatus } from '@contentauth/c2pa-web'
   import hljs from 'highlight.js'
   import ManifestSummary from './ManifestSummary.svelte'
+  import RubricsPanel from './RubricsPanel.svelte'
   import type { ConformanceReport, ValidationStatusItem, AssertionSummaryItem, CrJsonManifestEntry } from './types'
   import {
     getAssertionsList,
@@ -32,7 +33,11 @@
     newfile: void
   }>()
 
-  let showRaw = false
+  type ReportTab = 'formatted' | 'crjson' | 'rubrics'
+  let activeTab: ReportTab = 'formatted'
+  // If the Rubrics gate closes (e.g. certs removed, or a re-evaluation surfaces
+  // failures), snap back to the Formatted tab.
+  $: if (activeTab === 'rubrics' && !rubricsAvailable) activeTab = 'formatted'
   let rawJsonCodeEl: HTMLElement | null = null
   let copied = false
   let copyTimeout: ReturnType<typeof setTimeout> | null = null
@@ -169,6 +174,14 @@
   $: isTrusted = validationResults?.success?.some((status: ValidationStatus) =>
     status.code === VALIDATION_STATUS.SIGNING_CREDENTIAL_TRUSTED
   ) ?? false
+
+  // True if validation recorded zero failure entries for the active manifest.
+  // Rubrics are only meaningful when the manifest is both trusted AND has no
+  // validation failures, so the tab is gated on both.
+  $: hasNoValidationFailures = (validationResults?.failure?.length ?? 0) === 0
+
+  // Combined gate for the Rubrics tab.
+  $: rubricsAvailable = isTrusted && hasNoValidationFailures
 
   // Check if signature is using Interim Trust List
   $: usedITL = report.usedITL === true
@@ -560,17 +573,26 @@
     <div class="flex flex-wrap items-center gap-2">
       <div class="flex items-center gap-1 border border-gray-200 dark:border-gray-600 rounded-lg p-1">
         <button
-          class="inline-flex items-center gap-1.5 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors {!showRaw ? 'bg-gray-100 dark:bg-gray-700 font-medium' : ''}"
-          on:click={() => showRaw = false}
+          class="inline-flex items-center gap-1.5 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors {activeTab === 'formatted' ? 'bg-gray-100 dark:bg-gray-700 font-medium' : ''}"
+          on:click={() => activeTab = 'formatted'}
         >
           Formatted
         </button>
         <button
-          class="inline-flex items-center gap-1.5 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors {showRaw ? 'bg-gray-100 dark:bg-gray-700 font-medium' : ''}"
-          on:click={() => showRaw = true}
+          class="inline-flex items-center gap-1.5 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors {activeTab === 'crjson' ? 'bg-gray-100 dark:bg-gray-700 font-medium' : ''}"
+          on:click={() => activeTab = 'crjson'}
         >
           crJSON
         </button>
+        {#if rubricsAvailable}
+          <button
+            class="inline-flex items-center gap-1.5 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors {activeTab === 'rubrics' ? 'bg-gray-100 dark:bg-gray-700 font-medium' : ''}"
+            on:click={() => activeTab = 'rubrics'}
+            title="Evaluate this manifest against selectable rubrics"
+          >
+            Rubrics
+          </button>
+        {/if}
       </div>
       <button
         class="inline-flex items-center gap-1.5 px-3 py-2 text-sm text-gray-600 dark:text-gray-400 rounded-lg border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
@@ -623,8 +645,8 @@
     </div>
   {/if}
 
-  <!-- Section Navigation -->
-  {#if activeManifest}
+  <!-- Section Navigation — only relevant on the Formatted tab (anchors live there) -->
+  {#if activeManifest && activeTab === 'formatted'}
     <div class="mb-6 flex items-center gap-1 flex-wrap border-b border-gray-200 dark:border-gray-700 pb-4">
       <span class="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wide mr-2">Jump to:</span>
       <a href="#media-preview" class="text-sm px-2 py-1 text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-gray-300 transition-colors">Media</a>
@@ -657,7 +679,7 @@
     </button>
   {/if}
 
-  {#if showRaw}
+  {#if activeTab === 'crjson'}
     <div class="bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 rounded-2xl p-8 shadow-sm">
       <div class="flex items-center gap-3 mb-6 pb-4 border-b-2 border-gray-200 dark:border-gray-700">
         <div class="w-10 h-10 bg-gray-800 dark:bg-gray-700 rounded-lg flex items-center justify-center text-white shadow-md">
@@ -669,6 +691,8 @@
       </div>
       <pre class="hljs bg-gray-900 dark:bg-black border-2 border-gray-700 dark:border-gray-600 rounded-xl p-6 overflow-x-auto text-sm leading-relaxed shadow-inner"><code class="language-json" bind:this={rawJsonCodeEl}></code></pre>
     </div>
+  {:else if activeTab === 'rubrics' && rubricsAvailable}
+    <RubricsPanel {report} />
   {:else}
     <!-- Media Preview and Validation Status -->
     <div class="mb-8" id="media-preview">

@@ -1,0 +1,129 @@
+rubric_metadata:
+  name: C2PA Asset Signals Rubric (Local)
+  issuer: C2PA Conformance Task Force
+  date: '2026-03-31T05:00:00Z'
+  version: 1.0.0
+  language: en
+
+---
+
+- id: inception:signal_blankCanvas
+  description: Check if the manifest contains a Blank Canvas inception signal
+  expression: |
+    assertions."c2pa.actions.v2" != null && length("claim.v2".created_assertions[?contains(url, 'c2pa.actions.v2')]) > `0` && length(assertions."c2pa.actions.v2".actions[? action == 'c2pa.created' && digitalSourceType == 'http://c2pa.org/digitalsourcetype/empty']) > `0`
+  reportText:
+    'true':
+      en: Contains Blank Canvas
+    'false':
+      en: Does not contain Blank Canvas
+- id: inception:signal_capturedMedia
+  description: Check if the manifest contains a Captured media inception signal
+  expression: |
+    assertions."c2pa.actions.v2" != null && length("claim.v2".created_assertions[?contains(url, 'c2pa.actions.v2')]) > `0` && length(assertions."c2pa.actions.v2".actions[? action == 'c2pa.created' && (digitalSourceType == 'http://cv.iptc.org/newscodes/digitalsourcetype/digitalCapture' || digitalSourceType == 'http://cv.iptc.org/newscodes/digitalsourcetype/computationalCapture')]) > `0`
+  reportText:
+    'true':
+      en: Contains Captured Media
+    'false':
+      en: Does not contain Captured Media
+- id: inception:signal_capturedMediaStitched
+  description: Check if the manifest contains a Stitched Captured Media inception signal
+  expression: |
+    assertions."c2pa.actions.v2" != null && length("claim.v2".created_assertions[?contains(url, 'c2pa.actions.v2')]) > `0` && length(assertions."c2pa.actions.v2".actions[? action == 'c2pa.created' && digitalSourceType == 'http://cv.iptc.org/newscodes/digitalsourcetype/compositeCapture']) > `0`
+  reportText:
+    'true':
+      en: Contains Stitched Captured Media
+    'false':
+      en: Does not contain Stitched Captured Media
+- id: inception:signal_compositionMayContainGenAI
+  description: |-
+    Check if the manifest contains a Composition which may contain GenAI content inception signal
+  expression: |
+    assertions."c2pa.actions.v2" != null && length("claim.v2".created_assertions[?contains(url, 'c2pa.actions.v2')]) > `0` && length(assertions."c2pa.actions.v2".actions[? action == 'c2pa.created' && digitalSourceType == 'http://cv.iptc.org/newscodes/digitalsourcetype/composite']) > `0`
+  reportText:
+    'true':
+      en: Contains Composition which may contain GenAI content
+    'false':
+      en: Does not contain Composition which may contain GenAI content
+- id: inception:signal_fullyGenAIMedia
+  description: Check if the manifest contains a Fully GenAI Media inception signal
+  expression: |
+    assertions."c2pa.actions.v2" != null && length("claim.v2".created_assertions[?contains(url, 'c2pa.actions.v2')]) > `0` && length(assertions."c2pa.actions.v2".actions[? action == 'c2pa.created' && digitalSourceType == 'http://cv.iptc.org/newscodes/digitalsourcetype/trainedAlgorithmicMedia']) > `0`
+  reportText:
+    'true':
+      en: Contains Fully GenAI Media
+    'false':
+      en: Does not contain Fully GenAI Media
+- id: inception:signal_mediaUnknownProvenance
+  description: Check if the manifest contains a Media of Unknown Provenance inception signal
+  expression: |
+    assertions."c2pa.ingredient.v3" != null && assertions."c2pa.ingredient.v3".activeManifest == null
+  reportText:
+    'true':
+      en: Contains Media of Unknown Provenance
+    'false':
+      en: Does not contain Media of Unknown Provenance
+- id: inception:signal_nonGenAIDigitalCreation
+  description: Check if the manifest contains a Non-GenAI digital creation inception signal
+  expression: |
+    assertions."c2pa.actions.v2" != null && length("claim.v2".created_assertions[?contains(url, 'c2pa.actions.v2')]) > `0` && length(assertions."c2pa.actions.v2".actions[? action == 'c2pa.created' && digitalSourceType == 'http://cv.iptc.org/newscodes/digitalsourcetype/digitalCreation']) > `0`
+  reportText:
+    'true':
+      en: Contains Non-GenAI digital creation
+    'false':
+      en: Does not contain Non-GenAI digital creation
+- id: inception:signal_partlyGenAICreation
+  description: Check if the manifest contains a Partly GenAI Creation inception signal
+  expression: |
+    assertions."c2pa.actions.v2" != null && length("claim.v2".created_assertions[?contains(url, 'c2pa.actions.v2')]) > `0` && length(assertions."c2pa.actions.v2".actions[? action == 'c2pa.created' && digitalSourceType == 'http://cv.iptc.org/newscodes/digitalsourcetype/compositeWithTrainedAlgorithmicMedia']) > `0`
+  reportText:
+    'true':
+      en: Contains Partly GenAI Creation
+    'false':
+      en: Does not contain Partly GenAI Creation
+- id: inception:signal_screenCaptureMayContainGenAI
+  description: |-
+    Check if the manifest contains a Screen Capture Which May Contain GenAI Content inception signal
+  expression: |
+    assertions."c2pa.actions.v2" != null && length("claim.v2".created_assertions[?contains(url, 'c2pa.actions.v2')]) > `0` && length(assertions."c2pa.actions.v2".actions[? action == 'c2pa.created' && digitalSourceType == 'http://cv.iptc.org/newscodes/digitalsourcetype/screenCapture']) > `0`
+  reportText:
+    'true':
+      en: Contains Screen Capture Which May Contain GenAI Content
+    'false':
+      en: Does not contain Screen Capture Which May Contain GenAI Content
+- id: transformation:signal_editorialAI
+  description: Check if the manifest contains an Editorial GenAI Transformations signal
+  expression: |
+    assertions."c2pa.actions.v2" != null && length("claim.v2".created_assertions[?contains(url, 'c2pa.actions.v2')]) > `0` && length(assertions."c2pa.actions.v2".actions[? action != null && action != 'c2pa.created' && action != 'c2pa.opened' && action != 'c2pa.converted' && action != 'c2pa.published' && action != 'c2pa.repackaged' && action != 'c2pa.transcoded' && action != 'c2pa.resized.proportional' && action != 'c2pa.enhanced' && action != 'c2pa.edited.metadata' && action != 'c2pa.watermarked' && action != 'c2pa.watermarked.bound' && action != 'c2pa.watermarked.unbound' && action != 'c2pa.redacted' && (digitalSourceType == 'http://cv.iptc.org/newscodes/digitalsourcetype/trainedAlgorithmicMedia' || digitalSourceType == 'http://cv.iptc.org/newscodes/digitalsourcetype/compositeWithTrainedAlgorithmicMedia' || digitalSourceType == 'http://cv.iptc.org/newscodes/digitalsourcetype/compositeSynthetic')]) > `0`
+  reportText:
+    'true':
+      en: Contains Editorial GenAI Transformations
+    'false':
+      en: Does not contain Editorial GenAI Transformations
+- id: transformation:signal_editorialNonAI
+  description: Check if the manifest contains an Editorial Non-GenAI Transformations signal
+  expression: |
+    assertions."c2pa.actions.v2" != null && length("claim.v2".created_assertions[?contains(url, 'c2pa.actions.v2')]) > `0` && length(assertions."c2pa.actions.v2".actions[? action != null && action != 'c2pa.created' && action != 'c2pa.opened' && action != 'c2pa.converted' && action != 'c2pa.published' && action != 'c2pa.repackaged' && action != 'c2pa.transcoded' && action != 'c2pa.resized.proportional' && action != 'c2pa.enhanced' && action != 'c2pa.edited.metadata' && action != 'c2pa.watermarked' && action != 'c2pa.watermarked.bound' && action != 'c2pa.watermarked.unbound' && action != 'c2pa.redacted' && digitalSourceType != null && (digitalSourceType != 'http://cv.iptc.org/newscodes/digitalsourcetype/trainedAlgorithmicMedia' && digitalSourceType != 'http://cv.iptc.org/newscodes/digitalsourcetype/compositeWithTrainedAlgorithmicMedia' && digitalSourceType != 'http://cv.iptc.org/newscodes/digitalsourcetype/compositeSynthetic')]) > `0`
+  reportText:
+    'true':
+      en: Contains Editorial Non-GenAI Transformations
+    'false':
+      en: Does not contain Editorial Non-GenAI Transformations
+- id: transformation:signal_editorialPossiblyGenAI
+  description: |-
+    Check if the manifest contains an Editorial Transformations Possibly Using GenAI signal
+  expression: |
+    assertions."c2pa.actions.v2" != null && length("claim.v2".created_assertions[?contains(url, 'c2pa.actions.v2')]) > `0` && length(assertions."c2pa.actions.v2".actions[? action != null && action != 'c2pa.created' && action != 'c2pa.opened' && action != 'c2pa.converted' && action != 'c2pa.published' && action != 'c2pa.repackaged' && action != 'c2pa.transcoded' && action != 'c2pa.resized.proportional' && action != 'c2pa.enhanced' && action != 'c2pa.edited.metadata' && action != 'c2pa.watermarked' && action != 'c2pa.watermarked.bound' && action != 'c2pa.watermarked.unbound' && action != 'c2pa.redacted' && (digitalSourceType == 'http://cv.iptc.org/newscodes/digitalsourcetype/digitalArt' || digitalSourceType == 'http://cv.iptc.org/newscodes/digitalsourcetype/composite')]) > `0`
+  reportText:
+    'true':
+      en: Contains Editorial Transformations Possibly Using GenAI
+    'false':
+      en: Does not contain Editorial Transformations Possibly Using GenAI
+- id: transformation:signal_nonEditorial
+  description: Check if the manifest contains a Non-Editorial Transformations signal
+  expression: |
+    assertions."c2pa.actions.v2" != null && length("claim.v2".created_assertions[?contains(url, 'c2pa.actions.v2')]) > `0` && length(assertions."c2pa.actions.v2".actions[? action != null && action != 'c2pa.created' && action != 'c2pa.opened' && (action == 'c2pa.converted' || action == 'c2pa.published' || action == 'c2pa.repackaged' || action == 'c2pa.transcoded' || action == 'c2pa.resized.proportional' || action == 'c2pa.enhanced' || action == 'c2pa.edited.metadata' || action == 'c2pa.watermarked' || action == 'c2pa.watermarked.bound' || action == 'c2pa.watermarked.unbound' || action == 'c2pa.redacted')]) > `0`
+  reportText:
+    'true':
+      en: Contains Non-editorial Transformations
+    'false':
+      en: Does not contain Non-editorial Transformations

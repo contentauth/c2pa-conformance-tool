@@ -1,0 +1,23 @@
+{
+  "rubricName": "C2PA Asset Signals Rubric (Local)",
+  "rubricVersion": "1.0.0",
+  "manifests": [
+    {
+      "assertedBy": {
+        "CN": "Pixel Camera",
+        "O": "Google LLC"
+      },
+      "mimeType": null,
+      "localInceptions": [
+        {
+          "trait": "inception:signal_capturedMedia",
+          "reportText": "Contains Captured Media",
+          "multiple": false
+        }
+      ],
+      "localTransformations": [],
+      "allActionsIncluded": false,
+      "ingredients": []
+    }
+  ]
+}

@@ -1,0 +1,69 @@
+{
+  "rubricName": "C2PA Asset Signals Rubric (Local)",
+  "rubricVersion": "1.0.0",
+  "manifests": [
+    {
+      "assertedBy": {
+        "CN": "Google Photos",
+        "O": "Google LLC",
+        "OU": "Google Photos Android"
+      },
+      "mimeType": null,
+      "localInceptions": [],
+      "localTransformations": [
+        {
+          "trait": "transformation:signal_editorialAI",
+          "reportText": "Contains Editorial GenAI Transformations",
+          "multiple": false
+        }
+      ],
+      "allActionsIncluded": false,
+      "ingredients": [
+        {
+          "index": 1,
+          "relationship": "parentOf"
+        }
+      ]
+    },
+    {
+      "assertedBy": {
+        "CN": "Google Photos",
+        "O": "Google LLC",
+        "OU": "Google Photos Android"
+      },
+      "mimeType": null,
+      "localInceptions": [],
+      "localTransformations": [
+        {
+          "trait": "transformation:signal_editorialNonAI",
+          "reportText": "Contains Editorial Non-GenAI Transformations",
+          "multiple": false
+        }
+      ],
+      "allActionsIncluded": false,
+      "ingredients": [
+        {
+          "index": 2,
+          "relationship": "parentOf"
+        }
+      ]
+    },
+    {
+      "assertedBy": {
+        "CN": "Pixel Camera",
+        "O": "Google LLC"
+      },
+      "mimeType": null,
+      "localInceptions": [
+        {
+          "trait": "inception:signal_capturedMedia",
+          "reportText": "Contains Captured Media",
+          "multiple": false
+        }
+      ],
+      "localTransformations": [],
+      "allActionsIncluded": false,
+      "ingredients": []
+    }
+  ]
+}

@@ -173,33 +173,30 @@
 
 <div class="space-y-6">
   <!-- Rubric selector -->
-  <div class="bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 rounded-2xl p-8 shadow-sm">
-    <div class="flex items-center justify-between gap-4 mb-6 pb-4 border-b border-gray-200 dark:border-gray-700">
-      <div class="flex items-center gap-3">
-        <div class="w-10 h-10 bg-gray-800 dark:bg-gray-700 rounded-lg flex items-center justify-center text-white shadow-md">
-          <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <div class="bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 rounded-2xl p-5 shadow-sm">
+    <div class="flex items-center justify-between gap-4 mb-3 pb-3 border-b border-gray-200 dark:border-gray-700">
+      <div class="flex items-center gap-2.5">
+        <div class="w-7 h-7 bg-gray-800 dark:bg-gray-700 rounded-md flex items-center justify-center text-white shadow-sm">
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path stroke="none" d="M0 0h24v24H0z" fill="none" />
             <path d="M9 5h-2a2 2 0 0 0 -2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-12a2 2 0 0 0 -2 -2h-2" />
             <path d="M9 3m0 2a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v0a2 2 0 0 1 -2 2h-2a2 2 0 0 1 -2 -2z" />
             <path d="M9 14l2 2l4 -4" />
           </svg>
         </div>
-        <div>
-          <h3 class="text-xl font-semibold text-gray-900 dark:text-white">Available Rubrics</h3>
-          <p class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">Select one or more rubrics to evaluate against this manifest</p>
-        </div>
+        <h3 class="text-base font-semibold text-gray-900 dark:text-white">Available Rubrics</h3>
       </div>
       {#if index.length > 0}
-        <div class="flex items-center gap-2 text-xs">
+        <div class="flex items-center gap-1 text-xs">
           <button
             on:click={selectAll}
-            class="px-2.5 py-1.5 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors"
+            class="px-2 py-1 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors"
           >
             Select all
           </button>
           <button
             on:click={clearAll}
-            class="px-2.5 py-1.5 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors"
+            class="px-2 py-1 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors"
           >
             Clear
           </button>
@@ -216,11 +213,11 @@
     {:else if index.length === 0}
       <p class="text-sm text-gray-500 dark:text-gray-400">No rubrics available.</p>
     {:else}
-      <div class="space-y-5">
+      <div class="space-y-3">
         {#each groups as group (group.category)}
           <section>
             <!-- Category divider: small-caps label + hairline rule. -->
-            <div class="flex items-center gap-3 mb-2">
+            <div class="flex items-center gap-3 mb-1.5">
               <h4 class="text-[11px] font-bold uppercase tracking-[0.12em] text-gray-500 dark:text-gray-400">
                 {group.category}
               </h4>
@@ -229,12 +226,13 @@
                 {group.entries.length}
               </span>
             </div>
-            <ul class="space-y-2">
+            <ul class="space-y-1.5">
               {#each group.entries as rubric (rubric.id)}
                 {@const isChecked = selected.has(rubric.id)}
                 <li>
                   <label
-                    class="flex items-start gap-3 p-4 border-2 rounded-xl cursor-pointer transition-colors {isChecked
+                    title={rubric.description}
+                    class="flex items-center gap-2.5 px-3 py-2 border rounded-lg cursor-pointer transition-colors {isChecked
                       ? 'border-blue-400 bg-blue-50/50 dark:border-gray-500 dark:bg-gray-900/40'
                       : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'}"
                   >
@@ -242,19 +240,16 @@
                       type="checkbox"
                       checked={isChecked}
                       on:change={() => toggle(rubric.id)}
-                      class="mt-0.5 w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                      class="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 flex-shrink-0"
                     />
-                    <div class="flex-1 min-w-0">
-                      <div class="flex items-center gap-2 flex-wrap">
-                        <span class="font-semibold text-gray-900 dark:text-white text-sm">{rubric.name}</span>
-                        <span class="text-xs text-gray-400 dark:text-gray-500 font-mono">{rubric.id}</span>
-                        {#if rubric.mode === 'per-manifest'}
-                          <span class="px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide bg-indigo-100 text-indigo-800 dark:bg-gray-700 dark:text-gray-200">
-                            signals
-                          </span>
-                        {/if}
-                      </div>
-                      <p class="text-sm text-gray-600 dark:text-gray-400 mt-1 leading-relaxed">{rubric.description}</p>
+                    <div class="flex-1 min-w-0 flex items-center gap-2 flex-wrap">
+                      <span class="font-semibold text-gray-900 dark:text-white text-sm">{rubric.name}</span>
+                      {#if rubric.mode === 'per-manifest'}
+                        <span class="px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide bg-indigo-100 text-indigo-800 dark:bg-gray-700 dark:text-gray-200">
+                          signals
+                        </span>
+                      {/if}
+                      <span class="text-xs text-gray-400 dark:text-gray-500 font-mono truncate">{rubric.id}</span>
                     </div>
                   </label>
                 </li>
@@ -264,14 +259,14 @@
         {/each}
       </div>
 
-      <div class="mt-6 flex items-center justify-between gap-4">
-        <p class="text-sm text-gray-500 dark:text-gray-400">
+      <div class="mt-4 flex items-center justify-between gap-4">
+        <p class="text-xs text-gray-500 dark:text-gray-400">
           {selected.size} of {index.length} selected
         </p>
         <button
           on:click={runSelected}
           disabled={selected.size === 0 || running}
-          class="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 dark:disabled:bg-gray-700 disabled:cursor-not-allowed text-white text-sm font-semibold rounded-lg shadow-sm transition-colors"
+          class="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 dark:disabled:bg-gray-700 disabled:cursor-not-allowed text-white text-sm font-semibold rounded-lg shadow-sm transition-colors"
         >
           {#if running}
             <svg class="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">

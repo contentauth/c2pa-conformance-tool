@@ -42,7 +42,7 @@
   let copied = false
   let copyTimeout: ReturnType<typeof setTimeout> | null = null
   let mediaUrl: string | null = null
-  let mediaType: 'image' | 'video' | 'audio' | 'document' | 'unknown' = 'unknown'
+  let mediaType: 'image' | 'video' | 'audio' | 'document' | 'sidecar' | 'unknown' = 'unknown'
 
   // Only these image types can be rendered by browsers natively
   const BROWSER_PREVIEWABLE_IMAGES = new Set([
@@ -129,14 +129,19 @@
     }
     mediaUrl = URL.createObjectURL(file)
 
-    // Determine media type
-    if (file.type.startsWith('image/')) {
+    // Determine media type. Sidecar detection is first since `.c2pa` files
+    // typically arrive with an empty or `application/octet-stream` MIME, so
+    // the name check is doing most of the work.
+    const lowerName = file.name.toLowerCase()
+    if (file.type === 'application/c2pa' || lowerName.endsWith('.c2pa')) {
+      mediaType = 'sidecar'
+    } else if (file.type.startsWith('image/')) {
       mediaType = BROWSER_PREVIEWABLE_IMAGES.has(file.type) ? 'image' : 'unknown'
     } else if (file.type.startsWith('video/')) {
       mediaType = 'video'
     } else if (file.type.startsWith('audio/')) {
       mediaType = 'audio'
-    } else if (file.type === 'application/pdf' || file.name.endsWith('.pdf')) {
+    } else if (file.type === 'application/pdf' || lowerName.endsWith('.pdf')) {
       mediaType = 'document'
     } else {
       mediaType = 'unknown'
@@ -699,9 +704,15 @@
       <div class="bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 rounded-2xl p-8 shadow-sm">
         <div class="flex items-center gap-3 mb-6 pb-4 border-b border-gray-200 dark:border-gray-700">
           <div class="w-10 h-10 bg-gray-800 dark:bg-gray-700 rounded-lg flex items-center justify-center text-white shadow-md">
-            <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M15 8h.01" /><path d="M3 6a3 3 0 0 1 3 -3h12a3 3 0 0 1 3 3v12a3 3 0 0 1 -3 3h-12a3 3 0 0 1 -3 -3v-12" /><path d="M3 16l5 -5c.928 -.893 2.072 -.893 3 0l5 5" /><path d="M14 14l1 -1c.928 -.893 2.072 -.893 3 0l3 3" /></svg>
+            {#if mediaType === 'sidecar'}
+              <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M14 3v4a1 1 0 0 0 1 1h4" /><path d="M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2z" /><path d="M9 17h6" /><path d="M9 13h6" /></svg>
+            {:else}
+              <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M15 8h.01" /><path d="M3 6a3 3 0 0 1 3 -3h12a3 3 0 0 1 3 3v12a3 3 0 0 1 -3 3h-12a3 3 0 0 1 -3 -3v-12" /><path d="M3 16l5 -5c.928 -.893 2.072 -.893 3 0l5 5" /><path d="M14 14l1 -1c.928 -.893 2.072 -.893 3 0l3 3" /></svg>
+            {/if}
           </div>
-          <h3 class="text-xl font-semibold text-gray-900 dark:text-white">Media Preview</h3>
+          <h3 class="text-xl font-semibold text-gray-900 dark:text-white">
+            {mediaType === 'sidecar' ? 'Sidecar File' : 'Media Preview'}
+          </h3>
         </div>
 
         {#if file && mediaUrl}
@@ -713,7 +724,9 @@
               </div>
               <div class="bg-gray-50 dark:bg-gray-900 rounded-xl p-4">
                 <div class="text-xs font-semibold text-gray-500 dark:text-gray-500 uppercase tracking-wide mb-1">Type</div>
-                <p class="text-sm font-medium text-gray-900 dark:text-gray-100">{file.type || 'Unknown'}</p>
+                <p class="text-sm font-medium text-gray-900 dark:text-gray-100">
+                  {mediaType === 'sidecar' ? 'application/c2pa (sidecar)' : (file.type || 'Unknown')}
+                </p>
               </div>
               <div class="bg-gray-50 dark:bg-gray-900 rounded-xl p-4">
                 <div class="text-xs font-semibold text-gray-500 dark:text-gray-500 uppercase tracking-wide mb-1">Size</div>
@@ -749,6 +762,24 @@
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                     </svg>
                     Download PDF
+                  </a>
+                </div>
+              {:else if mediaType === 'sidecar'}
+                <div class="text-center max-w-md">
+                  <div class="w-20 h-20 mx-auto bg-gradient-to-br from-blue-500 to-indigo-600 dark:from-gray-600 dark:to-gray-700 rounded-2xl flex items-center justify-center text-white mb-6 shadow-lg">
+                    <svg class="w-10 h-10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M14 3v4a1 1 0 0 0 1 1h4" /><path d="M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2z" /><path d="M9 17h6" /><path d="M9 13h6" /></svg>
+                  </div>
+                  <p class="text-gray-900 dark:text-gray-100 mb-2 text-lg font-semibold">Standalone manifest sidecar</p>
+                  <p class="text-sm text-gray-600 dark:text-gray-400 leading-relaxed mb-4">
+                    This is a <code class="font-mono text-xs bg-gray-200 dark:bg-gray-700 px-1.5 py-0.5 rounded">.c2pa</code> file &mdash; a
+                    C2PA manifest store detached from its referenced asset. No embedded media to preview; the manifest&rsquo;s
+                    contents are shown below.
+                  </p>
+                  <a href={mediaUrl} download={file.name} class="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-lg transition-colors shadow-sm">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                    </svg>
+                    Download .c2pa
                   </a>
                 </div>
               {:else}

@@ -72,18 +72,23 @@ Base URL is dynamically set in `vite.config.ts` — `/` for Netlify, `/<repo-nam
 
 YAML-authored checks run against the crJSON in the browser. Mirrors the Python reference at `../../c2pa/conformance/asset-rubrics`. Composition (`include` directives, composables) is resolved at build time in the Python toolchain — we consume pre-built flat YAMLs and do **no** runtime composition or reference resolution.
 
+**Expression language**
+Rubric expressions are written in [json-formula](https://github.com/adobe/json-formula) (`@adobe/json-formula`), a JMESPath superset that adds arithmetic/string operators and Excel-style functions. Key syntax notes vs plain JMESPath: **single quotes** (`'c2pa.actions'`) quote identifiers (dotted or otherwise), **double quotes** (`"c2pa.created"`) are string literals, and the `&` operator is string concatenation (not expression-reference). The `_name()` named-expression and `$name` global-variable mechanisms below are json-formula features layered on top by the rubric evaluator.
+
 **Files**
 - `public/rubrics/index.json` — curated list the UI selector renders. Each entry: `{ id, filename, name, description, mode, category }`. `category` groups entries under section dividers in the selector (ordered by first appearance).
-- `public/rubrics/asset-rubric-*.yml` — pre-built rubric YAMLs. Two-doc format: `rubric_metadata:` then `---` then a list of statements (`id`, `expression`, `reportText`, optional `failIfMatched`, `description`).
-- `src/lib/rubrics/loader.ts` — fetch + parse rubric YAMLs.
-- `src/lib/rubrics/evaluate.ts` — document-mode evaluator. Passes the whole crJSON to JMESPath; statements produce pass/fail (expressions typically reference `manifests[0].*`). Used by integrity + conformance rubrics.
-- `src/lib/rubrics/perManifest.ts` — per-manifest evaluator. Iterates `report.manifests[]`, passes each manifest to JMESPath as the root, emits only truthy signals grouped by id prefix (`inception:` → localInceptions, `transformation:` → localTransformations). Also builds the ingredient DAG (parses `activeManifest.url` → bare `urn:c2pa:…` → index lookup) and resolves mimeType with a three-level priority chain (own claim → own thumbnail → child-ingredient back-fill).
+- `public/rubrics/asset-rubric-*.yml` — pre-built rubric YAMLs. Doc 0 carries `rubric_metadata:` plus optional `variables:` (shared `$name` globals) and `expressions:` (named reusable `_name()` expressions, which may reference `$arg0..$argN` positional parameters). Doc 1+ is the list of statements (`id`, `expression`, `reportText`, optional `failIfMatched`, `description`).
+- `src/lib/rubrics/loader.ts` — fetch + parse rubric YAMLs; extracts metadata + `variables` + `expressions` from doc 0.
+- `src/lib/rubrics/engine.ts` — thin wrapper around `@adobe/json-formula`. Builds a `JsonFormula` instance per rubric, pre-compiles every `expressions:` entry, registers each one as a custom function (`_name()`), and handles `$argN` positional parameters by injecting them into the interpreter's globals at call time with save/restore semantics. Exposes `createEngine(metadata)` returning a `{ search, variables }` facade.
+- `src/lib/rubrics/evaluate.ts` — document-mode evaluator. Passes the whole crJSON to json-formula (through `engine.search`); statements produce pass/fail (expressions typically reference `manifests[0].*`). Used by integrity + conformance rubrics.
+- `src/lib/rubrics/perManifest.ts` — per-manifest evaluator. Iterates `report.manifests[]`, passes each manifest to json-formula as the root, emits only truthy signals grouped by id prefix (`inception:` → localInceptions, `transformation:` → localTransformations). Also builds the ingredient DAG (parses `activeManifest.url` → bare `urn:c2pa:…` → index lookup) and resolves mimeType with a three-level priority chain (own claim → own thumbnail → child-ingredient back-fill).
 - `src/lib/rubrics/context.ts` — crJSON normalization: mirrors root-level `validationResults` into each manifest when missing, so `manifests[0].validationResults.*` expressions work uniformly.
 - `src/lib/rubrics/types.ts` — `RubricResult` (document mode), `SignalsRubricResult` (per-manifest mode), and `AnyRubricResult` discriminated union keyed by `mode`.
+- `src/lib/rubrics/json-formula.d.ts` — ambient type declarations for `@adobe/json-formula` (the package ships no `.d.ts`).
 - `src/lib/RubricsPanel.svelte` — UI. Renders the category-grouped selector, dispatches on `mode` to evaluate, renders both result shapes. Clears results when the `report` prop changes in place (so a new file doesn't show stale results on the active tab).
 
 **Evaluation semantics (port of the Python rules)**
-- JMESPath result coercion: list non-empty → true; bool preserved; number > 0 → true; null → false; other → true.
+- json-formula result coercion: list non-empty → true; bool preserved; number > 0 → true; null → false; other → true.
 - `failIfMatched: true` inverts: non-empty list → fail, `{{matches}}` substituted into reportText.
 - `reportText[passed ? 'true' : 'false'][locale]` with fallback to `default` and `DEFAULT_LOCALE` ("en").
 - Per-manifest mode drops falsy results entirely (only truthy signals surface).

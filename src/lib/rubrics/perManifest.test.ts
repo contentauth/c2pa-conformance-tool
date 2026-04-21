@@ -28,7 +28,7 @@ describe('per-manifest evaluator · local unit behavior', () => {
         "  reportText: { 'true': { en: nope } }",
         '- id: inception:list_signal',
         '  expression: |-',
-        "    assertions.\"c2pa.actions\".actions[?action == 'c2pa.created'].action",
+        "    assertions.'c2pa.actions'.actions[?action == \"c2pa.created\"].action",
         "  reportText: { 'true': { en: created } }",
       ].join('\n'),
       'inline',

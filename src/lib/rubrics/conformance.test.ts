@@ -36,7 +36,7 @@ describe('conformance rubric · shape invariants (0.1 spec 2.2)', () => {
     expect([...categories]).toEqual(['validation'])
   })
 
-  it('every statement has a JMESPath expression and reportText for "true" + "false"', () => {
+  it('every statement has a json-formula expression and reportText for "true" + "false"', () => {
     for (const s of rubric.statements) {
       expect(s.expression, `${s.id} missing expression`).toBeTruthy()
       expect(s.reportText?.['true'], `${s.id} missing reportText.true`).toBeTruthy()

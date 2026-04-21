@@ -11,13 +11,13 @@
  * cycle detection in this module.
  */
 
-/** A single check within a rubric. Evaluates one JMESPath expression. */
+/** A single check within a rubric. Evaluates one json-formula expression. */
 export interface RubricStatement {
   /** Stable identifier, usually "category:snake_case_name". */
   id: string
   /** Short human-readable description of the check. */
   description?: string
-  /** JMESPath expression evaluated against the crJSON context. */
+  /** json-formula expression evaluated against the crJSON context. */
   expression: string
   /**
    * When true, a truthy/non-empty match means the check FAILED.
@@ -45,6 +45,18 @@ export interface RubricMetadata {
   version?: string
   /** Default locale for reportText selection. */
   language?: string
+  /**
+   * Shared `$name → value` globals pulled from the rubric's top-level
+   * `variables:` block. Passed to every json-formula `search()` call so
+   * expressions can reference them as `$name`.
+   */
+  variables?: Record<string, unknown>
+  /**
+   * Named reusable expressions from the rubric's top-level `expressions:`
+   * block. Registered as custom json-formula functions (`_name()`). Values
+   * may reference `$argN` positional parameters.
+   */
+  expressions?: Record<string, string>
 }
 
 /** A full rubric — metadata + flat list of statements. */
@@ -56,12 +68,12 @@ export interface Rubric {
 /**
  * How the rubric should be evaluated.
  *
- *   - "document": the entire crJSON bundle is passed to JMESPath. Expressions
+ *   - "document": the entire crJSON bundle is passed to json-formula. Expressions
  *     typically reference `manifests[0].*`. Each statement produces a single
  *     pass/fail for the whole asset. Used by integrity / conformance rubrics.
  *
  *   - "per-manifest": the evaluator iterates `report.manifests[]` and passes
- *     each manifest to JMESPath as the root. Only *positive* (truthy)
+ *     each manifest to json-formula as the root. Only *positive* (truthy)
  *     outcomes are emitted, grouped by id prefix. Used by signals rubrics.
  */
 export type EvaluationMode = 'document' | 'per-manifest'
@@ -149,7 +161,7 @@ export interface StatementResult {
   passed: boolean | null
   /** Selected reportText, with `{{matches}}` substituted when applicable. */
   message: string
-  /** Raw JMESPath result (for debugging / UI deep-dive). */
+  /** Raw json-formula result (for debugging / UI deep-dive). */
   rawValue: unknown
   /** Error message if evaluation threw. */
   error?: string

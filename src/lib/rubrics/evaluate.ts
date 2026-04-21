@@ -4,7 +4,7 @@
  * Mirrors the coercion and reportText rules from the Python reference at
  * `c2pa_conformance_rubric_evaluator.py`. Key rules:
  *
- *   - JMESPath result coercion (normal case):
+ *   - json-formula result coercion (normal case):
  *       list   → passed = list.length > 0
  *       bool   → passed = val
  *       number → passed = val > 0
@@ -22,9 +22,9 @@
  *   - Any thrown error produces passed = null and an `error` field.
  */
 
-import { search as jmespathSearch, type JSONValue } from '@metrichor/jmespath'
 import type { CrJson } from '../crjson'
 import { buildEvalContext } from './context'
+import { createEngine, type RubricEngine } from './engine'
 import type { Rubric, RubricResult, RubricStatement, StatementResult } from './types'
 
 const DEFAULT_LOCALE = 'en'
@@ -37,7 +37,11 @@ export function evaluateRubric(
   const context = buildEvalContext(report)
   const locale = options.locale ?? rubric.metadata.language ?? DEFAULT_LOCALE
 
-  const statements = rubric.statements.map((s) => evaluateStatement(s, context, locale))
+  // One engine per evaluation — it closes over the rubric's variables and
+  // named expressions. Cheap enough that per-call is fine; statements reuse it.
+  const engine = createEngine(rubric.metadata)
+
+  const statements = rubric.statements.map((s) => evaluateStatement(s, context, locale, engine))
 
   const overallPassed = statements.every((s) => s.passed === true)
 
@@ -55,16 +59,19 @@ export function evaluateStatement(
   stmt: RubricStatement,
   context: unknown,
   locale: string = DEFAULT_LOCALE,
+  engine?: RubricEngine,
 ): StatementResult {
   const category = stmt.id.includes(':') ? stmt.id.split(':', 1)[0] : 'general'
+  // Allow ad-hoc single-statement evaluation without a rubric: fall back to a
+  // barebones engine that has no variables or named expressions. Unit tests
+  // and older callers rely on this.
+  const evalEngine = engine ?? createEngine({ name: 'ad-hoc' })
 
   let rawValue: unknown = undefined
   let error: string | undefined
 
   try {
-    // JMESPath operates on plain JSON data; our crJSON is JSON-compatible,
-    // but its static type is `unknown`, so we cast at the boundary.
-    rawValue = jmespathSearch(context as JSONValue, stmt.expression.trim())
+    rawValue = evalEngine.search(stmt.expression.trim(), context)
   } catch (e) {
     error = e instanceof Error ? e.message : String(e)
     return {

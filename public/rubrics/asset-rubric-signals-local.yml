@@ -4,13 +4,55 @@ rubric_metadata:
   date: '2026-03-31T05:00:00Z'
   version: 1.0.0
   language: en
+variables:
+  $non_editorial_actions:
+  - c2pa.created
+  - c2pa.opened
+  - c2pa.converted
+  - c2pa.published
+  - c2pa.repackaged
+  - c2pa.transcoded
+  - c2pa.resized.proportional
+  - c2pa.enhanced
+  - c2pa.edited.metadata
+  - c2pa.watermarked
+  - c2pa.watermarked.bound
+  - c2pa.watermarked.unbound
+  - c2pa.redacted
+  $non_editorial_transformation_actions:
+  - c2pa.converted
+  - c2pa.published
+  - c2pa.repackaged
+  - c2pa.transcoded
+  - c2pa.resized.proportional
+  - c2pa.enhanced
+  - c2pa.edited.metadata
+  - c2pa.watermarked
+  - c2pa.watermarked.bound
+  - c2pa.watermarked.unbound
+  - c2pa.redacted
+  $genai_dst_types:
+  - http://cv.iptc.org/newscodes/digitalsourcetype/trainedAlgorithmicMedia
+  - |-
+    http://cv.iptc.org/newscodes/digitalsourcetype/compositeWithTrainedAlgorithmicMedia
+  - http://cv.iptc.org/newscodes/digitalsourcetype/compositeSynthetic
+  $possibly_genai_dst_types:
+  - http://cv.iptc.org/newscodes/digitalsourcetype/digitalArt
+  - http://cv.iptc.org/newscodes/digitalsourcetype/composite
+expressions:
+  _hasActionsV2: |-
+    assertions.'c2pa.actions.v2' != null && length('claim.v2'.created_assertions[?contains(url, "c2pa.actions.v2")]) > 0
+  _signalActions: assertions.'c2pa.actions.v2'.actions
+  _createdWithDst: |-
+    _hasActionsV2() && length(_signalActions()[? action == "c2pa.created" && digitalSourceType == $arg0]) > 0
 
 ---
 
 - id: inception:signal_blankCanvas
   description: Check if the manifest contains a Blank Canvas inception signal
-  expression: |
-    assertions."c2pa.actions.v2" != null && length("claim.v2".created_assertions[?contains(url, 'c2pa.actions.v2')]) > `0` && length(assertions."c2pa.actions.v2".actions[? action == 'c2pa.created' && digitalSourceType == 'http://c2pa.org/digitalsourcetype/empty']) > `0`
+  expression: '_createdWithDst("http://c2pa.org/digitalsourcetype/empty")
+
+    '
   reportText:
     'true':
       en: Contains Blank Canvas
@@ -18,8 +60,7 @@ rubric_metadata:
       en: Does not contain Blank Canvas
 - id: inception:signal_capturedMedia
   description: Check if the manifest contains a Captured media inception signal
-  expression: |
-    assertions."c2pa.actions.v2" != null && length("claim.v2".created_assertions[?contains(url, 'c2pa.actions.v2')]) > `0` && length(assertions."c2pa.actions.v2".actions[? action == 'c2pa.created' && (digitalSourceType == 'http://cv.iptc.org/newscodes/digitalsourcetype/digitalCapture' || digitalSourceType == 'http://cv.iptc.org/newscodes/digitalsourcetype/computationalCapture')]) > `0`
+  expression: "_createdWithDst(\"http://cv.iptc.org/newscodes/digitalsourcetype/digitalCapture\") || \n_createdWithDst(\"http://cv.iptc.org/newscodes/digitalsourcetype/computationalCapture\")\n"
   reportText:
     'true':
       en: Contains Captured Media
@@ -28,7 +69,7 @@ rubric_metadata:
 - id: inception:signal_capturedMediaStitched
   description: Check if the manifest contains a Stitched Captured Media inception signal
   expression: |
-    assertions."c2pa.actions.v2" != null && length("claim.v2".created_assertions[?contains(url, 'c2pa.actions.v2')]) > `0` && length(assertions."c2pa.actions.v2".actions[? action == 'c2pa.created' && digitalSourceType == 'http://cv.iptc.org/newscodes/digitalsourcetype/compositeCapture']) > `0`
+    _createdWithDst("http://cv.iptc.org/newscodes/digitalsourcetype/compositeCapture")
   reportText:
     'true':
       en: Contains Stitched Captured Media
@@ -37,8 +78,9 @@ rubric_metadata:
 - id: inception:signal_compositionMayContainGenAI
   description: |-
     Check if the manifest contains a Composition which may contain GenAI content inception signal
-  expression: |
-    assertions."c2pa.actions.v2" != null && length("claim.v2".created_assertions[?contains(url, 'c2pa.actions.v2')]) > `0` && length(assertions."c2pa.actions.v2".actions[? action == 'c2pa.created' && digitalSourceType == 'http://cv.iptc.org/newscodes/digitalsourcetype/composite']) > `0`
+  expression: '_createdWithDst("http://cv.iptc.org/newscodes/digitalsourcetype/composite")
+
+    '
   reportText:
     'true':
       en: Contains Composition which may contain GenAI content
@@ -47,7 +89,7 @@ rubric_metadata:
 - id: inception:signal_fullyGenAIMedia
   description: Check if the manifest contains a Fully GenAI Media inception signal
   expression: |
-    assertions."c2pa.actions.v2" != null && length("claim.v2".created_assertions[?contains(url, 'c2pa.actions.v2')]) > `0` && length(assertions."c2pa.actions.v2".actions[? action == 'c2pa.created' && digitalSourceType == 'http://cv.iptc.org/newscodes/digitalsourcetype/trainedAlgorithmicMedia']) > `0`
+    _createdWithDst("http://cv.iptc.org/newscodes/digitalsourcetype/trainedAlgorithmicMedia")
   reportText:
     'true':
       en: Contains Fully GenAI Media
@@ -56,7 +98,8 @@ rubric_metadata:
 - id: inception:signal_mediaUnknownProvenance
   description: Check if the manifest contains a Media of Unknown Provenance inception signal
   expression: |
-    assertions."c2pa.ingredient.v3" != null && assertions."c2pa.ingredient.v3".activeManifest == null
+    assertions.'c2pa.ingredient.v3' != null &&
+    assertions.'c2pa.ingredient.v3'.activeManifest == null
   reportText:
     'true':
       en: Contains Media of Unknown Provenance
@@ -65,7 +108,7 @@ rubric_metadata:
 - id: inception:signal_nonGenAIDigitalCreation
   description: Check if the manifest contains a Non-GenAI digital creation inception signal
   expression: |
-    assertions."c2pa.actions.v2" != null && length("claim.v2".created_assertions[?contains(url, 'c2pa.actions.v2')]) > `0` && length(assertions."c2pa.actions.v2".actions[? action == 'c2pa.created' && digitalSourceType == 'http://cv.iptc.org/newscodes/digitalsourcetype/digitalCreation']) > `0`
+    _createdWithDst("http://cv.iptc.org/newscodes/digitalsourcetype/digitalCreation")
   reportText:
     'true':
       en: Contains Non-GenAI digital creation
@@ -74,7 +117,7 @@ rubric_metadata:
 - id: inception:signal_partlyGenAICreation
   description: Check if the manifest contains a Partly GenAI Creation inception signal
   expression: |
-    assertions."c2pa.actions.v2" != null && length("claim.v2".created_assertions[?contains(url, 'c2pa.actions.v2')]) > `0` && length(assertions."c2pa.actions.v2".actions[? action == 'c2pa.created' && digitalSourceType == 'http://cv.iptc.org/newscodes/digitalsourcetype/compositeWithTrainedAlgorithmicMedia']) > `0`
+    _createdWithDst("http://cv.iptc.org/newscodes/digitalsourcetype/compositeWithTrainedAlgorithmicMedia")
   reportText:
     'true':
       en: Contains Partly GenAI Creation
@@ -83,8 +126,9 @@ rubric_metadata:
 - id: inception:signal_screenCaptureMayContainGenAI
   description: |-
     Check if the manifest contains a Screen Capture Which May Contain GenAI Content inception signal
-  expression: |
-    assertions."c2pa.actions.v2" != null && length("claim.v2".created_assertions[?contains(url, 'c2pa.actions.v2')]) > `0` && length(assertions."c2pa.actions.v2".actions[? action == 'c2pa.created' && digitalSourceType == 'http://cv.iptc.org/newscodes/digitalsourcetype/screenCapture']) > `0`
+  expression: '_createdWithDst("http://cv.iptc.org/newscodes/digitalsourcetype/screenCapture")
+
+    '
   reportText:
     'true':
       en: Contains Screen Capture Which May Contain GenAI Content
@@ -93,7 +137,10 @@ rubric_metadata:
 - id: transformation:signal_editorialAI
   description: Check if the manifest contains an Editorial GenAI Transformations signal
   expression: |
-    assertions."c2pa.actions.v2" != null && length("claim.v2".created_assertions[?contains(url, 'c2pa.actions.v2')]) > `0` && length(assertions."c2pa.actions.v2".actions[? action != null && action != 'c2pa.created' && action != 'c2pa.opened' && action != 'c2pa.converted' && action != 'c2pa.published' && action != 'c2pa.repackaged' && action != 'c2pa.transcoded' && action != 'c2pa.resized.proportional' && action != 'c2pa.enhanced' && action != 'c2pa.edited.metadata' && action != 'c2pa.watermarked' && action != 'c2pa.watermarked.bound' && action != 'c2pa.watermarked.unbound' && action != 'c2pa.redacted' && (digitalSourceType == 'http://cv.iptc.org/newscodes/digitalsourcetype/trainedAlgorithmicMedia' || digitalSourceType == 'http://cv.iptc.org/newscodes/digitalsourcetype/compositeWithTrainedAlgorithmicMedia' || digitalSourceType == 'http://cv.iptc.org/newscodes/digitalsourcetype/compositeSynthetic')]) > `0`
+    _hasActionsV2() &&
+    length(_signalActions()[? action != null &&
+      !contains($non_editorial_actions, action) &&
+      contains($genai_dst_types, digitalSourceType)]) > 0
   reportText:
     'true':
       en: Contains Editorial GenAI Transformations
@@ -102,7 +149,11 @@ rubric_metadata:
 - id: transformation:signal_editorialNonAI
   description: Check if the manifest contains an Editorial Non-GenAI Transformations signal
   expression: |
-    assertions."c2pa.actions.v2" != null && length("claim.v2".created_assertions[?contains(url, 'c2pa.actions.v2')]) > `0` && length(assertions."c2pa.actions.v2".actions[? action != null && action != 'c2pa.created' && action != 'c2pa.opened' && action != 'c2pa.converted' && action != 'c2pa.published' && action != 'c2pa.repackaged' && action != 'c2pa.transcoded' && action != 'c2pa.resized.proportional' && action != 'c2pa.enhanced' && action != 'c2pa.edited.metadata' && action != 'c2pa.watermarked' && action != 'c2pa.watermarked.bound' && action != 'c2pa.watermarked.unbound' && action != 'c2pa.redacted' && digitalSourceType != null && (digitalSourceType != 'http://cv.iptc.org/newscodes/digitalsourcetype/trainedAlgorithmicMedia' && digitalSourceType != 'http://cv.iptc.org/newscodes/digitalsourcetype/compositeWithTrainedAlgorithmicMedia' && digitalSourceType != 'http://cv.iptc.org/newscodes/digitalsourcetype/compositeSynthetic')]) > `0`
+    _hasActionsV2() &&
+    length(_signalActions()[? action != null &&
+      !contains($non_editorial_actions, action) &&
+      digitalSourceType != null &&
+      !contains($genai_dst_types, digitalSourceType)]) > 0
   reportText:
     'true':
       en: Contains Editorial Non-GenAI Transformations
@@ -112,7 +163,10 @@ rubric_metadata:
   description: |-
     Check if the manifest contains an Editorial Transformations Possibly Using GenAI signal
   expression: |
-    assertions."c2pa.actions.v2" != null && length("claim.v2".created_assertions[?contains(url, 'c2pa.actions.v2')]) > `0` && length(assertions."c2pa.actions.v2".actions[? action != null && action != 'c2pa.created' && action != 'c2pa.opened' && action != 'c2pa.converted' && action != 'c2pa.published' && action != 'c2pa.repackaged' && action != 'c2pa.transcoded' && action != 'c2pa.resized.proportional' && action != 'c2pa.enhanced' && action != 'c2pa.edited.metadata' && action != 'c2pa.watermarked' && action != 'c2pa.watermarked.bound' && action != 'c2pa.watermarked.unbound' && action != 'c2pa.redacted' && (digitalSourceType == 'http://cv.iptc.org/newscodes/digitalsourcetype/digitalArt' || digitalSourceType == 'http://cv.iptc.org/newscodes/digitalsourcetype/composite')]) > `0`
+    _hasActionsV2() &&
+    length(_signalActions()[? action != null &&
+      !contains($non_editorial_actions, action) &&
+      contains($possibly_genai_dst_types, digitalSourceType)]) > 0
   reportText:
     'true':
       en: Contains Editorial Transformations Possibly Using GenAI
@@ -121,7 +175,9 @@ rubric_metadata:
 - id: transformation:signal_nonEditorial
   description: Check if the manifest contains a Non-Editorial Transformations signal
   expression: |
-    assertions."c2pa.actions.v2" != null && length("claim.v2".created_assertions[?contains(url, 'c2pa.actions.v2')]) > `0` && length(assertions."c2pa.actions.v2".actions[? action != null && action != 'c2pa.created' && action != 'c2pa.opened' && (action == 'c2pa.converted' || action == 'c2pa.published' || action == 'c2pa.repackaged' || action == 'c2pa.transcoded' || action == 'c2pa.resized.proportional' || action == 'c2pa.enhanced' || action == 'c2pa.edited.metadata' || action == 'c2pa.watermarked' || action == 'c2pa.watermarked.bound' || action == 'c2pa.watermarked.unbound' || action == 'c2pa.redacted')]) > `0`
+    _hasActionsV2() &&
+    length(_signalActions()[? action != null &&
+      contains($non_editorial_transformation_actions, action)]) > 0
   reportText:
     'true':
       en: Contains Non-editorial Transformations

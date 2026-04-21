@@ -7,9 +7,9 @@
  * `c2pa_signals_rubric_evaluator.py` (in asset-rubrics/). The algorithm:
  *
  *   1. Build a label → index mapping over `report.manifests`.
- *   2. For every manifest, run each statement's JMESPath expression with
- *      that manifest as the root. Only record signals where the result
- *      coerces to true.
+ *   2. For every manifest, run each statement's json-formula expression
+ *      with that manifest as the root. Only record signals where the
+ *      result coerces to true.
  *   3. Build the "mimeType" and ingredient-DAG metadata per manifest, so
  *      the UI can show ingredient edges, assertedBy, and allActionsIncluded.
  *
@@ -20,8 +20,8 @@
  * coupling when either evaluation mode grows.
  */
 
-import { search as jmespathSearch, type JSONValue } from '@metrichor/jmespath'
 import type { CrJson, CrJsonManifestEntry } from '../crjson'
+import { createEngine, type RubricEngine } from './engine'
 import type {
   AssertedBy,
   IngredientEdge,
@@ -42,6 +42,11 @@ export function evaluatePerManifest(
   const locale = options.locale ?? rubric.metadata.language ?? DEFAULT_LOCALE
   const manifests = Array.isArray(report.manifests) ? report.manifests : []
 
+  // One engine for the whole evaluation: its custom `_expression()` functions
+  // are pure (they re-evaluate their AST against whatever `data` is passed),
+  // so we can safely reuse a single instance across all manifests.
+  const engine = createEngine(rubric.metadata)
+
   // label → string index, mirroring the Python reference.
   const indexMapping = buildIndexMapping(manifests)
 
@@ -50,7 +55,7 @@ export function evaluatePerManifest(
   const mimeTypes = resolveMimeTypes(manifests, indexMapping)
 
   const manifestResults: ManifestSignalsResult[] = manifests.map((manifest, idx) => {
-    const signals = evaluateManifestSignals(manifest, rubric.statements, locale)
+    const signals = evaluateManifestSignals(manifest, rubric.statements, locale, engine)
 
     const localInceptions: SignalHit[] = []
     const localTransformations: SignalHit[] = []
@@ -85,6 +90,7 @@ function evaluateManifestSignals(
   manifest: CrJsonManifestEntry,
   statements: RubricStatement[],
   locale: string,
+  engine: RubricEngine,
 ): SignalHit[] {
   const hits: SignalHit[] = []
   for (const stmt of statements) {
@@ -92,7 +98,7 @@ function evaluateManifestSignals(
 
     let val: unknown
     try {
-      val = jmespathSearch(manifest as JSONValue, stmt.expression.trim())
+      val = engine.search(stmt.expression.trim(), manifest)
     } catch (e) {
       // Match Python: log and skip; don't let one bad expression kill the run.
       // eslint-disable-next-line no-console

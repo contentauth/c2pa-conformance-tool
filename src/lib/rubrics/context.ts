@@ -1,5 +1,5 @@
 /**
- * Build the JMESPath evaluation context from a crJSON report.
+ * Build the json-formula evaluation context from a crJSON report.
  *
  * The Python reference evaluator expects `validationResults` to live at
  * `manifests[i].validationResults` (so expressions like
@@ -15,9 +15,9 @@
 import type { CrJson, CrJsonManifestEntry } from '../crjson'
 
 /**
- * Evaluation context — a normalized crJSON ready for JMESPath.
+ * Evaluation context — a normalized crJSON ready for json-formula.
  *
- * Typed loosely as `Record<string, unknown>` because JMESPath doesn't care
+ * Typed loosely as `Record<string, unknown>` because json-formula doesn't care
  * about our nominal types and the rubric expressions reach into arbitrary
  * fields on assertions / claim / signature.
  */

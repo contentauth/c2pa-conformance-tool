@@ -4,43 +4,172 @@ rubric_metadata:
   date: '2026-03-31T05:00:00Z'
   version: 0.1.0
   language: en
+variables:
+  $well_formed_error_codes:
+  - assertion.action.malformed
+  - assertion.bmffHash.malformed
+  - assertion.boxesHash.malformed
+  - assertion.collectionHash.malformed
+  - assertion.dataHash.malformed
+  - assertion.external-reference.malformed
+  - assertion.ingredient.malformed
+  - assertion.alternativeContentRepresentation.malformed
+  - assertion.multiAssetHash.malformed
+  - assertion.cbor.invalid
+  - assertion.json.invalid
+  - claim.cbor.invalid
+  - claim.hardBindings.missing
+  - claim.malformed
+  - claim.missing
+  - claim.multiple
+  - hashedURI.missing
+  - ingredient.manifest.missing
+  - assertion.boxesHash.unknownBox
+  - assertion.multipleHardBindings
+  - manifest.compressed.invalid
+  - manifest.html.multipleManifests
+  - manifest.inaccessible
+  - manifest.multipleParents
+  - manifest.structuredText.emptyReference
+  - manifest.structuredText.malformedReference
+  - manifest.structuredText.multipleReferences
+  - manifest.structuredText.noManifest
+  - manifest.structuredText.noResolutionPath
+  - manifest.timestamp.invalid
+  - manifest.timestamp.wrongParents
+  - manifest.update.invalid
+  - manifest.update.wrongParents
+  - MISSING_VALIDATION_RESULTS
+  $valid_error_codes:
+  - assertion.action.ingredientMismatch
+  - assertion.action.redactionMismatch
+  - assertion.bmffHash.mismatch
+  - assertion.boxesHash.mismatch
+  - assertion.collectionHash.mismatch
+  - assertion.dataHash.mismatch
+  - assertion.external-reference.hashMismatch
+  - assertion.alternativeContentRepresentation.hashMismatch
+  - assertion.multiAssetHash.mismatch
+  - assertion.hashedURI.mismatch
+  - hashedURI.mismatch
+  - ingredient.manifest.mismatch
+  - ingredient.claimSignature.missing
+  - ingredient.claimSignature.mismatch
+  - claimSignature.missing
+  - MISSING_VALIDATION_RESULTS
+  $trust_error_codes:
+  - claimSignature.mismatch
+  - claimSignature.outsideValidity
+  - signingCredential.invalid
+  - signingCredential.ocsp.revoked
+  - signingCredential.untrusted
+  - MISSING_VALIDATION_RESULTS
+  $deprecated_assertion_labels:
+  - c2pa.claim
+  - c2pa.hash.bmff.v2
+  - c2pa.asset-type
+  - c2pa.ingredient
+  - c2pa.ingredient.v2
+  - c2pa.actions
+  $deprecated_action_labels:
+  - c2pa.copied
+  - c2pa.formatted
+  - c2pa.version_updated
+  - c2pa.printed
+  - c2pa.managed
+  - c2pa.produced
+  - c2pa.saved
+  - c2pa.color_adjustments
+  - c2pa.watermarked
+  $allowed_assertions_v22:
+  - c2pa.actions.v2
+  - c2pa.ingredient.v3
+  - c2pa.hash.boxes
+  - c2pa.hash.bmff.v3
+  - c2pa.collection-data
+  - c2pa.soft-binding
+  - c2pa.cloud-data
+  - c2pa.embedded-data
+  - c2pa.metadata
+  - c2pa.cert-status
+  - c2pa.asset-ref
+  - c2pa.asset-type.v2
+  - c2pa.hash.multi-asset
+  - c2pa.thumbnail.claim
+  - c2pa.thumbnail.ingredient
+  - c2pa.depthmap.GDepth
+  - c2pa.icon
+  $valid_relationship_values:
+  - parentOf
+  - inputTo
+  - componentOf
+  $human_entry_source_types:
+  - humanEntry.anonymous
+  - humanEntry.credentialed
+expressions:
+  _validationResults: |-
+    (manifests[0].validationResults || { failure: [{code: "MISSING_VALIDATION_RESULTS"}] })
+  _assertionKeys: keys(manifests[0].assertions || `{}`)
+  _assertionValues: values(manifests[0].assertions || `{}`)
+  _actionsV2: manifests[0].assertions.'c2pa.actions.v2'.actions || `[]`
+  _claimV2: manifests[0].'claim.v2'
+  _createdAssertions: manifests[0].'claim.v2'.created_assertions || `[]`
+  _ingredientAssertions: values(manifests[0].assertions || `{}`)[? relationship != null]
 
 ---
 
 - id: validation:inception_action_position
-  description: Check if an inception action is the first action in the first actions assertion in created_assertions
-  expression: |-
-    ends_with(not_null(manifests[0]."claim.v2".created_assertions[?contains(url, 'c2pa.actions')] | [0].url, ''), 'c2pa.actions.v2') && (length(manifests[0].assertions."c2pa.actions.v2".actions[?action == 'c2pa.created']) == `0` || contains(['c2pa.created', 'c2pa.opened'], manifests[0].assertions."c2pa.actions.v2".actions[0].action))
+  description: |-
+    Check if an inception action is the first action in the first actions assertion in created_assertions
+  expression: |
+    endsWith(notNull(_createdAssertions()[?contains(url, "c2pa.actions")] | [0].url, ""), "c2pa.actions.v2") &&
+    (length(_actionsV2()[?action == "c2pa.created"]) == 0 ||
+      contains(`["c2pa.created", "c2pa.opened"]`, _actionsV2()[0].action))
   reportText:
     'true':
-      en: Inception action is correctly positioned as the first item in the first created actions assertion
+      en: |-
+        Inception action is correctly positioned as the first item in the first created actions assertion
     'false':
-      en: Inception action is not in the first actions assertion of created_assertions (or first item is not an actions assertion)
+      en: |-
+        Inception action is not in the first actions assertion of created_assertions (or first item is not an actions assertion)
 - id: validation:thumbnail_location
   description: Ensure thumbnail assertions are in created_assertions, not gathered_assertions
   expression: |
-    length((manifests[0]."claim.v2".gathered_assertions || `[]`)[?contains(url, 'c2pa.thumbnail.claim') || contains(url, 'c2pa.thumbnail.ingredient')]) == `0` &&
-    (length(keys(manifests[0].assertions || `{}`)[?starts_with(@, 'c2pa.thumbnail.claim')]) == `0` || length((manifests[0]."claim.v2".created_assertions || `[]`)[?contains(url, 'c2pa.thumbnail.claim')]) > `0`) &&
-    (length(keys(manifests[0].assertions || `{}`)[?starts_with(@, 'c2pa.thumbnail.ingredient')]) == `0` || length((manifests[0]."claim.v2".created_assertions || `[]`)[?contains(url, 'c2pa.thumbnail.ingredient')]) > `0`)
+    length((_claimV2().gathered_assertions || `[]`)[?contains(url, "c2pa.thumbnail.claim") || contains(url, "c2pa.thumbnail.ingredient")]) == 0 &&
+    (length(_assertionKeys()[?startsWith(@, "c2pa.thumbnail.claim")]) == 0 || length(_createdAssertions()[?contains(url, "c2pa.thumbnail.claim")]) > 0) &&
+    (length(_assertionKeys()[?startsWith(@, "c2pa.thumbnail.ingredient")]) == 0 || length(_createdAssertions()[?contains(url, "c2pa.thumbnail.ingredient")]) > 0)
   reportText:
     'true':
       en: Thumbnail assertions are correctly located in created_assertions
     'false':
-      en: Thumbnail assertions found in gathered_assertions or missing from created_assertions
+      en: |-
+        Thumbnail assertions found in gathered_assertions or missing from created_assertions
+- id: validation:no_dst_for_opened_action
+  description: Check that c2pa.opened actions do not have digitalSourceType
+  expression: |
+    length(_actionsV2()[?action == 'c2pa.opened' && digitalSourceType != null]) == 0
+  reportText:
+    'true':
+      en: No c2pa.opened actions have a digitalSourceType
+    'false':
+      en: Found c2pa.opened actions with a digitalSourceType
 - id: validation:well_formed_data_present
   description: Check if validation results are present for structural analysis
-  expression: |-
-    manifests[0].validationResults != null
+  expression: 'manifests[0].validationResults != null
+
+    '
   reportText:
     'true':
       en: Validation results are present for structural analysis
     'false':
       en: Missing validation results in the manifest
 - id: validation:well_formed_success
-  description: Check if the asset has any structural or malformation failures (from the well-formed list)
+  description: |-
+    Check if the asset has any structural or malformation failures (from the well-formed list)
   failIfMatched: true
-  expression: |-
-    (manifests[0].validationResults || { failure: [{code: 'MISSING_VALIDATION_RESULTS'}] }).failure[?contains(['assertion.action.malformed', 'assertion.bmffHash.malformed', 'assertion.boxesHash.malformed', 'assertion.collectionHash.malformed', 'assertion.dataHash.malformed', 'assertion.external-reference.malformed', 'assertion.ingredient.malformed', 'assertion.alternativeContentRepresentation.malformed', 'assertion.multiAssetHash.malformed', 'assertion.cbor.invalid', 'assertion.json.invalid', 'claim.cbor.invalid', 'claim.hardBindings.missing', 'claim.malformed', 'claim.missing', 'claim.multiple', 'hashedURI.missing', 'ingredient.manifest.missing', 'assertion.boxesHash.unknownBox', 'assertion.multipleHardBindings', 'manifest.compressed.invalid', 'manifest.html.multipleManifests', 'manifest.inaccessible', 'manifest.multipleParents', 'manifest.structuredText.emptyReference', 'manifest.structuredText.malformedReference', 'manifest.structuredText.multipleReferences', 'manifest.structuredText.noManifest', 'manifest.structuredText.noResolutionPath', 'manifest.timestamp.invalid', 'manifest.timestamp.wrongParents', 'manifest.update.invalid', 'manifest.update.wrongParents', 'MISSING_VALIDATION_RESULTS'], code)].code
+  expression: '_validationResults().failure[?contains($well_formed_error_codes, code)].code
+
+    '
   reportText:
     'true':
       en: No structural failures found
@@ -48,8 +177,9 @@ rubric_metadata:
       en: 'Found structural failures: {{matches}}'
 - id: validation:valid_data_present
   description: Check if validation results are present for integrity analysis
-  expression: |-
-    manifests[0].validationResults != null
+  expression: 'manifests[0].validationResults != null
+
+    '
   reportText:
     'true':
       en: Validation results are present for integrity analysis
@@ -58,8 +188,9 @@ rubric_metadata:
 - id: validation:valid_success
   description: Check if the asset has any validation mismatches (from the valid list)
   failIfMatched: true
-  expression: |-
-    (manifests[0].validationResults || { failure: [{code: 'MISSING_VALIDATION_RESULTS'}] }).failure[?contains(['assertion.action.ingredientMismatch', 'assertion.action.redactionMismatch', 'assertion.bmffHash.mismatch', 'assertion.boxesHash.mismatch', 'assertion.collectionHash.mismatch', 'assertion.dataHash.mismatch', 'assertion.external-reference.hashMismatch', 'assertion.alternativeContentRepresentation.hashMismatch', 'assertion.multiAssetHash.mismatch', 'assertion.hashedURI.mismatch', 'hashedURI.mismatch', 'ingredient.manifest.mismatch', 'ingredient.claimSignature.missing', 'ingredient.claimSignature.mismatch', 'claimSignature.missing', 'MISSING_VALIDATION_RESULTS'], code)].code
+  expression: '_validationResults().failure[?contains($valid_error_codes, code)].code
+
+    '
   reportText:
     'true':
       en: No validation mismatches found
@@ -67,8 +198,9 @@ rubric_metadata:
       en: 'Found validation mismatches: {{matches}}'
 - id: validation:trusted_data_present
   description: Check if validation results are present for trust analysis
-  expression: |-
-    manifests[0].validationResults != null
+  expression: 'manifests[0].validationResults != null
+
+    '
   reportText:
     'true':
       en: Validation results are present for trust analysis
@@ -77,8 +209,9 @@ rubric_metadata:
 - id: validation:trusted_success
   description: Check if the asset has any trust failures (from the trusted list)
   failIfMatched: true
-  expression: |-
-    (manifests[0].validationResults || { failure: [{code: 'MISSING_VALIDATION_RESULTS'}] }).failure[?contains(['claimSignature.mismatch', 'claimSignature.outsideValidity', 'signingCredential.invalid', 'signingCredential.ocsp.revoked', 'signingCredential.untrusted', 'MISSING_VALIDATION_RESULTS'], code)].code
+  expression: '_validationResults().failure[?contains($trust_error_codes, code)].code
+
+    '
   reportText:
     'true':
       en: Asset is trusted
@@ -86,8 +219,9 @@ rubric_metadata:
       en: 'Found trust failures: {{matches}}'
 - id: validation:active_manifest_urn
   description: Check if the active manifest URN uses 'urn:c2pa:' prefix (v2.2+ requirement)
-  expression: |-
-    starts_with(not_null(manifests[0].label, ''), 'urn:c2pa:')
+  expression: 'startsWith(notNull(manifests[0].label, ""), "urn:c2pa:")
+
+    '
   reportText:
     'true':
       en: Active manifest URN uses standard 'urn:c2pa:' prefix
@@ -96,8 +230,8 @@ rubric_metadata:
 - id: validation:no_deprecated_assertions
   description: Check for known deprecated assertion labels (e.g. from v2.0 or earlier specs)
   failIfMatched: true
-  expression: |-
-    keys(manifests[0].assertions || `{}`)[?starts_with(@, 'stds.') || contains(['c2pa.claim', 'c2pa.hash.bmff.v2', 'c2pa.asset-type', 'c2pa.ingredient', 'c2pa.ingredient.v2', 'c2pa.actions'], @)]
+  expression: |
+    _assertionKeys()[?startsWith(@, "stds.") || contains($deprecated_assertion_labels, @)]
   reportText:
     'true':
       en: No deprecated standard assertions found
@@ -106,8 +240,29 @@ rubric_metadata:
 - id: validation:no_unsupported_assertions
   description: Check if all C2PA standard assertions are in the allow-list for Spec 2.2
   failIfMatched: true
-  expression: |-
-    keys(manifests[0].assertions || `{}`)[?starts_with(@, 'c2pa.') && !starts_with(@, 'c2pa.hash.data') && !contains(['c2pa.actions.v2', 'c2pa.ingredient.v3', 'c2pa.hash.boxes', 'c2pa.hash.bmff.v3', 'c2pa.collection-data', 'c2pa.soft-binding', 'c2pa.cloud-data', 'c2pa.embedded-data', 'c2pa.metadata', 'c2pa.cert-status', 'c2pa.asset-ref', 'c2pa.asset-type.v2', 'c2pa.hash.multi-asset', 'c2pa.thumbnail.claim', 'c2pa.thumbnail.ingredient', 'c2pa.depthmap.GDepth', 'c2pa.icon'], @) && !(contains(@, '__') && (starts_with(@, 'c2pa.actions.v2') || starts_with(@, 'c2pa.ingredient.v3') || starts_with(@, 'c2pa.hash.boxes') || starts_with(@, 'c2pa.hash.bmff.v3') || starts_with(@, 'c2pa.collection-data') || starts_with(@, 'c2pa.soft-binding') || starts_with(@, 'c2pa.cloud-data') || starts_with(@, 'c2pa.embedded-data') || starts_with(@, 'c2pa.metadata') || starts_with(@, 'c2pa.cert-status') || starts_with(@, 'c2pa.asset-ref') || starts_with(@, 'c2pa.asset-type.v2') || starts_with(@, 'c2pa.hash.multi-asset') || starts_with(@, 'c2pa.thumbnail.claim') || starts_with(@, 'c2pa.thumbnail.ingredient') || starts_with(@, 'c2pa.depthmap.GDepth') || starts_with(@, 'c2pa.icon'))) && !contains(['c2pa.claim', 'c2pa.hash.bmff.v2', 'c2pa.asset-type', 'c2pa.ingredient', 'c2pa.ingredient.v2', 'c2pa.actions'], @)]
+  expression: |
+    _assertionKeys()[?startsWith(@, "c2pa.") &&
+      !startsWith(@, "c2pa.hash.data") &&
+      !contains($allowed_assertions_v22, @) &&
+      !(contains(@, "__") && (
+        startsWith(@, "c2pa.actions.v2") ||
+        startsWith(@, "c2pa.ingredient.v3") ||
+        startsWith(@, "c2pa.hash.boxes") ||
+        startsWith(@, "c2pa.hash.bmff.v3") ||
+        startsWith(@, "c2pa.collection-data") ||
+        startsWith(@, "c2pa.soft-binding") ||
+        startsWith(@, "c2pa.cloud-data") ||
+        startsWith(@, "c2pa.embedded-data") ||
+        startsWith(@, "c2pa.metadata") ||
+        startsWith(@, "c2pa.cert-status") ||
+        startsWith(@, "c2pa.asset-ref") ||
+        startsWith(@, "c2pa.asset-type.v2") ||
+        startsWith(@, "c2pa.hash.multi-asset") ||
+        startsWith(@, "c2pa.thumbnail.claim") ||
+        startsWith(@, "c2pa.thumbnail.ingredient") ||
+        startsWith(@, "c2pa.depthmap.GDepth") ||
+        startsWith(@, "c2pa.icon"))) &&
+      !contains($deprecated_assertion_labels, @)]
   reportText:
     'true':
       en: All standard assertions are supported for Spec 2.2
@@ -115,8 +270,9 @@ rubric_metadata:
       en: 'Found unsupported or unknown standard C2PA assertions: {{matches}}'
 - id: validation:no_deprecated_actions
   description: Check for deprecated action types in c2pa.actions.v2
-  expression: |-
-    length((manifests[0].assertions."c2pa.actions.v2".actions || `[]`)[?contains(['c2pa.copied', 'c2pa.formatted', 'c2pa.version_updated', 'c2pa.printed', 'c2pa.managed', 'c2pa.produced', 'c2pa.saved', 'c2pa.color_adjustments', 'c2pa.watermarked'], action)]) == `0`
+  expression: 'length(_actionsV2()[?contains($deprecated_action_labels, action)]) == 0
+
+    '
   reportText:
     'true':
       en: No deprecated actions used
@@ -124,8 +280,8 @@ rubric_metadata:
       en: Found deprecated actions (e.g. c2pa.copied, c2pa.printed, etc.)
 - id: validation:review_ratings_datasource
   description: Check that reviewRatings is absent when dataSource type is human entry
-  expression: |-
-    length(values(manifests[0].assertions || `{}`)[? reviewRatings != null && contains(['humanEntry.anonymous', 'humanEntry.credentialed'], dataSource.type)]) == `0`
+  expression: |
+    length(_assertionValues()[? reviewRatings != null && contains($human_entry_source_types, dataSource.type)]) == 0
   reportText:
     'true':
       en: No invalid co-occurrence of reviewRatings and human entry dataSource
@@ -133,28 +289,35 @@ rubric_metadata:
       en: Found reviewRatings in an assertion with human entry dataSource
 - id: validation:ingredient_v3_no_active_manifest
   description: Check that ingredient v3 has no validationResults if no activeManifest
-  expression: |-
-    length(values(manifests[0].assertions || `{}`)[? relationship != null && activeManifest == null && validationResults != null]) == `0`
+  expression: |
+    length(_ingredientAssertions()[? activeManifest == null && validationResults != null]) == 0
   reportText:
     'true':
       en: Ingredient v3 assertions without activeManifest correctly omit validationResults
     'false':
-      en: Found ingredient v3 assertion without activeManifest but containing validationResults
+      en: |-
+        Found ingredient v3 assertion without activeManifest but containing validationResults
 - id: validation:ingredient_relationship_values
   description: Check that the relationship field in all ingredient assertions is valid
-  expression: |-
-    length(values(manifests[0].assertions || `{}`)[? relationship != null && !contains(['parentOf', 'inputTo', 'componentOf'], relationship)]) == `0`
+  expression: |
+    length(_ingredientAssertions()[? !contains($valid_relationship_values, relationship)]) == 0
   reportText:
     'true':
       en: All ingredient assertions have valid relationship values
     'false':
       en: Found ingredient assertion with invalid relationship value
 - id: validation:update_manifest_constraints
-  description: Check constraints for Update Manifests (no thumbnail, exactly one parentOf ingredient)
-  expression: |-
-    manifests[0].assertions."c2pa.hash.data" != null || length(values(manifests[0].assertions || `{}`)[? relationship != null]) == `0` || (manifests[0].assertions."c2pa.thumbnail.claim" == null && length(values(manifests[0].assertions || `{}`)[? relationship == 'parentOf']) == `1`)
+  description: |-
+    Check constraints for Update Manifests (no thumbnail, exactly one parentOf ingredient)
+  expression: |
+    manifests[0].assertions.'c2pa.hash.data' != null ||
+    length(_ingredientAssertions()) == 0 ||
+    (manifests[0].assertions.'c2pa.thumbnail.claim' == null &&
+      length(_ingredientAssertions()[? relationship == "parentOf"]) == 1)
   reportText:
     'true':
-      en: Update manifest constraints are satisfied (or manifest is not an update manifest)
+      en: |-
+        Update manifest constraints are satisfied (or manifest is not an update manifest)
     'false':
-      en: Update manifest violates constraints (has thumbnail or does not have exactly one parentOf ingredient)
+      en: |-
+        Update manifest violates constraints (has thumbnail or does not have exactly one parentOf ingredient)

@@ -7,6 +7,11 @@
  *     name: ...
  *     version: ...
  *     language: en
+ *   variables:                 # optional — shared $globals
+ *     $well_formed_error_codes: [...]
+ *   expressions:                # optional — named reusable expressions
+ *     _validationResults: |-
+ *       (manifests[0].validationResults || {...})
  *   ---
  *   - id: ...
  *     expression: ...
@@ -14,8 +19,9 @@
  *   - id: ...
  *     ...
  *
- * The first document is the metadata. The second (and any subsequent) document
- * is a list of statements; statements from all later docs are concatenated.
+ * The first document is the metadata (plus `variables` / `expressions` at the
+ * same top level). The second (and any subsequent) document is a list of
+ * statements; statements from all later docs are concatenated.
  */
 
 import { parseAllDocuments } from 'yaml'
@@ -99,27 +105,56 @@ export function parseRubricYaml(yamlText: string, filenameForError = '<inline>')
 function extractMetadata(doc: unknown, filenameForError: string): RubricMetadata {
   if (doc && typeof doc === 'object') {
     const obj = doc as Record<string, unknown>
+    // `variables` and `expressions` sit at the top level of doc 0, as
+    // siblings of `rubric_metadata`. Pull them out once here so both the
+    // wrapped and unwrapped shapes get the same treatment.
+    const variables = coerceStringKeyedObject(obj.variables)
+    const expressions = coerceStringExpressions(obj.expressions)
+
     // Preferred: wrapped under `rubric_metadata`.
     const wrapped = obj.rubric_metadata
     if (wrapped && typeof wrapped === 'object') {
-      return coerceMetadata(wrapped as Record<string, unknown>)
+      return coerceMetadata(wrapped as Record<string, unknown>, variables, expressions)
     }
     // Fallback: metadata fields directly at the top level of doc 0.
     if ('name' in obj) {
-      return coerceMetadata(obj)
+      return coerceMetadata(obj, variables, expressions)
     }
   }
   throw new Error(`Rubric ${filenameForError} is missing rubric_metadata`)
 }
 
-function coerceMetadata(obj: Record<string, unknown>): RubricMetadata {
+function coerceMetadata(
+  obj: Record<string, unknown>,
+  variables: Record<string, unknown> | undefined,
+  expressions: Record<string, string> | undefined,
+): RubricMetadata {
   return {
     name: String(obj.name ?? 'Unnamed Rubric'),
     issuer: obj.issuer != null ? String(obj.issuer) : undefined,
     date: obj.date != null ? String(obj.date) : undefined,
     version: obj.version != null ? String(obj.version) : undefined,
     language: obj.language != null ? String(obj.language) : undefined,
+    variables,
+    expressions,
   }
+}
+
+/** Accept any object with string keys. Returns `undefined` for null/arrays/non-objects. */
+function coerceStringKeyedObject(raw: unknown): Record<string, unknown> | undefined {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return undefined
+  return raw as Record<string, unknown>
+}
+
+/** Expressions must be `{ [name]: string }`; drop non-string values. */
+function coerceStringExpressions(raw: unknown): Record<string, string> | undefined {
+  const obj = coerceStringKeyedObject(raw)
+  if (!obj) return undefined
+  const out: Record<string, string> = {}
+  for (const [k, v] of Object.entries(obj)) {
+    if (typeof v === 'string') out[k] = v
+  }
+  return Object.keys(out).length > 0 ? out : undefined
 }
 
 function normalizeStatement(item: unknown, filenameForError: string): RubricStatement | null {

@@ -25,6 +25,7 @@
     "@tsconfig/svelte": "^5.0.2",
     "@vitest/ui": "^4.0.18",
     "autoprefixer": "^10.4.23",
+    "gh-pages": "^6.2.0",
     "happy-dom": "^20.4.0",
     "jsdom": "^27.4.0",
     "postcss": "^8.5.6",
@@ -34,12 +35,13 @@
     "tslib": "^2.6.2",
     "typescript": "^5.3.3",
     "vite": "^6.4.1",
-    "vitest": "^4.0.18",
-    "gh-pages": "^6.2.0"
+    "vitest": "^4.0.18"
   },
   "dependencies": {
+    "@adobe/json-formula": "^2.0.0",
     "@contentauth/c2pa-web": "^0.6.1",
     "@peculiar/x509": "^1.14.3",
-    "highlight.js": "^11.11.1"
+    "highlight.js": "^11.11.1",
+    "yaml": "^2.8.3"
   }
 }

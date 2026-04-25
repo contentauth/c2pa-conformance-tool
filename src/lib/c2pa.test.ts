@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import type { ValidationStatus } from '@contentauth/c2pa-web'
-import { processFile, getVersion } from './c2pa'
+import { processFile, getVersion, isSidecarFile, resolveMimeType, SIDECAR_MIME } from './c2pa'
 import type { ConformanceReport } from './types'
 
 // Track which validation is being called
@@ -130,6 +130,35 @@ describe('c2pa utilities', () => {
     it('should return the SDK version', async () => {
       const version = await getVersion()
       expect(version).toBe('@contentauth/c2pa-web v0.6.1')
+    })
+  })
+
+  describe('sidecar detection', () => {
+    // Browsers almost never set a MIME for .c2pa files, so extension-based
+    // detection is doing the real work here. We cover both shapes just in
+    // case a future environment fills in `type`.
+    it('detects a .c2pa file with no browser-reported MIME as a sidecar', () => {
+      const f = new File([new Uint8Array([0])], 'my-manifest.c2pa', { type: '' })
+      expect(isSidecarFile(f)).toBe(true)
+      expect(resolveMimeType(f)).toBe(SIDECAR_MIME)
+    })
+
+    it('detects a .c2pa file served as application/octet-stream', () => {
+      const f = new File([new Uint8Array([0])], 'my-manifest.c2pa', { type: 'application/octet-stream' })
+      expect(isSidecarFile(f)).toBe(true)
+      expect(resolveMimeType(f)).toBe(SIDECAR_MIME)
+    })
+
+    it('detects a file whose MIME is already application/c2pa', () => {
+      const f = new File([new Uint8Array([0])], 'no-extension', { type: SIDECAR_MIME })
+      expect(isSidecarFile(f)).toBe(true)
+      expect(resolveMimeType(f)).toBe(SIDECAR_MIME)
+    })
+
+    it('does NOT mis-detect a .jpg as a sidecar', () => {
+      const f = new File([new Uint8Array([0])], 'photo.jpg', { type: 'image/jpeg' })
+      expect(isSidecarFile(f)).toBe(false)
+      expect(resolveMimeType(f)).toBe('image/jpeg')
     })
   })
 

@@ -10,6 +10,24 @@ export function init(): void;
 
 export function read_manifest_store(file_bytes: Uint8Array, format: string, settings_json?: string | null): Promise<string>;
 
+/**
+ * Validate a detached (`.c2pa`) manifest store against its referenced asset.
+ *
+ * This is the sidecar-with-asset case: the C2PA manifest lives in its own file
+ * (`manifest_bytes`) and the asset whose hash-bindings the manifest claims
+ * lives separately (`asset_bytes`). We feed both into c2pa-rs's
+ * `with_manifest_data_and_stream_async`, which evaluates the asset-hash
+ * assertions *against the actual asset bytes* — something we cannot do with
+ * the single-blob `read_manifest_store` path.
+ *
+ * * `manifest_bytes` - raw bytes of the `.c2pa` sidecar (JUMBF manifest store).
+ * * `asset_bytes` - raw bytes of the referenced asset.
+ * * `asset_format` - MIME type of the asset (e.g. "image/jpeg"). The
+ *   sidecar's own format is always `application/c2pa` and the SDK infers that.
+ * * `settings_json` - trust settings (same shape as `read_manifest_store`).
+ */
+export function read_sidecar_manifest_store(manifest_bytes: Uint8Array, asset_bytes: Uint8Array, asset_format: string, settings_json?: string | null): Promise<string>;
+
 export type InitInput = RequestInfo | URL | Response | BufferSource | WebAssembly.Module;
 
 export interface InitOutput {
@@ -17,10 +35,11 @@ export interface InitOutput {
     readonly get_version: () => [number, number];
     readonly init: () => void;
     readonly read_manifest_store: (a: number, b: number, c: number, d: number, e: number, f: number) => any;
-    readonly wasm_bindgen__closure__destroy__h0667ea7aa0a255a7: (a: number, b: number) => void;
-    readonly wasm_bindgen__convert__closures_____invoke__hca39902318df4249: (a: number, b: number, c: any) => [number, number];
-    readonly wasm_bindgen__convert__closures_____invoke__h2986024ebf27e018: (a: number, b: number, c: any, d: any) => void;
-    readonly wasm_bindgen__convert__closures_____invoke__hdd2e4c5eb311bd94: (a: number, b: number) => void;
+    readonly read_sidecar_manifest_store: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number) => any;
+    readonly wasm_bindgen__closure__destroy__h82fa2966358c4802: (a: number, b: number) => void;
+    readonly wasm_bindgen__convert__closures_____invoke__h7a7db0cf662510dd: (a: number, b: number, c: any) => [number, number];
+    readonly wasm_bindgen__convert__closures_____invoke__h27230f37ec4b6815: (a: number, b: number, c: any, d: any) => void;
+    readonly wasm_bindgen__convert__closures_____invoke__h6775f40242fbe8e0: (a: number, b: number) => void;
     readonly __wbindgen_malloc: (a: number, b: number) => number;
     readonly __wbindgen_realloc: (a: number, b: number, c: number, d: number) => number;
     readonly __wbindgen_exn_store: (a: number) => void;

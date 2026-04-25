@@ -1,0 +1,330 @@
+{
+  "@context": {
+    "@vocab": "https://contentcredentials.org/crjson",
+    "extras": "https://contentcredentials.org/crjson/extras"
+  },
+  "manifests": [
+    {
+      "label": "urn:c2pa:e274ecd0-34ec-46b3-aa9d-d90dc10aa56a",
+      "assertions": {
+        "c2pa.thumbnail.ingredient": {
+          "format": "image/jpeg",
+          "identifier": "self#jumbf=/c2pa/urn:c2pa:e274ecd0-34ec-46b3-aa9d-d90dc10aa56a/c2pa.assertions/c2pa.thumbnail.ingredient",
+          "hash": "b64'rjYkR3i4FhakkodD6cqv392O79bjOuGQhfbYPh/AN+w="
+        },
+        "c2pa.ingredient.v3": {
+          "relationship": "parentOf",
+          "dc:title": "image.png",
+          "dc:format": "png",
+          "validationResults": {
+            "activeManifest": {
+              "success": [
+                {
+                  "code": "claimSignature.insideValidity",
+                  "url": "self#jumbf=/c2pa/urn:c2pa:adf57efd-c6bf-4ee2-9d3e-0f473a8ff16c/c2pa.signature",
+                  "explanation": "claim signature valid"
+                },
+                {
+                  "code": "claimSignature.validated",
+                  "url": "self#jumbf=/c2pa/urn:c2pa:adf57efd-c6bf-4ee2-9d3e-0f473a8ff16c/c2pa.signature",
+                  "explanation": "claim signature valid"
+                },
+                {
+                  "code": "assertion.hashedURI.match",
+                  "url": "self#jumbf=/c2pa/urn:c2pa:adf57efd-c6bf-4ee2-9d3e-0f473a8ff16c/c2pa.assertions/c2pa.actions.v2",
+                  "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/c2pa.actions.v2"
+                },
+                {
+                  "code": "assertion.hashedURI.match",
+                  "url": "self#jumbf=/c2pa/urn:c2pa:adf57efd-c6bf-4ee2-9d3e-0f473a8ff16c/c2pa.assertions/c2pa.hash.data",
+                  "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/c2pa.hash.data"
+                },
+                {
+                  "code": "assertion.dataHash.match",
+                  "url": "self#jumbf=/c2pa/urn:c2pa:adf57efd-c6bf-4ee2-9d3e-0f473a8ff16c/c2pa.assertions/c2pa.hash.data",
+                  "explanation": "data hash valid"
+                }
+              ],
+              "informational": [],
+              "failure": []
+            }
+          },
+          "instanceID": "xmp:iid:8c614a03-e296-4ff9-ad28-dc43088ac657",
+          "activeManifest": {
+            "url": "self#jumbf=/c2pa/urn:c2pa:adf57efd-c6bf-4ee2-9d3e-0f473a8ff16c",
+            "alg": "sha256",
+            "hash": "b64'TqZVTHsaDs4JonPfiaVbML7udhg4TAbcScqdudc5dk4=",
+            "pad": "b64'"
+          },
+          "claimSignature": {
+            "url": "self#jumbf=/c2pa/urn:c2pa:adf57efd-c6bf-4ee2-9d3e-0f473a8ff16c/c2pa.signature",
+            "alg": "sha256",
+            "hash": "b64'7rpHoq0UDMcas1hAPjBtSFdRoKPeszatNICO4k8lipo=",
+            "pad": "b64'"
+          },
+          "thumbnail": {
+            "url": "self#jumbf=c2pa.assertions/c2pa.thumbnail.ingredient",
+            "hash": "b64'rjYkR3i4FhakkodD6cqv392O79bjOuGQhfbYPh/AN+w=",
+            "pad": "b64'"
+          }
+        },
+        "c2pa.actions.v2": {
+          "actions": [
+            {
+              "action": "c2pa.opened",
+              "parameters": {
+                "ingredients": [
+                  {
+                    "url": "self#jumbf=c2pa.assertions/c2pa.ingredient.v3",
+                    "hash": "b64'GegYoWtgLHvOMUDooV9zuEnhsrPVKVDnW4XLXf7xUYo=",
+                    "pad": "b64'"
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "c2pa.hash.data": {
+          "exclusions": [
+            {
+              "start": 33,
+              "length": 71711
+            }
+          ],
+          "name": "jumbf manifest",
+          "alg": "sha256",
+          "hash": "b64'wy0JUOnYycBpEP1AkiRsBYQj8oJxf6iUDbj7tE8nuFk=",
+          "pad": "b64'AAAAAAAAAAA="
+        }
+      },
+      "claim.v2": {
+        "instanceID": "xmp:iid:f4e73b28-f7ed-4f73-aa2b-6b5cccd1dbb4",
+        "signature": "self#jumbf=/c2pa/urn:c2pa:e274ecd0-34ec-46b3-aa9d-d90dc10aa56a/c2pa.signature",
+        "claim_generator_info": {
+          "name": "ChatGPT",
+          "org.contentauth.c2pa_rs": "0.0.0"
+        },
+        "alg": "sha256",
+        "dc:title": "image.png",
+        "created_assertions": [
+          {
+            "url": "self#jumbf=c2pa.assertions/c2pa.thumbnail.ingredient",
+            "hash": "b64'rjYkR3i4FhakkodD6cqv392O79bjOuGQhfbYPh/AN+w="
+          },
+          {
+            "url": "self#jumbf=c2pa.assertions/c2pa.ingredient.v3",
+            "hash": "b64'GegYoWtgLHvOMUDooV9zuEnhsrPVKVDnW4XLXf7xUYo="
+          },
+          {
+            "url": "self#jumbf=c2pa.assertions/c2pa.actions.v2",
+            "hash": "b64'ocxu/8itRySQo/13V/3ve4jmsLQThuRYEHZT25PD5F8="
+          },
+          {
+            "url": "self#jumbf=c2pa.assertions/c2pa.hash.data",
+            "hash": "b64'4JnHtQ0bQQuSqf0yALwpoUOHR49mWGcf6/E9Sfg+LqQ="
+          }
+        ],
+        "gathered_assertions": []
+      },
+      "signature": {
+        "algorithm": "es256",
+        "certificateInfo": {
+          "serialNumber": "6c29a373fbdcc1d6bb48fc34ba5efa4004e0c446",
+          "issuer": {
+            "CN": "WebClaimSigningCA",
+            "OU": "Lens",
+            "O": "Truepic",
+            "C": "US"
+          },
+          "subject": {
+            "C": "US",
+            "O": "OpenAI",
+            "OU": "Sora",
+            "CN": "Truepic Lens CLI in Sora"
+          },
+          "validity": {
+            "notBefore": "2025-04-15T15:09:05+00:00",
+            "notAfter": "2026-04-15T15:09:04+00:00"
+          }
+        }
+      },
+      "validationResults": {
+        "success": [
+          {
+            "code": "claimSignature.insideValidity",
+            "url": "self#jumbf=/c2pa/urn:c2pa:e274ecd0-34ec-46b3-aa9d-d90dc10aa56a/c2pa.signature",
+            "explanation": "claim signature valid"
+          },
+          {
+            "code": "claimSignature.validated",
+            "url": "self#jumbf=/c2pa/urn:c2pa:e274ecd0-34ec-46b3-aa9d-d90dc10aa56a/c2pa.signature",
+            "explanation": "claim signature valid"
+          },
+          {
+            "code": "assertion.hashedURI.match",
+            "url": "self#jumbf=/c2pa/urn:c2pa:e274ecd0-34ec-46b3-aa9d-d90dc10aa56a/c2pa.assertions/c2pa.thumbnail.ingredient",
+            "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/c2pa.thumbnail.ingredient"
+          },
+          {
+            "code": "assertion.hashedURI.match",
+            "url": "self#jumbf=/c2pa/urn:c2pa:e274ecd0-34ec-46b3-aa9d-d90dc10aa56a/c2pa.assertions/c2pa.ingredient.v3",
+            "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/c2pa.ingredient.v3"
+          },
+          {
+            "code": "assertion.hashedURI.match",
+            "url": "self#jumbf=/c2pa/urn:c2pa:e274ecd0-34ec-46b3-aa9d-d90dc10aa56a/c2pa.assertions/c2pa.actions.v2",
+            "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/c2pa.actions.v2"
+          },
+          {
+            "code": "assertion.hashedURI.match",
+            "url": "self#jumbf=/c2pa/urn:c2pa:e274ecd0-34ec-46b3-aa9d-d90dc10aa56a/c2pa.assertions/c2pa.hash.data",
+            "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/c2pa.hash.data"
+          },
+          {
+            "code": "assertion.dataHash.match",
+            "url": "self#jumbf=/c2pa/urn:c2pa:e274ecd0-34ec-46b3-aa9d-d90dc10aa56a/c2pa.assertions/c2pa.hash.data",
+            "explanation": "data hash valid"
+          }
+        ],
+        "informational": [],
+        "failure": [
+          {
+            "code": "signingCredential.untrusted",
+            "url": "self#jumbf=/c2pa/urn:c2pa:e274ecd0-34ec-46b3-aa9d-d90dc10aa56a/c2pa.signature",
+            "explanation": "signing certificate untrusted"
+          }
+        ],
+        "specVersion": "2.3.0",
+        "validationTime": "2026-03-31T05:51:57.503+00:00"
+      },
+      "ingredientDeltas": [
+        {
+          "ingredientAssertionURI": "self#jumbf=/c2pa/urn:c2pa:e274ecd0-34ec-46b3-aa9d-d90dc10aa56a/c2pa.assertions/c2pa.ingredient.v3",
+          "validationDeltas": {
+            "success": [
+              {
+                "code": "ingredient.manifest.validated",
+                "url": "self#jumbf=/c2pa/urn:c2pa:adf57efd-c6bf-4ee2-9d3e-0f473a8ff16c",
+                "explanation": "ingredient hash matched"
+              }
+            ],
+            "informational": [],
+            "failure": [
+              {
+                "code": "signingCredential.untrusted",
+                "url": "self#jumbf=/c2pa/urn:c2pa:adf57efd-c6bf-4ee2-9d3e-0f473a8ff16c/c2pa.signature",
+                "explanation": "signing certificate untrusted"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "label": "urn:c2pa:adf57efd-c6bf-4ee2-9d3e-0f473a8ff16c",
+      "assertions": {
+        "c2pa.actions.v2": {
+          "actions": [
+            {
+              "action": "c2pa.created",
+              "softwareAgent": {
+                "name": "GPT-4o"
+              },
+              "digitalSourceType": "http://cv.iptc.org/newscodes/digitalsourcetype/trainedAlgorithmicMedia"
+            },
+            {
+              "action": "c2pa.converted"
+            }
+          ]
+        },
+        "c2pa.hash.data": {
+          "exclusions": [
+            {
+              "start": 33,
+              "length": 14118
+            }
+          ],
+          "name": "jumbf manifest",
+          "alg": "sha256",
+          "hash": "b64'wy0JUOnYycBpEP1AkiRsBYQj8oJxf6iUDbj7tE8nuFk=",
+          "pad": "b64'AAAAAAAAAAA="
+        }
+      },
+      "claim.v2": {
+        "instanceID": "xmp:iid:4a3c2a89-6c9c-4f46-bb0d-fd201c8d9957",
+        "signature": "self#jumbf=/c2pa/urn:c2pa:adf57efd-c6bf-4ee2-9d3e-0f473a8ff16c/c2pa.signature",
+        "claim_generator_info": {
+          "name": "ChatGPT",
+          "org.contentauth.c2pa_rs": "0.0.0"
+        },
+        "alg": "sha256",
+        "dc:title": "image.png",
+        "created_assertions": [
+          {
+            "url": "self#jumbf=c2pa.assertions/c2pa.actions.v2",
+            "hash": "b64'j06jKi2a0YnaYj1JQTJA/fXaKbmaViQasY2WYTITPLU="
+          },
+          {
+            "url": "self#jumbf=c2pa.assertions/c2pa.hash.data",
+            "hash": "b64'hsxg8DbXsyiU7mFA+DF56T8dgofZbPNplpHuRg36ya4="
+          }
+        ],
+        "gathered_assertions": []
+      },
+      "signature": {
+        "algorithm": "es256",
+        "certificateInfo": {
+          "serialNumber": "6c29a373fbdcc1d6bb48fc34ba5efa4004e0c446",
+          "issuer": {
+            "CN": "WebClaimSigningCA",
+            "OU": "Lens",
+            "O": "Truepic",
+            "C": "US"
+          },
+          "subject": {
+            "C": "US",
+            "O": "OpenAI",
+            "OU": "Sora",
+            "CN": "Truepic Lens CLI in Sora"
+          },
+          "validity": {
+            "notBefore": "2025-04-15T15:09:05+00:00",
+            "notAfter": "2026-04-15T15:09:04+00:00"
+          }
+        }
+      },
+      "validationResults": {
+        "success": [
+          {
+            "code": "ingredient.manifest.validated",
+            "url": "self#jumbf=/c2pa/urn:c2pa:adf57efd-c6bf-4ee2-9d3e-0f473a8ff16c",
+            "explanation": "ingredient hash matched"
+          }
+        ],
+        "informational": [],
+        "failure": [
+          {
+            "code": "signingCredential.untrusted",
+            "url": "self#jumbf=/c2pa/urn:c2pa:adf57efd-c6bf-4ee2-9d3e-0f473a8ff16c/c2pa.signature",
+            "explanation": "signing certificate untrusted"
+          }
+        ],
+        "specVersion": "2.3.0",
+        "validationTime": "2026-03-31T05:51:57.503+00:00"
+      }
+    }
+  ],
+  "jsonGenerator": {
+    "name": "c2pa-rs",
+    "version": "0.78.0"
+  },
+  "usedITL": false,
+  "usedTestCerts": false,
+  "_conformanceToolVersion": {
+    "commit": "d291fb884e02665d169a38928392c2710f6f0953",
+    "shortCommit": "d291fb8",
+    "date": "2026-03-19 20:11:48 -0400",
+    "branch": "HEAD",
+    "generatedAt": "2026-03-23T18:42:00.448Z"
+  }
+}

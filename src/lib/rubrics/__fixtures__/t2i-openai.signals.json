@@ -1,0 +1,47 @@
+{
+  "rubricName": "C2PA Asset Signals Rubric (Local)",
+  "rubricVersion": "1.0.0",
+  "manifests": [
+    {
+      "assertedBy": {
+        "CN": "Truepic Lens CLI in Sora",
+        "O": "OpenAI",
+        "OU": "Sora"
+      },
+      "mimeType": "image/jpeg",
+      "localInceptions": [],
+      "localTransformations": [],
+      "allActionsIncluded": false,
+      "ingredients": [
+        {
+          "index": 1,
+          "relationship": "parentOf"
+        }
+      ]
+    },
+    {
+      "assertedBy": {
+        "CN": "Truepic Lens CLI in Sora",
+        "O": "OpenAI",
+        "OU": "Sora"
+      },
+      "mimeType": "png",
+      "localInceptions": [
+        {
+          "trait": "inception:signal_fullyGenAIMedia",
+          "reportText": "Contains Fully GenAI Media",
+          "multiple": false
+        }
+      ],
+      "localTransformations": [
+        {
+          "trait": "transformation:signal_nonEditorial",
+          "reportText": "Contains Non-editorial Transformations",
+          "multiple": false
+        }
+      ],
+      "allActionsIncluded": false,
+      "ingredients": []
+    }
+  ]
+}

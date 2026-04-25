@@ -1,0 +1,72 @@
+{
+  "rubricName": "C2PA Asset Conformance 0.1 Spec 2.2 Rubric",
+  "rubricVersion": "0.1.0",
+  "true": {
+    "validation": [
+      {
+        "trait": "active_manifest_urn",
+        "reportText": "Active manifest URN uses standard 'urn:c2pa:' prefix"
+      },
+      {
+        "trait": "inception_action_position",
+        "reportText": "Inception action is correctly positioned as the first item in the first created actions assertion"
+      },
+      {
+        "trait": "ingredient_relationship_values",
+        "reportText": "All ingredient assertions have valid relationship values"
+      },
+      {
+        "trait": "ingredient_v3_no_active_manifest",
+        "reportText": "Ingredient v3 assertions without activeManifest correctly omit validationResults"
+      },
+      {
+        "trait": "no_deprecated_actions",
+        "reportText": "No deprecated actions used"
+      },
+      {
+        "trait": "no_deprecated_assertions",
+        "reportText": "No deprecated standard assertions found"
+      },
+      {
+        "trait": "no_unsupported_assertions",
+        "reportText": "All standard assertions are supported for Spec 2.2"
+      },
+      {
+        "trait": "review_ratings_datasource",
+        "reportText": "No invalid co-occurrence of reviewRatings and human entry dataSource"
+      },
+      {
+        "trait": "trusted_data_present",
+        "reportText": "Validation results are present for trust analysis"
+      },
+      {
+        "trait": "trusted_success",
+        "reportText": "Asset is trusted"
+      },
+      {
+        "trait": "valid_data_present",
+        "reportText": "Validation results are present for integrity analysis"
+      },
+      {
+        "trait": "valid_success",
+        "reportText": "No validation mismatches found"
+      },
+      {
+        "trait": "well_formed_data_present",
+        "reportText": "Validation results are present for structural analysis"
+      },
+      {
+        "trait": "well_formed_success",
+        "reportText": "No structural failures found"
+      }
+    ]
+  },
+  "false": {
+    "validation": [
+      {
+        "trait": "update_manifest_constraints",
+        "reportText": "Update manifest violates constraints (has thumbnail or does not have exactly one parentOf ingredient)"
+      }
+    ]
+  }
+}

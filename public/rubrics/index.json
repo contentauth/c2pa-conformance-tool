@@ -20,7 +20,7 @@
       "id": "asset-conformance-0.2-spec2.2",
       "filename": "asset-rubric-conformance0.2-spec2.2.yml",
       "name": "Asset Conformance 0.2 \u00b7 Spec 2.2",
-      "description": "Full conformance rubric for C2PA Spec 2.2, conformance profile 0.2 (adds specVersion and thumbnail-location checks).",
+      "description": "Full conformance rubric for C2PA Spec 2.2, conformance profile 0.2 (adds the mandatory specVersion check).",
       "mode": "document",
       "category": "Conformance"
     },

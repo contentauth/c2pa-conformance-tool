@@ -91,7 +91,7 @@ variables:
   - c2pa.cloud-data
   - c2pa.embedded-data
   - c2pa.metadata
-  - c2pa.cert-status
+  - c2pa.certificate-status
   - c2pa.asset-ref
   - c2pa.asset-type.v2
   - c2pa.hash.multi-asset
@@ -99,12 +99,14 @@ variables:
   - c2pa.thumbnail.ingredient
   - c2pa.depthmap.GDepth
   - c2pa.icon
-  - c2pa.alternativeContentRepresentation
+  - c2pa.alternative-content-representation
   - c2pa.external-reference
   - c2pa.session-keys
   - c2pa.environmental-sustainability
   - c2pa.repository-receipt
   - c2pa.ai-disclosure
+  - c2pa.assertion.metadata
+  - c2pa.time-stamp
   $valid_relationship_values:
   - parentOf
   - inputTo
@@ -151,22 +153,10 @@ expressions:
     'false':
       en: |-
         Inception action is not in the first actions assertion of created_assertions (or first item is not an actions assertion)
-- id: validation:thumbnail_location
-  description: Ensure thumbnail assertions are in created_assertions, not gathered_assertions
-  expression: |
-    length((_claimV2().gathered_assertions || `[]`)[?contains(url, "c2pa.thumbnail.claim") || contains(url, "c2pa.thumbnail.ingredient")]) == 0 &&
-    (length(_assertionKeys()[?startsWith(@, "c2pa.thumbnail.claim")]) == 0 || length(_createdAssertions()[?contains(url, "c2pa.thumbnail.claim")]) > 0) &&
-    (length(_assertionKeys()[?startsWith(@, "c2pa.thumbnail.ingredient")]) == 0 || length(_createdAssertions()[?contains(url, "c2pa.thumbnail.ingredient")]) > 0)
-  reportText:
-    'true':
-      en: Thumbnail assertions are correctly located in created_assertions
-    'false':
-      en: |-
-        Thumbnail assertions found in gathered_assertions or missing from created_assertions
 - id: validation:no_dst_for_opened_action
   description: Check that c2pa.opened actions do not have digitalSourceType
   expression: |
-    length(_actionsV2()[?action == 'c2pa.opened' && digitalSourceType != null]) == 0
+    length(_actionsV2()[?action == "c2pa.opened" && digitalSourceType != null()]) == 0
   reportText:
     'true':
       en: No c2pa.opened actions have a digitalSourceType
@@ -273,30 +263,7 @@ expressions:
     _assertionKeys()[?startsWith(@, "c2pa.") &&
       !startsWith(@, "c2pa.hash.data") &&
       !contains($allowed_assertions_v24, @) &&
-      !(contains(@, "__") && (
-        startsWith(@, "c2pa.actions.v2") ||
-        startsWith(@, "c2pa.ingredient.v3") ||
-        startsWith(@, "c2pa.hash.boxes") ||
-        startsWith(@, "c2pa.hash.bmff.v3") ||
-        startsWith(@, "c2pa.collection-data") ||
-        startsWith(@, "c2pa.soft-binding") ||
-        startsWith(@, "c2pa.cloud-data") ||
-        startsWith(@, "c2pa.embedded-data") ||
-        startsWith(@, "c2pa.metadata") ||
-        startsWith(@, "c2pa.cert-status") ||
-        startsWith(@, "c2pa.asset-ref") ||
-        startsWith(@, "c2pa.asset-type.v2") ||
-        startsWith(@, "c2pa.hash.multi-asset") ||
-        startsWith(@, "c2pa.thumbnail.claim") ||
-        startsWith(@, "c2pa.thumbnail.ingredient") ||
-        startsWith(@, "c2pa.depthmap.GDepth") ||
-        startsWith(@, "c2pa.alternativeContentRepresentation") ||
-        startsWith(@, "c2pa.external-reference") ||
-        startsWith(@, "c2pa.session-keys") ||
-        startsWith(@, "c2pa.environmental-sustainability") ||
-        startsWith(@, "c2pa.repository-receipt") ||
-        startsWith(@, "c2pa.ai-disclosure") ||
-        startsWith(@, "c2pa.icon"))) &&
+      !(contains(@, "__") && contains(startsWith(@, $allowed_assertions_v24), true)) &&
       !contains($deprecated_assertion_labels, @)]
   reportText:
     'true':

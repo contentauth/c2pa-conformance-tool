@@ -61,7 +61,10 @@ export function createEngine(metadata: RubricMetadata): RubricEngine {
   for (const [name, exprStr] of Object.entries(expressions)) {
     const arity = argCount(exprStr)
     try {
-      compiled.set(name, { ast: compileHelper.compile(exprStr, allowedGlobals), arity })
+      compiled.set(name, {
+        ast: compileHelper.compile(normalizeExpression(exprStr), allowedGlobals),
+        arity,
+      })
     } catch (err) {
       compiled.set(name, {
         ast: null,
@@ -84,9 +87,97 @@ export function createEngine(metadata: RubricMetadata): RubricEngine {
   return {
     variables,
     search(expression: string, data: unknown): unknown {
-      return engine.search(expression, data, variables)
+      return engine.search(normalizeExpression(expression), data, variables)
     },
   }
+}
+
+/**
+ * Rewrite bare `true` / `false` / `null` keywords to their zero-arg function
+ * form (`true()`, etc.).
+ *
+ * Why: `@adobe/json-formula` 2.0 registers `true`/`false`/`null` as zero-arg
+ * functions but does NOT auto-invoke them when written without parens — bare
+ * `true` is parsed as a field access (current value's `true` property),
+ * which yields `null` and breaks `contains([...], true)`. The reference
+ * Python `json-formula` package tolerates the bare form, so upstream rubrics
+ * are written that way (e.g. the `no_unsupported_assertions` rule:
+ * `contains(startsWith(@, $allowed), true)`). Normalizing here keeps the
+ * pre-built YAMLs unmodified relative to upstream while still evaluating
+ * correctly in the browser.
+ *
+ * The walk is string-aware: it skips over `"..."` (string literals),
+ * `'...'` (quoted identifiers), and `` `...` `` (JSON literals) so a
+ * keyword inside a string is never rewritten. It also leaves identifiers
+ * like `is_true` or `truely` alone (word-boundary check), and skips any
+ * keyword already followed by `(`.
+ */
+export function normalizeExpression(expr: string): string {
+  if (typeof expr !== 'string' || expr.length === 0) return expr
+  const KEYWORDS = new Set(['true', 'false', 'null'])
+  // Characters that count as "word" for the purpose of identifier detection.
+  const isWordChar = (ch: string | undefined) =>
+    ch != null && /[A-Za-z0-9_$]/.test(ch)
+
+  let out = ''
+  let i = 0
+  while (i < expr.length) {
+    const ch = expr[i]
+
+    // Skip string-like spans untouched: " ' and `.
+    if (ch === '"' || ch === "'" || ch === '`') {
+      const quote = ch
+      out += ch
+      i += 1
+      while (i < expr.length && expr[i] !== quote) {
+        if (expr[i] === '\\' && i + 1 < expr.length) {
+          out += expr[i] + expr[i + 1]
+          i += 2
+        } else {
+          out += expr[i]
+          i += 1
+        }
+      }
+      if (i < expr.length) {
+        out += expr[i] // closing quote
+        i += 1
+      }
+      continue
+    }
+
+    // Try to match one of the bare keywords at this position. They must:
+    //   - not be preceded by a word char (so we don't touch `is_true`),
+    //   - not be followed by a word char (so we don't touch `truely`),
+    //   - not be already followed by `(` (so we don't touch `true()`).
+    const prev = i > 0 ? expr[i - 1] : undefined
+    if (!isWordChar(prev)) {
+      let matched: string | undefined
+      for (const kw of KEYWORDS) {
+        if (
+          expr.startsWith(kw, i) &&
+          !isWordChar(expr[i + kw.length])
+        ) {
+          matched = kw
+          break
+        }
+      }
+      if (matched) {
+        // Look past whitespace for an opening `(` — if present, it's already
+        // a function call and we leave it alone.
+        let j = i + matched.length
+        while (j < expr.length && /\s/.test(expr[j])) j += 1
+        if (expr[j] !== '(') {
+          out += `${matched}()`
+          i += matched.length
+          continue
+        }
+      }
+    }
+
+    out += ch
+    i += 1
+  }
+  return out
 }
 
 /** Count the highest `$argN` index referenced in an expression, +1. Zero if none. */

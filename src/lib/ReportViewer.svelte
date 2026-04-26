@@ -5,6 +5,7 @@
   import ManifestSummary from './ManifestSummary.svelte'
   import RubricsPanel from './RubricsPanel.svelte'
   import type { ConformanceReport, ValidationStatusItem, AssertionSummaryItem, CrJsonManifestEntry } from './types'
+  import type { ManifestSignalsResult } from './rubrics/types'
   import {
     getAssertionsList,
     getIngredientsFromManifest,
@@ -12,6 +13,7 @@
     getClaimInfo,
     getActiveManifestValidationStatus
   } from './crjson'
+  import { evaluateReportSignals } from './summarySignals'
   import { VALIDATION_STATUS } from './constants'
 
   $: rawJsonHighlighted = (() => {
@@ -172,6 +174,23 @@
   $: signatureInfo = activeManifest ? getSignatureInfo(activeManifest) : undefined
   $: claimInfo = activeManifest ? getClaimInfo(activeManifest) : undefined
 
+  // Per-manifest signal hits powering the rubric-driven sentence in the
+  // summary card. Re-evaluated whenever `report` changes; null while the
+  // async load is in flight or if the rubric couldn't be loaded.
+  let activeManifestSignals: ManifestSignalsResult | null = null
+  $: {
+    activeManifestSignals = null
+    if (report) {
+      const reportSnapshot = report
+      evaluateReportSignals(reportSnapshot).then((result) => {
+        // Guard against a stale resolution clobbering a newer report's value.
+        if (report === reportSnapshot) {
+          activeManifestSignals = result?.manifests[0] ?? null
+        }
+      })
+    }
+  }
+
   // Get validation results from crJSON (document-level or per-manifest from c2pa-rs)
   $: validationResults = getActiveManifestValidationStatus(report)
 
@@ -180,13 +199,22 @@
     status.code === VALIDATION_STATUS.SIGNING_CREDENTIAL_TRUSTED
   ) ?? false
 
-  // True if validation recorded zero failure entries for the active manifest.
-  // Rubrics are only meaningful when the manifest is both trusted AND has no
-  // validation failures, so the tab is gated on both.
-  $: hasNoValidationFailures = (validationResults?.failure?.length ?? 0) === 0
-
-  // Combined gate for the Rubrics tab.
-  $: rubricsAvailable = isTrusted && hasNoValidationFailures
+  // Gate for the Rubrics tab: trusted signature is enough.
+  //
+  // We deliberately do NOT require an empty failure array. The rubrics
+  // (integrity, conformance) are *designed* to enumerate validation failures
+  // — their `validation:*_success` rules read directly out of
+  // `validationResults.failure[]`. Hiding the tab when failures exist
+  // would hide the very report meant to explain them. Trust-adjacent
+  // non-fatal codes (e.g. `signingCredential.ocsp.inaccessible`,
+  // `signingCredential.expired`, `timeStamp.untrusted`) are common with
+  // test-cert and offline/dev workflows; gating on those locked the tab
+  // out for legitimate cases.
+  //
+  // If a rubric expression throws (e.g. on a structurally-malformed
+  // manifest), the engine catches it and renders the failure in the
+  // panel's "Errored" section — so the soft case is still safe.
+  $: rubricsAvailable = isTrusted
 
   // Check if signature is using Interim Trust List
   $: usedITL = report.usedITL === true
@@ -797,6 +825,7 @@
             manifest={activeManifest}
             ingredients={ingredientsList}
             mimeType={file?.type ?? ''}
+            signals={activeManifestSignals}
             {usedITL}
             {isTrusted}
           />

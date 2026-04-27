@@ -1,0 +1,1378 @@
+{
+  "@context": {
+    "@vocab": "https://contentcredentials.org/crjson",
+    "extras": "https://contentcredentials.org/crjson/extras"
+  },
+  "manifests": [
+    {
+      "label": "urn:c2pa:840f88ed-cc8b-c4d9-ded4-4b41633a8371",
+      "assertions": {
+        "c2pa.hash.boxes": {
+          "boxes": [
+            {
+              "names": [
+                "PNGh",
+                "IHDR",
+                "iTXt"
+              ],
+              "hash": "b64'UAn6NvKU888EjzhqrP0Gjnbqledw4/pu1jAbm3FGk3M=",
+              "pad": "b64'",
+              "pad2": "b64'"
+            },
+            {
+              "names": [
+                "C2PA"
+              ],
+              "hash": "b64'AA==",
+              "pad": "b64'",
+              "pad2": "b64'"
+            },
+            {
+              "names": [
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IDAT",
+                "IEND"
+              ],
+              "hash": "b64'um7jea+l3NiG0mjxptpK8gzGU1R7Fy+Wk2Yxb52HDkg=",
+              "pad": "b64'",
+              "pad2": "b64'"
+            }
+          ],
+          "alg": "sha256"
+        },
+        "c2pa.actions.v2": {
+          "actions": [
+            {
+              "action": "c2pa.opened",
+              "parameters": {
+                "ingredients": [
+                  {
+                    "url": "self#jumbf=c2pa.assertions/c2pa.ingredient.v3",
+                    "hash": "b64'zUGzL5QIbeApvXcsdkb8zXhKUYICckoRSlxUOurr4Qc=",
+                    "pad": "b64'"
+                  }
+                ]
+              }
+            },
+            {
+              "action": "c2pa.edited",
+              "description": "Added imperceptible SynthID watermark",
+              "digitalSourceType": "http://cv.iptc.org/newscodes/digitalsourcetype/trainedAlgorithmicMedia"
+            },
+            {
+              "action": "c2pa.edited",
+              "description": "Added visible watermark",
+              "digitalSourceType": "http://cv.iptc.org/newscodes/digitalsourcetype/composite"
+            },
+            {
+              "action": "c2pa.converted",
+              "description": "Converted to .png"
+            }
+          ]
+        },
+        "c2pa.ingredient.v3": {
+          "relationship": "parentOf",
+          "validationResults": {
+            "activeManifest": {
+              "success": [
+                {
+                  "code": "signingCredential.ocsp.notRevoked",
+                  "url": "self#jumbf=/c2pa/urn:c2pa:964aabeb-447d-453a-f767-455d60eb8f09/c2pa.signature"
+                },
+                {
+                  "code": "timeStamp.validated",
+                  "url": "self#jumbf=/c2pa/urn:c2pa:964aabeb-447d-453a-f767-455d60eb8f09/c2pa.signature"
+                },
+                {
+                  "code": "timeStamp.trusted",
+                  "url": "self#jumbf=/c2pa/urn:c2pa:964aabeb-447d-453a-f767-455d60eb8f09/c2pa.signature"
+                },
+                {
+                  "code": "signingCredential.trusted",
+                  "url": "self#jumbf=/c2pa/urn:c2pa:964aabeb-447d-453a-f767-455d60eb8f09/c2pa.signature"
+                },
+                {
+                  "code": "claimSignature.insideValidity",
+                  "url": "self#jumbf=/c2pa/urn:c2pa:964aabeb-447d-453a-f767-455d60eb8f09/c2pa.signature"
+                },
+                {
+                  "code": "claimSignature.validated",
+                  "url": "self#jumbf=/c2pa/urn:c2pa:964aabeb-447d-453a-f767-455d60eb8f09/c2pa.signature"
+                },
+                {
+                  "code": "assertion.hashedURI.match",
+                  "url": "self#jumbf=/c2pa/urn:c2pa:964aabeb-447d-453a-f767-455d60eb8f09/c2pa.assertions/c2pa.ingredient.v3"
+                },
+                {
+                  "code": "assertion.hashedURI.match",
+                  "url": "self#jumbf=/c2pa/urn:c2pa:964aabeb-447d-453a-f767-455d60eb8f09/c2pa.assertions/c2pa.actions.v2"
+                },
+                {
+                  "code": "assertion.hashedURI.match",
+                  "url": "self#jumbf=/c2pa/urn:c2pa:964aabeb-447d-453a-f767-455d60eb8f09/c2pa.assertions/c2pa.hash.data"
+                },
+                {
+                  "code": "ingredient.claimSignature.validated",
+                  "url": "self#jumbf=/c2pa/urn:c2pa:964aabeb-447d-453a-f767-455d60eb8f09/c2pa.assertions/c2pa.ingredient.v3"
+                },
+                {
+                  "code": "assertion.dataHash.match",
+                  "url": "self#jumbf=/c2pa/urn:c2pa:964aabeb-447d-453a-f767-455d60eb8f09/c2pa.assertions/c2pa.hash.data"
+                }
+              ],
+              "informational": [],
+              "failure": []
+            },
+            "ingredientDeltas": [
+              {
+                "ingredientAssertionURI": "self#jumbf=/c2pa/urn:c2pa:964aabeb-447d-453a-f767-455d60eb8f09/c2pa.assertions/c2pa.ingredient.v3",
+                "validationDeltas": {
+                  "success": [],
+                  "informational": [],
+                  "failure": []
+                }
+              }
+            ]
+          },
+          "activeManifest": {
+            "url": "self#jumbf=/c2pa/urn:c2pa:964aabeb-447d-453a-f767-455d60eb8f09",
+            "hash": "b64'NhbmtLPvGKUK49B8JO64rPiuNUbup+kxl9ntq/Y98Ks=",
+            "pad": "b64'"
+          },
+          "claimSignature": {
+            "url": "self#jumbf=/c2pa/urn:c2pa:964aabeb-447d-453a-f767-455d60eb8f09/c2pa.signature",
+            "hash": "b64'QcCN4Um3G4WElKSIORMyKdGlfTQ6C7b5cxF7el+IeVw=",
+            "pad": "b64'"
+          }
+        }
+      },
+      "claim.v2": {
+        "instanceID": "4cfcb3b4-b210-4d7e-4555-4c6b853ccb69",
+        "signature": "self#jumbf=/c2pa/urn:c2pa:840f88ed-cc8b-c4d9-ded4-4b41633a8371/c2pa.signature",
+        "claim_generator_info": {
+          "name": "Google C2PA Core Generator Library",
+          "version": "839267052:839267052"
+        },
+        "alg": "sha256",
+        "created_assertions": [
+          {
+            "url": "self#jumbf=c2pa.assertions/c2pa.ingredient.v3",
+            "hash": "b64'zUGzL5QIbeApvXcsdkb8zXhKUYICckoRSlxUOurr4Qc="
+          },
+          {
+            "url": "self#jumbf=c2pa.assertions/c2pa.actions.v2",
+            "hash": "b64'bnUpvMC335K44qfKeOzD71ljKMP6IE7U63HHF0Ic2vg="
+          },
+          {
+            "url": "self#jumbf=c2pa.assertions/c2pa.hash.boxes",
+            "hash": "b64'1vGD7QlmodKqQ26fqbRcJvp5msLSuq77ujvSP5/Xam4="
+          }
+        ],
+        "gathered_assertions": []
+      },
+      "signature": {
+        "algorithm": "es256",
+        "certificateInfo": {
+          "serialNumber": "861352a867db32ba70726ad50ed2e2b3b4ead2",
+          "issuer": {
+            "C": "US",
+            "O": "Google LLC",
+            "CN": "Google C2PA Media Services 1P ICA G3"
+          },
+          "subject": {
+            "C": "US",
+            "O": "Google LLC",
+            "OU": "Google System 67154",
+            "CN": "Google Media Processing Services"
+          },
+          "validity": {
+            "notBefore": "2025-07-30T10:58:39+00:00",
+            "notAfter": "2026-01-26T10:58:38+00:00"
+          }
+        },
+        "timeStampInfo": {
+          "timestamp": "2025-12-05T15:16:03+00:00",
+          "certificateInfo": {
+            "serialNumber": "7b519970ffd75a959d0c40d74e86f1d7702483",
+            "issuer": {
+              "C": "US",
+              "O": "Google LLC",
+              "CN": "Google C2PA Core Time-Stamping ICA G3"
+            },
+            "subject": {
+              "C": "US",
+              "O": "Google LLC",
+              "CN": "Google Core Time Stamping Authority T11"
+            },
+            "validity": {
+              "notBefore": "2025-09-08T13:48:59+00:00",
+              "notAfter": "2031-09-09T01:48:58+00:00"
+            }
+          }
+        }
+      },
+      "validationResults": {
+        "success": [
+          {
+            "code": "timeStamp.validated",
+            "url": "self#jumbf=/c2pa/urn:c2pa:840f88ed-cc8b-c4d9-ded4-4b41633a8371/c2pa.signature",
+            "explanation": "timestamp message digest matched: Google Core Time Stamping Authority T11"
+          },
+          {
+            "code": "timeStamp.trusted",
+            "url": "self#jumbf=/c2pa/urn:c2pa:840f88ed-cc8b-c4d9-ded4-4b41633a8371/c2pa.signature",
+            "explanation": "timestamp cert trusted: Google Core Time Stamping Authority T11"
+          },
+          {
+            "code": "signingCredential.trusted",
+            "url": "self#jumbf=/c2pa/urn:c2pa:840f88ed-cc8b-c4d9-ded4-4b41633a8371/c2pa.signature",
+            "explanation": "signing certificate trusted, found in System trust anchors"
+          },
+          {
+            "code": "claimSignature.insideValidity",
+            "url": "self#jumbf=/c2pa/urn:c2pa:840f88ed-cc8b-c4d9-ded4-4b41633a8371/c2pa.signature",
+            "explanation": "claim signature valid"
+          },
+          {
+            "code": "claimSignature.validated",
+            "url": "self#jumbf=/c2pa/urn:c2pa:840f88ed-cc8b-c4d9-ded4-4b41633a8371/c2pa.signature",
+            "explanation": "claim signature valid"
+          },
+          {
+            "code": "assertion.hashedURI.match",
+            "url": "self#jumbf=/c2pa/urn:c2pa:840f88ed-cc8b-c4d9-ded4-4b41633a8371/c2pa.assertions/c2pa.ingredient.v3",
+            "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/c2pa.ingredient.v3"
+          },
+          {
+            "code": "assertion.hashedURI.match",
+            "url": "self#jumbf=/c2pa/urn:c2pa:840f88ed-cc8b-c4d9-ded4-4b41633a8371/c2pa.assertions/c2pa.actions.v2",
+            "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/c2pa.actions.v2"
+          },
+          {
+            "code": "assertion.hashedURI.match",
+            "url": "self#jumbf=/c2pa/urn:c2pa:840f88ed-cc8b-c4d9-ded4-4b41633a8371/c2pa.assertions/c2pa.hash.boxes",
+            "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/c2pa.hash.boxes"
+          },
+          {
+            "code": "assertion.boxesHash.match",
+            "url": "self#jumbf=/c2pa/urn:c2pa:840f88ed-cc8b-c4d9-ded4-4b41633a8371/c2pa.assertions/c2pa.hash.boxes",
+            "explanation": "boxes hash valid"
+          }
+        ],
+        "informational": [
+          {
+            "code": "signingCredential.ocsp.notRevoked",
+            "url": "self#jumbf=/c2pa/urn:c2pa:840f88ed-cc8b-c4d9-ded4-4b41633a8371/c2pa.signature",
+            "explanation": "signing cert not revoked: 2989983117039450197712507261014569595627170514"
+          }
+        ],
+        "failure": [],
+        "specVersion": "2.3.0",
+        "validationTime": "2026-03-31T04:16:15.411+00:00"
+      },
+      "ingredientDeltas": [
+        {
+          "ingredientAssertionURI": "self#jumbf=/c2pa/urn:c2pa:840f88ed-cc8b-c4d9-ded4-4b41633a8371/c2pa.assertions/c2pa.ingredient.v3",
+          "validationDeltas": {
+            "success": [
+              {
+                "code": "ingredient.manifest.validated",
+                "url": "self#jumbf=/c2pa/urn:c2pa:964aabeb-447d-453a-f767-455d60eb8f09",
+                "explanation": "ingredient hash matched"
+              }
+            ],
+            "informational": [
+              {
+                "code": "signingCredential.ocsp.notRevoked",
+                "url": "self#jumbf=/c2pa/urn:c2pa:964aabeb-447d-453a-f767-455d60eb8f09/c2pa.signature",
+                "explanation": "signing cert not revoked: 2848987360631057089626022484736785301855189030"
+              }
+            ],
+            "failure": []
+          }
+        }
+      ]
+    },
+    {
+      "label": "urn:c2pa:964aabeb-447d-453a-f767-455d60eb8f09",
+      "assertions": {
+        "c2pa.hash.data": {
+          "exclusions": [
+            {
+              "start": 20,
+              "length": 13689
+            }
+          ],
+          "alg": "sha256",
+          "hash": "b64'mA6cnDTpCb6ci4LvKrzhx5fsxWfqLH3aGQE5jLXIpk0=",
+          "pad": "b64'AAAAAAAAAAAAAAAAAAA="
+        },
+        "c2pa.actions.v2": {
+          "actions": [
+            {
+              "action": "c2pa.created",
+              "description": "Created by Google Generative AI.",
+              "digitalSourceType": "http://cv.iptc.org/newscodes/digitalsourcetype/trainedAlgorithmicMedia",
+              "parameters": {
+                "ingredients": [
+                  {
+                    "url": "self#jumbf=c2pa.assertions/c2pa.ingredient.v3",
+                    "hash": "b64'ndFGLQ/R4urVZaXE/9RKp1TbDoOJ8y46lqugAG7EUZY=",
+                    "pad": "b64'"
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "c2pa.ingredient.v3": {
+          "relationship": "inputTo",
+          "dc:format": "image/jpeg",
+          "validationResults": {
+            "activeManifest": {
+              "success": [
+                {
+                  "code": "signingCredential.ocsp.notRevoked",
+                  "url": "self#jumbf=/c2pa/urn:c2pa:dfdfab00-b60a-9324-d754-4b43b6dfd0d4/c2pa.signature"
+                },
+                {
+                  "code": "timeStamp.validated",
+                  "url": "self#jumbf=/c2pa/urn:c2pa:dfdfab00-b60a-9324-d754-4b43b6dfd0d4/c2pa.signature"
+                },
+                {
+                  "code": "timeStamp.trusted",
+                  "url": "self#jumbf=/c2pa/urn:c2pa:dfdfab00-b60a-9324-d754-4b43b6dfd0d4/c2pa.signature"
+                },
+                {
+                  "code": "signingCredential.trusted",
+                  "url": "self#jumbf=/c2pa/urn:c2pa:dfdfab00-b60a-9324-d754-4b43b6dfd0d4/c2pa.signature"
+                },
+                {
+                  "code": "claimSignature.insideValidity",
+                  "url": "self#jumbf=/c2pa/urn:c2pa:dfdfab00-b60a-9324-d754-4b43b6dfd0d4/c2pa.signature"
+                },
+                {
+                  "code": "claimSignature.validated",
+                  "url": "self#jumbf=/c2pa/urn:c2pa:dfdfab00-b60a-9324-d754-4b43b6dfd0d4/c2pa.signature"
+                },
+                {
+                  "code": "assertion.hashedURI.match",
+                  "url": "self#jumbf=/c2pa/urn:c2pa:dfdfab00-b60a-9324-d754-4b43b6dfd0d4/c2pa.assertions/c2pa.actions.v2"
+                },
+                {
+                  "code": "assertion.hashedURI.match",
+                  "url": "self#jumbf=/c2pa/urn:c2pa:dfdfab00-b60a-9324-d754-4b43b6dfd0d4/c2pa.assertions/c2pa.hash.data"
+                },
+                {
+                  "code": "assertion.dataHash.match",
+                  "url": "self#jumbf=/c2pa/urn:c2pa:dfdfab00-b60a-9324-d754-4b43b6dfd0d4/c2pa.assertions/c2pa.hash.data"
+                }
+              ],
+              "informational": [],
+              "failure": []
+            }
+          },
+          "activeManifest": {
+            "url": "self#jumbf=/c2pa/urn:c2pa:dfdfab00-b60a-9324-d754-4b43b6dfd0d4",
+            "hash": "b64'UB/dPy1WQQka/4eQf0QBKZyKyuEEUGqBTWIodIwNdXE=",
+            "pad": "b64'"
+          },
+          "claimSignature": {
+            "url": "self#jumbf=/c2pa/urn:c2pa:dfdfab00-b60a-9324-d754-4b43b6dfd0d4/c2pa.signature",
+            "hash": "b64'0scUoK5Igplaqe8YzY3IWsFxVN7Y7oPRSFEPle/eGxY=",
+            "pad": "b64'"
+          },
+          "description": "Input ingredient 0"
+        }
+      },
+      "claim.v2": {
+        "instanceID": "d1eb9e0e-d0a1-cb9f-d729-4e9f3a28da29",
+        "signature": "self#jumbf=/c2pa/urn:c2pa:964aabeb-447d-453a-f767-455d60eb8f09/c2pa.signature",
+        "claim_generator_info": {
+          "name": "Google C2PA Core Generator Library",
+          "version": "839419279:839419279"
+        },
+        "alg": "sha256",
+        "created_assertions": [
+          {
+            "url": "self#jumbf=c2pa.assertions/c2pa.ingredient.v3",
+            "hash": "b64'ndFGLQ/R4urVZaXE/9RKp1TbDoOJ8y46lqugAG7EUZY="
+          },
+          {
+            "url": "self#jumbf=c2pa.assertions/c2pa.actions.v2",
+            "hash": "b64'/5tLIovgZI7o1BGqV3OtWt2kVH6VOqO8HynYl1dAxBU="
+          },
+          {
+            "url": "self#jumbf=c2pa.assertions/c2pa.hash.data",
+            "hash": "b64'NBOukQ9msadngJnTCpPvC0qcDj3ysCPXfGS7iUiJLXQ="
+          }
+        ],
+        "gathered_assertions": []
+      },
+      "signature": {
+        "algorithm": "es256",
+        "certificateInfo": {
+          "serialNumber": "7fc0c55eb602ce830f9dfdd04ab00c459eb826",
+          "issuer": {
+            "C": "US",
+            "O": "Google LLC",
+            "CN": "Google C2PA Media Services 1P ICA G3"
+          },
+          "subject": {
+            "C": "US",
+            "O": "Google LLC",
+            "OU": "Google System 60032",
+            "CN": "Google Media Processing Services"
+          },
+          "validity": {
+            "notBefore": "2025-10-30T22:34:47+00:00",
+            "notAfter": "2026-10-25T22:34:46+00:00"
+          }
+        },
+        "timeStampInfo": {
+          "timestamp": "2025-12-05T15:16:00+00:00",
+          "certificateInfo": {
+            "serialNumber": "7b519970ffd75a959d0c40d74e86f1d7702483",
+            "issuer": {
+              "C": "US",
+              "O": "Google LLC",
+              "CN": "Google C2PA Core Time-Stamping ICA G3"
+            },
+            "subject": {
+              "C": "US",
+              "O": "Google LLC",
+              "CN": "Google Core Time Stamping Authority T11"
+            },
+            "validity": {
+              "notBefore": "2025-09-08T13:48:59+00:00",
+              "notAfter": "2031-09-09T01:48:58+00:00"
+            }
+          }
+        }
+      },
+      "validationResults": {
+        "success": [
+          {
+            "code": "ingredient.manifest.validated",
+            "url": "self#jumbf=/c2pa/urn:c2pa:964aabeb-447d-453a-f767-455d60eb8f09",
+            "explanation": "ingredient hash matched"
+          }
+        ],
+        "informational": [
+          {
+            "code": "signingCredential.ocsp.notRevoked",
+            "url": "self#jumbf=/c2pa/urn:c2pa:964aabeb-447d-453a-f767-455d60eb8f09/c2pa.signature",
+            "explanation": "signing cert not revoked: 2848987360631057089626022484736785301855189030"
+          }
+        ],
+        "failure": [],
+        "specVersion": "2.3.0",
+        "validationTime": "2026-03-31T04:16:15.411+00:00"
+      }
+    },
+    {
+      "label": "urn:c2pa:dfdfab00-b60a-9324-d754-4b43b6dfd0d4",
+      "assertions": {
+        "c2pa.hash.data": {
+          "exclusions": [
+            {
+              "start": 20,
+              "length": 5991
+            }
+          ],
+          "alg": "sha256",
+          "hash": "b64'o1R7dQ1vZ9tUvnnxcKK5+6RHin56UBJQiIM3fADDeeM=",
+          "pad": "b64'AAAAAAAAAAAAAAAAAAA="
+        },
+        "c2pa.actions.v2": {
+          "actions": [
+            {
+              "action": "c2pa.created",
+              "description": "Created by Google Generative AI.",
+              "digitalSourceType": "http://cv.iptc.org/newscodes/digitalsourcetype/trainedAlgorithmicMedia"
+            }
+          ]
+        }
+      },
+      "claim.v2": {
+        "instanceID": "793da6ce-4f26-2ecd-100a-4956742768a7",
+        "signature": "self#jumbf=/c2pa/urn:c2pa:dfdfab00-b60a-9324-d754-4b43b6dfd0d4/c2pa.signature",
+        "claim_generator_info": {
+          "name": "Google C2PA Core Generator Library",
+          "version": "839419279:839419279"
+        },
+        "alg": "sha256",
+        "created_assertions": [
+          {
+            "url": "self#jumbf=c2pa.assertions/c2pa.actions.v2",
+            "hash": "b64'0iRpWnXaCPtJwlIc8RruokSxpMzbiXQ7NBM1qAtHaWY="
+          },
+          {
+            "url": "self#jumbf=c2pa.assertions/c2pa.hash.data",
+            "hash": "b64'CGdetlWF4JnbDL2p2SGAC5kcoaBXTxm7R218V+UbCX8="
+          }
+        ],
+        "gathered_assertions": []
+      },
+      "signature": {
+        "algorithm": "es256",
+        "certificateInfo": {
+          "serialNumber": "7fc0c55eb602ce830f9dfdd04ab00c459eb826",
+          "issuer": {
+            "C": "US",
+            "O": "Google LLC",
+            "CN": "Google C2PA Media Services 1P ICA G3"
+          },
+          "subject": {
+            "C": "US",
+            "O": "Google LLC",
+            "OU": "Google System 60032",
+            "CN": "Google Media Processing Services"
+          },
+          "validity": {
+            "notBefore": "2025-10-30T22:34:47+00:00",
+            "notAfter": "2026-10-25T22:34:46+00:00"
+          }
+        },
+        "timeStampInfo": {
+          "timestamp": "2025-12-05T15:15:34+00:00",
+          "certificateInfo": {
+            "serialNumber": "7b519970ffd75a959d0c40d74e86f1d7702483",
+            "issuer": {
+              "C": "US",
+              "O": "Google LLC",
+              "CN": "Google C2PA Core Time-Stamping ICA G3"
+            },
+            "subject": {
+              "C": "US",
+              "O": "Google LLC",
+              "CN": "Google Core Time Stamping Authority T11"
+            },
+            "validity": {
+              "notBefore": "2025-09-08T13:48:59+00:00",
+              "notAfter": "2031-09-09T01:48:58+00:00"
+            }
+          }
+        }
+      },
+      "validationResults": {
+        "success": [],
+        "informational": [],
+        "failure": [],
+        "specVersion": "2.3.0",
+        "validationTime": "2026-03-31T04:16:15.412+00:00"
+      }
+    }
+  ],
+  "jsonGenerator": {
+    "name": "c2pa-rs",
+    "version": "0.78.0"
+  },
+  "usedITL": false,
+  "usedTestCerts": false,
+  "_conformanceToolVersion": {
+    "commit": "d291fb884e02665d169a38928392c2710f6f0953",
+    "shortCommit": "d291fb8",
+    "date": "2026-03-19 20:11:48 -0400",
+    "branch": "HEAD",
+    "generatedAt": "2026-03-23T18:42:00.448Z"
+  }
+}

@@ -1,0 +1,411 @@
+{
+  "@context": {
+    "@vocab": "https://contentcredentials.org/crjson",
+    "extras": "https://contentcredentials.org/crjson/extras"
+  },
+  "manifests": [
+    {
+      "label": "urn:c2pa:a2b680ae-e454-2302-cbf8-46b5d3e407b4",
+      "assertions": {
+        "c2pa.hash.bmff.v3": {
+          "exclusions": [
+            {
+              "xpath": "/ftyp"
+            },
+            {
+              "xpath": "/uuid",
+              "data": [
+                {
+                  "offset": 8,
+                  "value": [
+                    216,
+                    254,
+                    195,
+                    214,
+                    27,
+                    14,
+                    72,
+                    60,
+                    146,
+                    151,
+                    88,
+                    40,
+                    135,
+                    126,
+                    196,
+                    129
+                  ]
+                }
+              ]
+            },
+            {
+              "xpath": "/mfra"
+            },
+            {
+              "xpath": "/free"
+            }
+          ],
+          "alg": "sha256",
+          "hash": "b64'Ux5Rz5ubwnuUIIoHhVRXdctAKpn6acNujT22vMBJBF0=",
+          "name": "BMFF file hash",
+          "pad": "b64'"
+        },
+        "c2pa.actions.v2": {
+          "actions": [
+            {
+              "action": "c2pa.opened",
+              "parameters": {
+                "ingredients": [
+                  {
+                    "url": "self#jumbf=c2pa.assertions/c2pa.ingredient.v3",
+                    "hash": "b64'wrGfYTzqcn+suUUwhQhscgSRNwvMIsWIrETRWC2cXEE=",
+                    "pad": "b64'"
+                  }
+                ]
+              }
+            },
+            {
+              "action": "c2pa.dubbed",
+              "digitalSourceType": "http://cv.iptc.org/newscodes/digitalsourcetype/compositeSynthetic"
+            }
+          ]
+        },
+        "c2pa.ingredient.v3": {
+          "relationship": "parentOf",
+          "validationResults": {
+            "activeManifest": {
+              "success": [
+                {
+                  "code": "timeStamp.validated",
+                  "url": "self#jumbf=/c2pa/urn:c2pa:6b16b24d-4eba-60b5-0218-469a7ab9c73a/c2pa.signature"
+                },
+                {
+                  "code": "timeStamp.trusted",
+                  "url": "self#jumbf=/c2pa/urn:c2pa:6b16b24d-4eba-60b5-0218-469a7ab9c73a/c2pa.signature"
+                },
+                {
+                  "code": "signingCredential.trusted",
+                  "url": "self#jumbf=/c2pa/urn:c2pa:6b16b24d-4eba-60b5-0218-469a7ab9c73a/c2pa.signature"
+                },
+                {
+                  "code": "claimSignature.insideValidity",
+                  "url": "self#jumbf=/c2pa/urn:c2pa:6b16b24d-4eba-60b5-0218-469a7ab9c73a/c2pa.signature"
+                },
+                {
+                  "code": "claimSignature.validated",
+                  "url": "self#jumbf=/c2pa/urn:c2pa:6b16b24d-4eba-60b5-0218-469a7ab9c73a/c2pa.signature"
+                },
+                {
+                  "code": "assertion.hashedURI.match",
+                  "url": "self#jumbf=/c2pa/urn:c2pa:6b16b24d-4eba-60b5-0218-469a7ab9c73a/c2pa.assertions/c2pa.actions.v2"
+                },
+                {
+                  "code": "assertion.hashedURI.match",
+                  "url": "self#jumbf=/c2pa/urn:c2pa:6b16b24d-4eba-60b5-0218-469a7ab9c73a/c2pa.assertions/c2pa.hash.bmff.v3"
+                },
+                {
+                  "code": "assertion.bmffHash.match",
+                  "url": "self#jumbf=/c2pa/urn:c2pa:6b16b24d-4eba-60b5-0218-469a7ab9c73a/c2pa.assertions/c2pa.hash.bmff.v3"
+                }
+              ],
+              "informational": [
+                {
+                  "code": "signingCredential.ocsp.skipped",
+                  "url": "self#jumbf=/c2pa/urn:c2pa:6b16b24d-4eba-60b5-0218-469a7ab9c73a/c2pa.signature"
+                }
+              ],
+              "failure": []
+            }
+          },
+          "activeManifest": {
+            "url": "self#jumbf=/c2pa/urn:c2pa:6b16b24d-4eba-60b5-0218-469a7ab9c73a",
+            "hash": "b64'cykuU1M2Tb/0uyFDDEoHWeef1AiO1AK16PXvEzSgZyk=",
+            "pad": "b64'"
+          },
+          "claimSignature": {
+            "url": "self#jumbf=/c2pa/urn:c2pa:6b16b24d-4eba-60b5-0218-469a7ab9c73a/c2pa.signature",
+            "hash": "b64'TBF0HEF8zMnOH8xrDUOfb0hEsCZ1VT8q3yKlpNuXTA8=",
+            "pad": "b64'"
+          }
+        }
+      },
+      "claim.v2": {
+        "instanceID": "2e1ebd20-c38f-182f-ca20-4783b606bc7a",
+        "signature": "self#jumbf=/c2pa/urn:c2pa:a2b680ae-e454-2302-cbf8-46b5d3e407b4/c2pa.signature",
+        "claim_generator_info": {
+          "name": "Google C2PA SDK for Android",
+          "version": "852130983:867906598"
+        },
+        "alg": "sha256",
+        "created_assertions": [
+          {
+            "url": "self#jumbf=c2pa.assertions/c2pa.ingredient.v3",
+            "hash": "b64'wrGfYTzqcn+suUUwhQhscgSRNwvMIsWIrETRWC2cXEE="
+          },
+          {
+            "url": "self#jumbf=c2pa.assertions/c2pa.actions.v2",
+            "hash": "b64'OZ3pss9ZPcxyUinHZHQr7ozQagxiVk1/ky/wCu5Urcs="
+          },
+          {
+            "url": "self#jumbf=c2pa.assertions/c2pa.hash.bmff.v3",
+            "hash": "b64'gowprNbZfHrW+1IgggMrOM/dlDD9BPHl5lD/j0Jvr0w="
+          }
+        ],
+        "gathered_assertions": []
+      },
+      "signature": {
+        "algorithm": "es256",
+        "certificateInfo": {
+          "serialNumber": "46c75c60ba9c323de2720b726b45dde36c8135",
+          "issuer": {
+            "C": "US",
+            "O": "Google LLC",
+            "CN": "Google C2PA Mobile A 1P ICA G3 L4"
+          },
+          "subject": {
+            "C": "US",
+            "O": "Google LLC",
+            "OU": "Android",
+            "CN": "Pixel Recorder"
+          },
+          "validity": {
+            "notBefore": "2026-03-02T09:19:20+00:00",
+            "notAfter": "2026-04-01T09:19:19+00:00"
+          }
+        },
+        "timeStampInfo": {
+          "timestamp": "2026-03-04T00:40:25+00:00",
+          "certificateInfo": {
+            "serialNumber": "801dd6ca0e3a76f622533f629162f7faa703c9",
+            "issuer": {
+              "C": "US",
+              "O": "Google LLC",
+              "CN": "Google C2PA Pixel Time-Stamping ICA G3"
+            },
+            "subject": {
+              "C": "US",
+              "O": "Google",
+              "CN": "Google Pixel Time Stamping Authority"
+            },
+            "validity": {
+              "notBefore": "2025-05-12T23:43:02+00:00",
+              "notAfter": "2032-11-11T08:43:01+00:00"
+            }
+          }
+        }
+      },
+      "validationResults": {
+        "success": [
+          {
+            "code": "timeStamp.validated",
+            "url": "self#jumbf=/c2pa/urn:c2pa:a2b680ae-e454-2302-cbf8-46b5d3e407b4/c2pa.signature",
+            "explanation": "timestamp message digest matched: Google Pixel Time Stamping Authority"
+          },
+          {
+            "code": "timeStamp.trusted",
+            "url": "self#jumbf=/c2pa/urn:c2pa:a2b680ae-e454-2302-cbf8-46b5d3e407b4/c2pa.signature",
+            "explanation": "timestamp cert trusted: Google Pixel Time Stamping Authority"
+          },
+          {
+            "code": "signingCredential.trusted",
+            "url": "self#jumbf=/c2pa/urn:c2pa:a2b680ae-e454-2302-cbf8-46b5d3e407b4/c2pa.signature",
+            "explanation": "signing certificate trusted, found in System trust anchors"
+          },
+          {
+            "code": "claimSignature.insideValidity",
+            "url": "self#jumbf=/c2pa/urn:c2pa:a2b680ae-e454-2302-cbf8-46b5d3e407b4/c2pa.signature",
+            "explanation": "claim signature valid"
+          },
+          {
+            "code": "claimSignature.validated",
+            "url": "self#jumbf=/c2pa/urn:c2pa:a2b680ae-e454-2302-cbf8-46b5d3e407b4/c2pa.signature",
+            "explanation": "claim signature valid"
+          },
+          {
+            "code": "assertion.hashedURI.match",
+            "url": "self#jumbf=/c2pa/urn:c2pa:a2b680ae-e454-2302-cbf8-46b5d3e407b4/c2pa.assertions/c2pa.ingredient.v3",
+            "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/c2pa.ingredient.v3"
+          },
+          {
+            "code": "assertion.hashedURI.match",
+            "url": "self#jumbf=/c2pa/urn:c2pa:a2b680ae-e454-2302-cbf8-46b5d3e407b4/c2pa.assertions/c2pa.actions.v2",
+            "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/c2pa.actions.v2"
+          },
+          {
+            "code": "assertion.hashedURI.match",
+            "url": "self#jumbf=/c2pa/urn:c2pa:a2b680ae-e454-2302-cbf8-46b5d3e407b4/c2pa.assertions/c2pa.hash.bmff.v3",
+            "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/c2pa.hash.bmff.v3"
+          },
+          {
+            "code": "assertion.bmffHash.match",
+            "url": "self#jumbf=/c2pa/urn:c2pa:a2b680ae-e454-2302-cbf8-46b5d3e407b4/c2pa.assertions/c2pa.hash.bmff.v3",
+            "explanation": "BMFF hash valid"
+          }
+        ],
+        "informational": [],
+        "failure": [],
+        "specVersion": "2.3.0",
+        "validationTime": "2026-03-31T06:28:36.137+00:00"
+      },
+      "ingredientDeltas": [
+        {
+          "ingredientAssertionURI": "self#jumbf=/c2pa/urn:c2pa:a2b680ae-e454-2302-cbf8-46b5d3e407b4/c2pa.assertions/c2pa.ingredient.v3",
+          "validationDeltas": {
+            "success": [
+              {
+                "code": "ingredient.manifest.validated",
+                "url": "self#jumbf=/c2pa/urn:c2pa:6b16b24d-4eba-60b5-0218-469a7ab9c73a",
+                "explanation": "ingredient hash matched"
+              }
+            ],
+            "informational": [],
+            "failure": []
+          }
+        }
+      ]
+    },
+    {
+      "label": "urn:c2pa:6b16b24d-4eba-60b5-0218-469a7ab9c73a",
+      "assertions": {
+        "c2pa.hash.bmff.v3": {
+          "exclusions": [
+            {
+              "xpath": "/ftyp"
+            },
+            {
+              "xpath": "/uuid",
+              "data": [
+                {
+                  "offset": 8,
+                  "value": [
+                    216,
+                    254,
+                    195,
+                    214,
+                    27,
+                    14,
+                    72,
+                    60,
+                    146,
+                    151,
+                    88,
+                    40,
+                    135,
+                    126,
+                    196,
+                    129
+                  ]
+                }
+              ]
+            },
+            {
+              "xpath": "/mfra"
+            },
+            {
+              "xpath": "/free"
+            }
+          ],
+          "alg": "sha256",
+          "hash": "b64'lMaJ8VQCEl71zLB1jph2Da7lb/5JwhI6NFknB2Svp/M=",
+          "name": "BMFF file hash",
+          "pad": "b64'"
+        },
+        "c2pa.actions.v2": {
+          "actions": [
+            {
+              "action": "c2pa.created",
+              "digitalSourceType": "http://cv.iptc.org/newscodes/digitalsourcetype/digitalCapture"
+            }
+          ]
+        }
+      },
+      "claim.v2": {
+        "instanceID": "e71a9a36-803b-c1fb-a749-407b13ca758e",
+        "signature": "self#jumbf=/c2pa/urn:c2pa:6b16b24d-4eba-60b5-0218-469a7ab9c73a/c2pa.signature",
+        "claim_generator_info": {
+          "name": "Google C2PA SDK for Android",
+          "version": "852130983:867906598"
+        },
+        "alg": "sha256",
+        "created_assertions": [
+          {
+            "url": "self#jumbf=c2pa.assertions/c2pa.actions.v2",
+            "hash": "b64'Qc/GfIFN7B3jbO7vQGR1KhL28apGvWum5Vgq4Kp44I8="
+          },
+          {
+            "url": "self#jumbf=c2pa.assertions/c2pa.hash.bmff.v3",
+            "hash": "b64'kjLaiX3kOeck0AapbM4yfQcFbEJRDhdIcXfq+13KPHI="
+          }
+        ],
+        "gathered_assertions": []
+      },
+      "signature": {
+        "algorithm": "es256",
+        "certificateInfo": {
+          "serialNumber": "a7d0f59d0e0866958134ca36aec4b0925b17ce",
+          "issuer": {
+            "C": "US",
+            "O": "Google LLC",
+            "CN": "Google C2PA Mobile A 1P ICA G3 L1"
+          },
+          "subject": {
+            "C": "US",
+            "O": "Google LLC",
+            "OU": "Android",
+            "CN": "Pixel Recorder"
+          },
+          "validity": {
+            "notBefore": "2026-03-02T08:17:07+00:00",
+            "notAfter": "2026-04-01T08:17:06+00:00"
+          }
+        },
+        "timeStampInfo": {
+          "timestamp": "2026-03-03T23:33:50+00:00",
+          "certificateInfo": {
+            "serialNumber": "801dd6ca0e3a76f622533f629162f7faa703c9",
+            "issuer": {
+              "C": "US",
+              "O": "Google LLC",
+              "CN": "Google C2PA Pixel Time-Stamping ICA G3"
+            },
+            "subject": {
+              "C": "US",
+              "O": "Google",
+              "CN": "Google Pixel Time Stamping Authority"
+            },
+            "validity": {
+              "notBefore": "2025-05-12T23:43:02+00:00",
+              "notAfter": "2032-11-11T08:43:01+00:00"
+            }
+          }
+        }
+      },
+      "validationResults": {
+        "success": [
+          {
+            "code": "ingredient.manifest.validated",
+            "url": "self#jumbf=/c2pa/urn:c2pa:6b16b24d-4eba-60b5-0218-469a7ab9c73a",
+            "explanation": "ingredient hash matched"
+          }
+        ],
+        "informational": [],
+        "failure": [],
+        "specVersion": "2.3.0",
+        "validationTime": "2026-03-31T06:28:36.137+00:00"
+      }
+    }
+  ],
+  "jsonGenerator": {
+    "name": "c2pa-rs",
+    "version": "0.78.0"
+  },
+  "usedITL": false,
+  "usedTestCerts": false,
+  "_conformanceToolVersion": {
+    "commit": "d291fb884e02665d169a38928392c2710f6f0953",
+    "shortCommit": "d291fb8",
+    "date": "2026-03-19 20:11:48 -0400",
+    "branch": "HEAD",
+    "generatedAt": "2026-03-23T18:42:00.448Z"
+  }
+}

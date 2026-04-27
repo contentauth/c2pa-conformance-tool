@@ -643,7 +643,7 @@
                   Drop or select the asset file this sidecar belongs to. The sidecar's hash bindings will be verified against the asset bytes.
                 </p>
                 <div class="flex flex-wrap gap-3">
-                  <FileUpload on:fileselect={(e) => handleFilesDropped([e.detail])} compact={true} label="Select asset file" />
+                  <FileUpload on:fileselect={(e) => handleFilesDropped([e.detail])} compact={true} />
                   <button
                     on:click={inspectSidecarWithoutAsset}
                     class="inline-flex items-center gap-2 px-4 py-2 bg-white dark:bg-gray-700 border border-blue-300 dark:border-gray-500 text-blue-700 dark:text-gray-200 text-sm font-semibold rounded-lg hover:bg-blue-50 dark:hover:bg-gray-600 transition-colors"
@@ -662,10 +662,16 @@
           </div>
         {:else}
           <!-- Upload Area -->
+          <!--
+            Always route through the pairing dispatcher so that selecting a
+            .c2pa via Browse Files lands in the same "waiting for asset"
+            state as dragging one in. Going directly to handleFileSelect
+            here would skip the pending-sidecar branch and process the
+            sidecar alone, which is exactly what we don't want.
+          -->
           <div class="mb-6">
             <FileUpload
-              on:fileselect={handleFileSelect}
-              on:filesselect={(e) => handleFilesDropped(e.detail)}
+              on:fileselect={(e) => handleFilesDropped([e.detail])}
               compact={false}
             />
           </div>

@@ -207,7 +207,7 @@
     {#if indexLoading}
       <p class="text-sm text-gray-500 dark:text-gray-400">Loading rubrics…</p>
     {:else if indexError}
-      <div class="text-sm text-red-700 dark:text-gray-200 bg-red-50 dark:bg-gray-900 border border-red-200 dark:border-gray-700 rounded-lg p-4">
+      <div class="text-sm text-red-700 dark:text-red-300 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-700 rounded-lg p-4">
         Failed to load rubric index: {indexError}
       </div>
     {:else if index.length === 0}
@@ -233,7 +233,7 @@
                   <label
                     title={rubric.description}
                     class="flex items-center gap-2.5 px-3 py-2 border rounded-lg cursor-pointer transition-colors {isChecked
-                      ? 'border-blue-400 bg-blue-50/50 dark:border-gray-500 dark:bg-gray-900/40'
+                      ? 'border-blue-400 bg-blue-50/50 dark:border-blue-700 dark:bg-blue-900/30'
                       : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'}"
                   >
                     <input
@@ -288,9 +288,9 @@
 
   <!-- Run error -->
   {#if runError}
-    <div class="bg-red-50 dark:bg-gray-900 border border-red-200 dark:border-gray-700 rounded-2xl p-5 shadow-sm">
-      <h4 class="font-semibold text-red-900 dark:text-gray-100 text-sm mb-1">Evaluation failed</h4>
-      <p class="text-sm text-red-800 dark:text-gray-300 leading-relaxed">{runError}</p>
+    <div class="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-700 rounded-2xl p-5 shadow-sm">
+      <h4 class="font-semibold text-red-900 dark:text-red-300 text-sm mb-1">Evaluation failed</h4>
+      <p class="text-sm text-red-800 dark:text-red-300 leading-relaxed">{runError}</p>
     </div>
   {/if}
 
@@ -310,7 +310,7 @@
             <h3 class="text-xl font-semibold text-gray-900 dark:text-white">Results</h3>
             <p class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
               {#if docResults.length > 0}
-                <span class="font-semibold {docPassCount === docResults.length ? 'text-green-700 dark:text-gray-200' : 'text-red-700 dark:text-gray-200'}">
+                <span class="font-semibold {docPassCount === docResults.length ? 'text-green-700 dark:text-green-300' : 'text-red-700 dark:text-red-300'}">
                   {docPassCount} of {docResults.length} pass/fail rubrics passed
                 </span>
               {/if}
@@ -335,17 +335,17 @@
           {#if isDocumentResult(r)}
             {@const grouped = groupByOutcome(r)}
             <li class="border-2 rounded-xl p-5 {r.overallPassed
-              ? 'border-green-200 bg-green-50/50 dark:border-gray-700 dark:bg-gray-900/40'
-              : 'border-red-200 bg-red-50/50 dark:border-gray-700 dark:bg-gray-900/40'}">
+              ? 'border-green-200 bg-green-50/50 dark:border-green-700 dark:bg-green-900/30'
+              : 'border-red-200 bg-red-50/50 dark:border-red-700 dark:bg-red-900/30'}">
               <div class="flex items-start gap-3 mb-3">
                 {#if r.overallPassed}
-                  <div class="flex-shrink-0 w-8 h-8 bg-green-500 dark:bg-gray-600 rounded-full flex items-center justify-center text-white">
+                  <div class="flex-shrink-0 w-8 h-8 bg-green-500 dark:bg-green-700 rounded-full flex items-center justify-center text-white">
                     <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
                       <path d="M5 12l5 5l10 -10" />
                     </svg>
                   </div>
                 {:else}
-                  <div class="flex-shrink-0 w-8 h-8 bg-red-500 dark:bg-gray-600 rounded-full flex items-center justify-center text-white">
+                  <div class="flex-shrink-0 w-8 h-8 bg-red-500 dark:bg-red-700 rounded-full flex items-center justify-center text-white">
                     <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
                       <path d="M18 6l-12 12" /><path d="M6 6l12 12" />
                     </svg>
@@ -358,8 +358,8 @@
                       <span class="text-xs text-gray-400 dark:text-gray-500 font-mono">v{r.rubricVersion}</span>
                     {/if}
                     <span class="px-2 py-0.5 rounded-full text-xs font-bold uppercase tracking-wide {r.overallPassed
-                      ? 'bg-green-100 text-green-800 dark:bg-gray-800 dark:text-gray-200'
-                      : 'bg-red-100 text-red-800 dark:bg-gray-800 dark:text-gray-200'}">
+                      ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300'
+                      : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300'}">
                       {r.overallPassed ? 'Pass' : 'Fail'}
                     </span>
                     <span class="text-xs text-gray-500 dark:text-gray-400">
@@ -372,11 +372,11 @@
               <!-- Failures first (most interesting), then errors, then passes. -->
               {#if grouped.failed.length > 0}
                 <div class="mt-3">
-                  <h5 class="text-xs font-semibold text-red-700 dark:text-gray-300 uppercase tracking-wider mb-2">Failed</h5>
+                  <h5 class="text-xs font-semibold text-red-700 dark:text-red-300 uppercase tracking-wider mb-2">Failed</h5>
                   <ul class="space-y-1.5">
                     {#each grouped.failed as s (s.id)}
                       <li class="flex items-start gap-2 text-sm">
-                        <svg class="w-4 h-4 text-red-600 dark:text-gray-400 flex-shrink-0 mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <svg class="w-4 h-4 text-red-600 dark:text-red-300 flex-shrink-0 mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                           <path d="M18 6l-12 12" /><path d="M6 6l12 12" />
                         </svg>
                         <div class="flex-1 min-w-0">
@@ -391,11 +391,11 @@
 
               {#if grouped.errored.length > 0}
                 <div class="mt-3">
-                  <h5 class="text-xs font-semibold text-amber-700 dark:text-gray-300 uppercase tracking-wider mb-2">Errored</h5>
+                  <h5 class="text-xs font-semibold text-amber-700 dark:text-amber-300 uppercase tracking-wider mb-2">Errored</h5>
                   <ul class="space-y-1.5">
                     {#each grouped.errored as s (s.id)}
                       <li class="flex items-start gap-2 text-sm">
-                        <svg class="w-4 h-4 text-amber-600 dark:text-gray-400 flex-shrink-0 mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <svg class="w-4 h-4 text-amber-600 dark:text-amber-300 flex-shrink-0 mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                           <path d="M12 9v4" /><path d="M10.363 3.591l-8.106 13.534a1.914 1.914 0 0 0 1.636 2.871h16.214a1.914 1.914 0 0 0 1.636 -2.87l-8.106 -13.536a1.914 1.914 0 0 0 -3.274 0z" /><path d="M12 16h.01" />
                         </svg>
                         <div class="flex-1 min-w-0">
@@ -410,13 +410,13 @@
 
               {#if grouped.passed.length > 0}
                 <details class="mt-3">
-                  <summary class="text-xs font-semibold text-green-700 dark:text-gray-300 uppercase tracking-wider mb-2 cursor-pointer hover:text-green-900 dark:hover:text-gray-100">
+                  <summary class="text-xs font-semibold text-green-700 dark:text-green-300 uppercase tracking-wider mb-2 cursor-pointer hover:text-green-900 dark:hover:text-green-200">
                     Passed ({grouped.passed.length})
                   </summary>
                   <ul class="space-y-1.5 mt-2">
                     {#each grouped.passed as s (s.id)}
                       <li class="flex items-start gap-2 text-sm">
-                        <svg class="w-4 h-4 text-green-600 dark:text-gray-400 flex-shrink-0 mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <svg class="w-4 h-4 text-green-600 dark:text-green-300 flex-shrink-0 mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                           <path d="M5 12l5 5l10 -10" />
                         </svg>
                         <div class="flex-1 min-w-0">
@@ -507,13 +507,13 @@
 
                     {#if m.localTransformations.length > 0}
                       <div class="mt-3">
-                        <h5 class="text-xs font-semibold text-amber-700 dark:text-gray-300 uppercase tracking-wider mb-2">
+                        <h5 class="text-xs font-semibold text-amber-700 dark:text-amber-300 uppercase tracking-wider mb-2">
                           Transformation ({m.localTransformations.length})
                         </h5>
                         <ul class="space-y-1.5">
                           {#each m.localTransformations as sig (sig.trait)}
                             <li class="flex items-start gap-2 text-sm">
-                              <svg class="w-4 h-4 text-amber-600 dark:text-gray-400 flex-shrink-0 mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                              <svg class="w-4 h-4 text-amber-600 dark:text-amber-300 flex-shrink-0 mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                                 <path d="M4 4v5h5" /><path d="M20 20v-5h-5" />
                                 <path d="M5.63 9A9 9 0 0 1 20 12" /><path d="M18.37 15A9 9 0 0 1 4 12" />
                               </svg>

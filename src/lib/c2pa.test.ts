@@ -1,6 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import type { ValidationStatus } from '@contentauth/c2pa-web'
-import { processFile, getVersion } from './c2pa'
+import { processFile, getVersion, isSidecarFile, resolveMimeType, SIDECAR_MIME } from './c2pa'
 import type { ConformanceReport } from './types'
 
 // Track which validation is being called
@@ -133,6 +132,35 @@ describe('c2pa utilities', () => {
     })
   })
 
+  describe('sidecar detection', () => {
+    // Browsers almost never set a MIME for .c2pa files, so extension-based
+    // detection is doing the real work here. We cover both shapes just in
+    // case a future environment fills in `type`.
+    it('detects a .c2pa file with no browser-reported MIME as a sidecar', () => {
+      const f = new File([new Uint8Array([0])], 'my-manifest.c2pa', { type: '' })
+      expect(isSidecarFile(f)).toBe(true)
+      expect(resolveMimeType(f)).toBe(SIDECAR_MIME)
+    })
+
+    it('detects a .c2pa file served as application/octet-stream', () => {
+      const f = new File([new Uint8Array([0])], 'my-manifest.c2pa', { type: 'application/octet-stream' })
+      expect(isSidecarFile(f)).toBe(true)
+      expect(resolveMimeType(f)).toBe(SIDECAR_MIME)
+    })
+
+    it('detects a file whose MIME is already application/c2pa', () => {
+      const f = new File([new Uint8Array([0])], 'no-extension', { type: SIDECAR_MIME })
+      expect(isSidecarFile(f)).toBe(true)
+      expect(resolveMimeType(f)).toBe(SIDECAR_MIME)
+    })
+
+    it('does NOT mis-detect a .jpg as a sidecar', () => {
+      const f = new File([new Uint8Array([0])], 'photo.jpg', { type: 'image/jpeg' })
+      expect(isSidecarFile(f)).toBe(false)
+      expect(resolveMimeType(f)).toBe('image/jpeg')
+    })
+  })
+
   describe('processFile', () => {
     it('should process a file and return manifest store with trusted signature', async () => {
       // Reset to simulate trusted signature from the start
@@ -192,10 +220,10 @@ describe('c2pa utilities', () => {
       expect(result).toBeDefined()
       // Check if ITL validation succeeded
       const hasUntrusted = result.validationResults?.activeManifest?.failure?.some(
-        (f: ValidationStatus) => f.code === 'signingCredential.untrusted'
+        (f) => f.code === 'signingCredential.untrusted'
       )
       const hasTrusted = result.validationResults?.activeManifest?.success?.some(
-        (s: ValidationStatus) => s.code === 'signingCredential.trusted'
+        (s) => s.code === 'signingCredential.trusted'
       )
 
       if (hasTrusted && !hasUntrusted) {

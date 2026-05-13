@@ -1,17 +1,22 @@
 <script lang="ts">
   import { createEventDispatcher, onDestroy } from 'svelte'
-  import type { ValidationStatus } from '@contentauth/c2pa-web'
   import hljs from 'highlight.js'
   import ManifestSummary from './ManifestSummary.svelte'
-  import type { ConformanceReport, ValidationStatusItem, AssertionSummaryItem, CrJsonManifestEntry } from './types'
+  import RubricsPanel from './RubricsPanel.svelte'
+  import OverviewPanel from './OverviewPanel.svelte'
+  import type { ConformanceReport, ValidationStatusItem, AssertionSummaryItem, CrJsonManifestEntry, ManifestValidationGroup } from './types'
+  import type { ManifestSignalsResult } from './rubrics/types'
   import {
     getAssertionsList,
     getIngredientsFromManifest,
     getSignatureInfo,
     getClaimInfo,
-    getActiveManifestValidationStatus
+    getActiveManifestValidationStatus,
+    getAllValidationFailures,
+    getManifestValidationStatus
   } from './crjson'
-  import { VALIDATION_STATUS } from './constants'
+  import { evaluateReportSignals } from './summarySignals'
+  import { VALIDATION_STATUS, VALIDATION_FAILURE_DESCRIPTIONS } from './constants'
 
   $: rawJsonHighlighted = (() => {
     try {
@@ -32,12 +37,21 @@
     newfile: void
   }>()
 
-  let showRaw = false
+  type ReportTab = 'summary' | 'report' | 'crjson' | 'rubrics'
+  let activeTab: ReportTab = 'summary'
+
+  const tabHeadings: Record<ReportTab, { title: string; subtitle: string }> = {
+    summary:  { title: 'Overview',           subtitle: 'Content Credentials summary' },
+    report:   { title: 'Conformance Report', subtitle: 'Manifest validation details' },
+    crjson:   { title: 'crJSON Output',      subtitle: 'crJSON-formatted validation results' },
+    rubrics:  { title: 'Asset Rubrics',      subtitle: 'Check crJSON against rubrics' },
+  }
+  $: heading = tabHeadings[activeTab]
   let rawJsonCodeEl: HTMLElement | null = null
   let copied = false
   let copyTimeout: ReturnType<typeof setTimeout> | null = null
   let mediaUrl: string | null = null
-  let mediaType: 'image' | 'video' | 'audio' | 'document' | 'unknown' = 'unknown'
+  let mediaType: 'image' | 'video' | 'audio' | 'document' | 'sidecar' | 'unknown' = 'unknown'
 
   // Only these image types can be rendered by browsers natively
   const BROWSER_PREVIEWABLE_IMAGES = new Set([
@@ -45,7 +59,6 @@
     'image/avif', 'image/svg+xml', 'image/bmp', 'image/ico', 'image/x-icon',
   ])
   let fileInput: HTMLInputElement
-  let validationStatus: ValidationStatusItem[] = []
   let expandedIngredients: Set<number> = new Set()
   let expandedAssertions: Set<number> = new Set()
   let showBackToTop = false
@@ -53,15 +66,6 @@
   // Track scroll position for back to top button
   function handleScroll() {
     showBackToTop = window.scrollY > 400
-  }
-
-  function toggleIngredient(index: number) {
-    if (expandedIngredients.has(index)) {
-      expandedIngredients.delete(index)
-    } else {
-      expandedIngredients.add(index)
-    }
-    expandedIngredients = expandedIngredients // Trigger reactivity
   }
 
   function toggleAssertion(index: number) {
@@ -82,39 +86,8 @@
     expandedAssertions = new Set()
   }
 
-  function expandAllIngredients() {
-    const list = activeManifest ? getIngredientsFromManifest(activeManifest) : []
-    expandedIngredients = new Set(list.map((_, i) => i))
-  }
-
-  function collapseAllIngredients() {
-    expandedIngredients = new Set()
-  }
-
   function scrollToTop() {
     window.scrollTo({ top: 0, behavior: 'smooth' })
-  }
-
-  // Get ingredient manifest from crJSON manifests array (returns crJSON entry for UI getters)
-  function getIngredientManifest(ingredient: { active_manifest?: string; instance_id?: string; [key: string]: unknown }): CrJsonManifestEntry | null {
-    const manifests = report.manifests
-    if (!manifests || !Array.isArray(manifests)) return null
-
-    const label = ingredient.active_manifest ?? ingredient.instance_id
-    if (label) {
-      const entry = manifests.find((m: { label: string }) => m.label === label)
-      if (entry) return entry
-    }
-
-    if (ingredient.instance_id) {
-      const entry = manifests.find((m: CrJsonManifestEntry) => {
-        const claim = (m.claim ?? m['claim.v2']) as Record<string, unknown> | undefined
-        return claim && (claim.instanceID === ingredient.instance_id || claim.instance_id === ingredient.instance_id) || m.label === ingredient.instance_id
-      })
-      if (entry) return entry
-    }
-
-    return null
   }
 
   // Create object URL for media preview
@@ -124,14 +97,19 @@
     }
     mediaUrl = URL.createObjectURL(file)
 
-    // Determine media type
-    if (file.type.startsWith('image/')) {
+    // Determine media type. Sidecar detection is first since `.c2pa` files
+    // typically arrive with an empty or `application/octet-stream` MIME, so
+    // the name check is doing most of the work.
+    const lowerName = file.name.toLowerCase()
+    if (file.type === 'application/c2pa' || lowerName.endsWith('.c2pa')) {
+      mediaType = 'sidecar'
+    } else if (file.type.startsWith('image/')) {
       mediaType = BROWSER_PREVIEWABLE_IMAGES.has(file.type) ? 'image' : 'unknown'
     } else if (file.type.startsWith('video/')) {
       mediaType = 'video'
     } else if (file.type.startsWith('audio/')) {
       mediaType = 'audio'
-    } else if (file.type === 'application/pdf' || file.name.endsWith('.pdf')) {
+    } else if (file.type === 'application/pdf' || lowerName.endsWith('.pdf')) {
       mediaType = 'document'
     } else {
       mediaType = 'unknown'
@@ -157,19 +135,46 @@
   $: activeManifest = report.manifests?.[0] ?? null
 
   // Read from crJSON locations via getters
-  $: assertionsList = activeManifest ? getAssertionsList(activeManifest) : []
+  $: assertionsList = activeManifest ? getAssertionsList(activeManifest).filter(a => !a.label.includes('hash.data')) : []
   $: ingredientsList = activeManifest ? getIngredientsFromManifest(activeManifest) : []
   $: signatureInfo = activeManifest ? getSignatureInfo(activeManifest) : undefined
   $: claimInfo = activeManifest ? getClaimInfo(activeManifest) : undefined
 
+  // Per-manifest signal hits powering the rubric-driven sentence in the
+  // summary card. Re-evaluated whenever `report` changes; null while the
+  // async load is in flight or if the rubric couldn't be loaded.
+  let activeManifestSignals: ManifestSignalsResult | null = null
+  $: {
+    activeManifestSignals = null
+    if (report) {
+      const reportSnapshot = report
+      evaluateReportSignals(reportSnapshot).then((result) => {
+        // Guard against a stale resolution clobbering a newer report's value.
+        if (report === reportSnapshot) {
+          activeManifestSignals = result?.manifests[0] ?? null
+        }
+      })
+    }
+  }
+
   // Get validation results from crJSON (document-level or per-manifest from c2pa-rs)
   $: validationResults = getActiveManifestValidationStatus(report)
 
-  // Check if trusted from crJSON validationResults
-  $: isTrusted = validationResults?.success?.some((status: ValidationStatus) =>
-    status.code === VALIDATION_STATUS.SIGNING_CREDENTIAL_TRUSTED
-  ) ?? false
+  // Get all validation failures from the report (including active and ingredients)
+  $: failures = report ? getAllValidationFailures(report) : []
 
+  // Check if trusted from crJSON validationResults (must have trusted code AND no failures)
+  $: isTrusted = (validationResults?.success?.some((status) =>
+    status.code === VALIDATION_STATUS.SIGNING_CREDENTIAL_TRUSTED
+  ) ?? false) && failures.length === 0
+
+  function getFailureDescription(code: string, explanation?: string): string {
+    return VALIDATION_FAILURE_DESCRIPTIONS[code] ?? explanation ?? `Validation failed (Code: ${code})`
+  }
+
+  // Gate for the Rubrics tab: trusted signature is enough.
+  //
+  // We deliberately do NOT require an empty failure array. The rubrics
   // Check if signature is using Interim Trust List
   $: usedITL = report.usedITL === true
 
@@ -177,35 +182,56 @@
   // This is determined by validating twice in processFile - once with official TL, once with test certs
   $: actuallyUsedTestCert = report.usedTestCerts === true
 
-  // Build validation status array - show key validation results from success and failure
-  $: {
-    const successStatuses: ValidationStatusItem[] = validationResults?.success?.filter((status: ValidationStatus) =>
-      status.code === VALIDATION_STATUS.SIGNING_CREDENTIAL_TRUSTED ||
-      status.code === VALIDATION_STATUS.TIMESTAMP_TRUSTED ||
-      status.code === VALIDATION_STATUS.CLAIM_SIGNATURE_VALIDATED
-    ).map((status: ValidationStatus) => {
-      const isInterim = status.code === VALIDATION_STATUS.SIGNING_CREDENTIAL_TRUSTED && usedITL
-      return {
-        code: status.code,
+  // Build validation status array - show all failures first (active & ingredients), then key successes
+  // Build validation status grouped by manifest
+  $: validationGroups = (() => {
+    if (!report || !report.manifests) return []
+
+    return report.manifests.map((m, i) => {
+      const isActive = i === 0
+      const sigInfo = getSignatureInfo(m)
+      const status = getManifestValidationStatus(report, m, isActive)
+
+      const success: ValidationStatusItem[] = status?.success?.filter((s) =>
+        s.code === VALIDATION_STATUS.SIGNING_CREDENTIAL_TRUSTED ||
+        s.code === VALIDATION_STATUS.TIMESTAMP_TRUSTED ||
+        s.code === VALIDATION_STATUS.CLAIM_SIGNATURE_VALIDATED ||
+        s.code === 'timeStamp.validated'
+      ).map((s) => {
+        const isInterim = s.code === VALIDATION_STATUS.SIGNING_CREDENTIAL_TRUSTED && usedITL
+        return {
+          code: s.code,
+          success: true,
+          isInterim,
+          explanation: s.explanation ?? 'Validation passed'
+        }
+      }) ?? []
+
+      const failure: ValidationStatusItem[] = status?.failure?.map((f) => ({
+        code: f.code,
+        success: false,
+        isInterim: false,
+        explanation: getFailureDescription(f.code, f.explanation)
+      })) ?? []
+
+      const informational: ValidationStatusItem[] = status?.informational?.map((inf) => ({
+        code: inf.code,
         success: true,
-        isInterim,
-        explanation: status.explanation ?? 'Validation passed'
+        isInformational: true,
+        explanation: inf.explanation ?? 'Informational'
+      })) ?? []
+
+      return {
+        label: m.label,
+        isActive,
+        index: i,
+        sigInfo,
+        success,
+        failure,
+        informational
       }
-    }) ?? []
-
-    const failureStatuses: ValidationStatusItem[] = validationResults?.failure?.filter((status: ValidationStatus) =>
-      status.code === VALIDATION_STATUS.SIGNING_CREDENTIAL_UNTRUSTED ||
-      status.code === VALIDATION_STATUS.TIMESTAMP_UNTRUSTED ||
-      status.code === VALIDATION_STATUS.CLAIM_SIGNATURE_INVALID
-    ).map((status: ValidationStatus) => ({
-      code: status.code,
-      success: false,
-      isInterim: false,
-      explanation: status.explanation ?? 'Validation failed'
-    })) ?? []
-
-    validationStatus = [...successStatuses, ...failureStatuses]
-  }
+    }).filter(group => group.success.length > 0 || group.failure.length > 0 || group.informational.length > 0)
+  })()
 
   // Certificate validity status derived from validation results
   $: certValidityStatus = (() => {
@@ -213,10 +239,10 @@
     const failure = validationResults.failure ?? []
     const success = validationResults.success ?? []
     const info = validationResults.informational ?? []
-    if (failure.some((s: ValidationStatus) => s.code === VALIDATION_STATUS.SIGNING_CREDENTIAL_EXPIRED))
+    if (failure.some((s) => s.code === VALIDATION_STATUS.SIGNING_CREDENTIAL_EXPIRED))
       return 'expired' as const
     const validCodes = [VALIDATION_STATUS.CLAIM_SIGNATURE_INSIDE_VALIDITY, VALIDATION_STATUS.TIME_OF_SIGNING_INSIDE_VALIDITY]
-    if ([...success, ...info].some((s: ValidationStatus) => validCodes.includes(s.code as typeof validCodes[number])))
+    if ([...success, ...info].some((s) => validCodes.includes(s.code as typeof validCodes[number])))
       return 'valid' as const
     return 'unknown' as const
   })()
@@ -227,13 +253,13 @@
     const failure = validationResults.failure ?? []
     const success = validationResults.success ?? []
     const info = validationResults.informational ?? []
-    if (failure.some((s: ValidationStatus) => s.code === VALIDATION_STATUS.SIGNING_CREDENTIAL_OCSP_REVOKED))
+    if (failure.some((s) => s.code === VALIDATION_STATUS.SIGNING_CREDENTIAL_OCSP_REVOKED))
       return 'revoked' as const
-    if (success.some((s: ValidationStatus) => s.code === VALIDATION_STATUS.SIGNING_CREDENTIAL_OCSP_NOT_REVOKED))
+    if (success.some((s) => s.code === VALIDATION_STATUS.SIGNING_CREDENTIAL_OCSP_NOT_REVOKED))
       return 'not_revoked' as const
-    if (info.some((s: ValidationStatus) => s.code === VALIDATION_STATUS.SIGNING_CREDENTIAL_OCSP_INACCESSIBLE))
+    if (info.some((s) => s.code === VALIDATION_STATUS.SIGNING_CREDENTIAL_OCSP_INACCESSIBLE))
       return 'inaccessible' as const
-    if (info.some((s: ValidationStatus) => s.code === VALIDATION_STATUS.SIGNING_CREDENTIAL_OCSP_SKIPPED))
+    if (info.some((s) => s.code === VALIDATION_STATUS.SIGNING_CREDENTIAL_OCSP_SKIPPED))
       return 'no_staple' as const
     return 'unknown' as const
   })()
@@ -479,21 +505,21 @@
   }
 </script>
 
-  <div class="text-left mt-8 animate-fade-in">
+  <div class="text-left mt-8 animate-fade-in flex-1 flex flex-col min-h-0 {activeTab !== 'summary' ? 'mb-8' : ''}">
   <!-- Prominent Validation Status Banner -->
   <div class="mb-8 bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 rounded-2xl p-6 shadow-sm">
     <div class="flex items-center gap-4">
-      <div class={`flex-shrink-0 w-16 h-16 rounded-full flex items-center justify-center ${isTrusted ? 'bg-green-100 dark:bg-gray-900' : 'bg-red-100 dark:bg-gray-900'}`}>
+      <div class={`flex-shrink-0 w-16 h-16 rounded-full flex items-center justify-center ${isTrusted ? 'bg-green-100 dark:bg-green-900/30' : 'bg-red-100 dark:bg-red-900/30'}`}>
         {#if isTrusted}
-          <svg class="w-10 h-10 text-green-600 dark:text-gray-300" viewBox="0 0 24 24" fill="currentColor"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M11.998 2l.118 .007l.059 .008l.061 .013l.111 .034a.993 .993 0 0 1 .217 .112l.104 .082l.255 .218a11 11 0 0 0 7.189 2.537l.342 -.01a1 1 0 0 1 1.005 .717a13 13 0 0 1 -9.208 16.25a1 1 0 0 1 -.502 0a13 13 0 0 1 -9.209 -16.25a1 1 0 0 1 1.005 -.717a11 11 0 0 0 7.531 -2.527l.263 -.225l.096 -.075a.993 .993 0 0 1 .217 -.112l.112 -.034a.97 .97 0 0 1 .119 -.021l.115 -.007zm3.71 7.293a1 1 0 0 0 -1.415 0l-3.293 3.292l-1.293 -1.292l-.094 -.083a1 1 0 0 0 -1.32 1.497l2 2l.094 .083a1 1 0 0 0 1.32 -.083l4 -4l.083 -.094a1 1 0 0 0 -.083 -1.32z" /></svg>
+          <svg class="w-10 h-10 text-green-600 dark:text-green-300" viewBox="0 0 24 24" fill="currentColor"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M11.998 2l.118 .007l.059 .008l.061 .013l.111 .034a.993 .993 0 0 1 .217 .112l.104 .082l.255 .218a11 11 0 0 0 7.189 2.537l.342 -.01a1 1 0 0 1 1.005 .717a13 13 0 0 1 -9.208 16.25a1 1 0 0 1 -.502 0a13 13 0 0 1 -9.209 -16.25a1 1 0 0 1 1.005 -.717a11 11 0 0 0 7.531 -2.527l.263 -.225l.096 -.075a.993 .993 0 0 1 .217 -.112l.112 -.034a.97 .97 0 0 1 .119 -.021l.115 -.007zm3.71 7.293a1 1 0 0 0 -1.415 0l-3.293 3.292l-1.293 -1.292l-.094 -.083a1 1 0 0 0 -1.32 1.497l2 2l.094 .083a1 1 0 0 0 1.32 -.083l4 -4l.083 -.094a1 1 0 0 0 -.083 -1.32z" /></svg>
         {:else}
-          <svg class="w-10 h-10 text-red-600 dark:text-gray-300" fill="currentColor" viewBox="0 0 20 20">
+          <svg class="w-10 h-10 text-red-600 dark:text-red-300" fill="currentColor" viewBox="0 0 20 20">
             <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
           </svg>
         {/if}
       </div>
       <div class="flex-1">
-        <h3 class="text-xl font-semibold {isTrusted ? 'text-green-900 dark:text-gray-100' : 'text-red-900 dark:text-gray-100'} mb-1">
+        <h3 class="text-xl font-semibold {isTrusted ? 'text-green-900 dark:text-green-300' : 'text-red-900 dark:text-red-300'} mb-1">
           {#if isTrusted}
             {#if usedITL}
               Signature Trusted via ITL ✓
@@ -503,10 +529,14 @@
               Signature Trusted ✓
             {/if}
           {:else}
-            Signature Not Trusted
+            {#if failures.length > 0}
+              Validation Failed ✕
+            {:else}
+              Signature Not Trusted
+            {/if}
           {/if}
         </h3>
-        <p class="text-sm {isTrusted ? 'text-green-700 dark:text-gray-300' : 'text-red-700 dark:text-gray-300'}">
+        <div class="text-sm {isTrusted ? 'text-green-700 dark:text-gray-300' : 'text-red-700 dark:text-gray-300'}">
           {#if usedITL && isTrusted}
             Validated using Interim Trust List 
             <a
@@ -526,12 +556,27 @@
           {:else if isTrusted}
             Validated against official C2PA Trust List
           {:else}
-            The signing credential could not be validated against known trust lists
+            {#if failures.length > 0}
+              <span class="font-semibold">Validation failed with the following errors:</span>
+              <div class="mt-2 space-y-1 text-xs font-mono bg-red-50/50 dark:bg-gray-900/50 p-3 rounded-lg border border-red-100 dark:border-gray-700 w-full">
+                {#each failures as failure}
+                  <div class="flex items-start gap-2">
+                    <span class="text-red-500 mt-0.5">✕</span>
+                    <div class="flex-1 text-left">
+                      <span class="font-bold">{failure.code}:</span>
+                      <span class="text-gray-700 dark:text-gray-300">{getFailureDescription(failure.code, failure.explanation)}</span>
+                    </div>
+                  </div>
+                {/each}
+              </div>
+            {:else}
+              The signing credential could not be validated against known trust lists
+            {/if}
           {/if}
-        </p>
+        </div>
         {#if usedITL && isTrusted}
           <div class="mt-2 flex items-center gap-2 flex-wrap">
-            <span class="inline-flex items-center gap-1.5 px-3 py-1 bg-blue-100 dark:bg-gray-600 text-blue-800 dark:text-gray-200 rounded-full text-xs font-semibold">
+            <span class="inline-flex items-center gap-1.5 px-3 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 rounded-full text-xs font-semibold">
               <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
                 <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
               </svg>
@@ -540,7 +585,7 @@
           </div>
         {:else if actuallyUsedTestCert && isTrusted}
           <div class="mt-2">
-            <span class="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-100 dark:bg-gray-800 text-amber-800 dark:text-gray-200 rounded-full text-xs font-semibold">
+            <span class="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-300 rounded-full text-xs font-semibold">
               <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
                 <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
               </svg>
@@ -554,22 +599,35 @@
 
   <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-6 gap-4">
     <div>
-      <h2 class="text-xl font-semibold text-gray-900 dark:text-white">Conformance Report</h2>
-      <p class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">Manifest validation details</p>
+      <h2 class="text-xl font-semibold text-gray-900 dark:text-white">{heading.title}</h2>
+      <p class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">{heading.subtitle}</p>
     </div>
     <div class="flex flex-wrap items-center gap-2">
       <div class="flex items-center gap-1 border border-gray-200 dark:border-gray-600 rounded-lg p-1">
         <button
-          class="inline-flex items-center gap-1.5 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors {!showRaw ? 'bg-gray-100 dark:bg-gray-700 font-medium' : ''}"
-          on:click={() => showRaw = false}
+          class="inline-flex items-center gap-1.5 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors {activeTab === 'summary' ? 'bg-gray-100 dark:bg-gray-700 font-medium' : ''}"
+          on:click={() => activeTab = 'summary'}
         >
-          Formatted
+          Summary
         </button>
         <button
-          class="inline-flex items-center gap-1.5 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors {showRaw ? 'bg-gray-100 dark:bg-gray-700 font-medium' : ''}"
-          on:click={() => showRaw = true}
+          class="inline-flex items-center gap-1.5 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors {activeTab === 'report' ? 'bg-gray-100 dark:bg-gray-700 font-medium' : ''}"
+          on:click={() => activeTab = 'report'}
+        >
+          Report
+        </button>
+        <button
+          class="inline-flex items-center gap-1.5 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors {activeTab === 'crjson' ? 'bg-gray-100 dark:bg-gray-700 font-medium' : ''}"
+          on:click={() => activeTab = 'crjson'}
         >
           crJSON
+        </button>
+        <button
+          class="inline-flex items-center gap-1.5 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors {activeTab === 'rubrics' ? 'bg-gray-100 dark:bg-gray-700 font-medium' : ''}"
+          on:click={() => activeTab = 'rubrics'}
+          title="Evaluate this manifest against selectable rubrics"
+        >
+          Rubrics
         </button>
       </div>
       <button
@@ -581,7 +639,7 @@
         Download
       </button>
       <button
-        class="inline-flex items-center gap-1.5 px-3 py-2 text-sm rounded-lg border transition-colors {copied ? 'border-green-500 bg-green-50 dark:bg-gray-800/50 text-green-700 dark:text-gray-300' : 'border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'}"
+        class="inline-flex items-center gap-1.5 px-3 py-2 text-sm rounded-lg border transition-colors {copied ? 'border-green-500 bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300' : 'border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'}"
         on:click={copyToClipboard}
         title="Copy JSON to clipboard"
       >
@@ -608,14 +666,14 @@
   />
 
   {#if usedTestCertificates}
-    <div class="mb-8 bg-amber-50 dark:bg-gray-900 border border-amber-300 dark:border-gray-700 rounded-2xl p-6 shadow-sm">
+    <div class="mb-8 bg-amber-50 dark:bg-amber-900/30 border border-amber-300 dark:border-amber-700 rounded-2xl p-6 shadow-sm">
       <div class="flex items-start gap-4">
-        <div class="flex-shrink-0 w-12 h-12 bg-amber-600 dark:bg-gray-600 rounded-full flex items-center justify-center text-white text-2xl shadow-md">
+        <div class="flex-shrink-0 w-12 h-12 bg-amber-600 dark:bg-amber-700 rounded-full flex items-center justify-center text-white text-2xl shadow-md">
           ⚠
         </div>
         <div class="flex-1">
-          <h3 class="font-bold text-amber-900 dark:text-gray-100 text-lg mb-2">Test Certificate Mode Active</h3>
-          <p class="text-sm text-amber-800 dark:text-gray-300 leading-relaxed">
+          <h3 class="font-bold text-amber-900 dark:text-amber-300 text-lg mb-2">Test Certificate Mode Active</h3>
+          <p class="text-sm text-amber-800 dark:text-amber-300 leading-relaxed">
             This validation used custom test certificates. Results may differ from production validation using only the official C2PA trust list.
           </p>
         </div>
@@ -623,24 +681,20 @@
     </div>
   {/if}
 
-  <!-- Section Navigation -->
-  {#if activeManifest}
+  <!-- Section Navigation — only relevant on the Formatted tab (anchors live there) -->
+  {#if activeManifest && activeTab === 'report'}
     <div class="mb-6 flex items-center gap-1 flex-wrap border-b border-gray-200 dark:border-gray-700 pb-4">
       <span class="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wide mr-2">Jump to:</span>
-      <a href="#media-preview" class="text-sm px-2 py-1 text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-gray-300 transition-colors">Media</a>
+      <a href="#media-preview" class="text-sm px-2 py-1 text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-200 transition-colors">Media</a>
       <span class="text-gray-300 dark:text-gray-600 select-none">·</span>
-      <a href="#validation-status" class="text-sm px-2 py-1 text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-gray-300 transition-colors">Validation</a>
+      <a href="#validation-status" class="text-sm px-2 py-1 text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-200 transition-colors">Validation</a>
       <span class="text-gray-300 dark:text-gray-600 select-none">·</span>
-      <a href="#signature-info" class="text-sm px-2 py-1 text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-gray-300 transition-colors">Signature</a>
+      <a href="#signature-info" class="text-sm px-2 py-1 text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-200 transition-colors">Signature</a>
       <span class="text-gray-300 dark:text-gray-600 select-none">·</span>
-      <a href="#manifest-details" class="text-sm px-2 py-1 text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-gray-300 transition-colors">Manifest</a>
+      <a href="#manifest-details" class="text-sm px-2 py-1 text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-200 transition-colors">Manifest</a>
       {#if assertionsList.length > 0}
         <span class="text-gray-300 dark:text-gray-600 select-none">·</span>
-        <a href="#assertions" class="text-sm px-2 py-1 text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-gray-300 transition-colors">Assertions ({assertionsList.length})</a>
-      {/if}
-      {#if ingredientsList.length > 0}
-        <span class="text-gray-300 dark:text-gray-600 select-none">·</span>
-        <a href="#ingredients" class="text-sm px-2 py-1 text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-gray-300 transition-colors">Ingredients ({ingredientsList.length})</a>
+        <a href="#assertions" class="text-sm px-2 py-1 text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-200 transition-colors">Assertions ({assertionsList.length})</a>
       {/if}
     </div>
   {/if}
@@ -657,7 +711,11 @@
     </button>
   {/if}
 
-  {#if showRaw}
+  {#if activeTab === 'summary'}
+    <div class="bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 rounded-2xl p-8 shadow-sm flex-1 flex flex-col min-h-0 mb-6">
+      <OverviewPanel {report} {file} />
+    </div>
+  {:else if activeTab === 'crjson'}
     <div class="bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 rounded-2xl p-8 shadow-sm">
       <div class="flex items-center gap-3 mb-6 pb-4 border-b-2 border-gray-200 dark:border-gray-700">
         <div class="w-10 h-10 bg-gray-800 dark:bg-gray-700 rounded-lg flex items-center justify-center text-white shadow-md">
@@ -669,15 +727,25 @@
       </div>
       <pre class="hljs bg-gray-900 dark:bg-black border-2 border-gray-700 dark:border-gray-600 rounded-xl p-6 overflow-x-auto text-sm leading-relaxed shadow-inner"><code class="language-json" bind:this={rawJsonCodeEl}></code></pre>
     </div>
+  {:else if activeTab === 'rubrics'}
+    <div class="w-full">
+      <RubricsPanel {report} />
+    </div>
   {:else}
     <!-- Media Preview and Validation Status -->
     <div class="mb-8" id="media-preview">
       <div class="bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 rounded-2xl p-8 shadow-sm">
         <div class="flex items-center gap-3 mb-6 pb-4 border-b border-gray-200 dark:border-gray-700">
           <div class="w-10 h-10 bg-gray-800 dark:bg-gray-700 rounded-lg flex items-center justify-center text-white shadow-md">
-            <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M15 8h.01" /><path d="M3 6a3 3 0 0 1 3 -3h12a3 3 0 0 1 3 3v12a3 3 0 0 1 -3 3h-12a3 3 0 0 1 -3 -3v-12" /><path d="M3 16l5 -5c.928 -.893 2.072 -.893 3 0l5 5" /><path d="M14 14l1 -1c.928 -.893 2.072 -.893 3 0l3 3" /></svg>
+            {#if mediaType === 'sidecar'}
+              <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M14 3v4a1 1 0 0 0 1 1h4" /><path d="M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2z" /><path d="M9 17h6" /><path d="M9 13h6" /></svg>
+            {:else}
+              <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M15 8h.01" /><path d="M3 6a3 3 0 0 1 3 -3h12a3 3 0 0 1 3 3v12a3 3 0 0 1 -3 3h-12a3 3 0 0 1 -3 -3v-12" /><path d="M3 16l5 -5c.928 -.893 2.072 -.893 3 0l5 5" /><path d="M14 14l1 -1c.928 -.893 2.072 -.893 3 0l3 3" /></svg>
+            {/if}
           </div>
-          <h3 class="text-xl font-semibold text-gray-900 dark:text-white">Media Preview</h3>
+          <h3 class="text-xl font-semibold text-gray-900 dark:text-white">
+            {mediaType === 'sidecar' ? 'Sidecar File' : 'Media Preview'}
+          </h3>
         </div>
 
         {#if file && mediaUrl}
@@ -689,7 +757,9 @@
               </div>
               <div class="bg-gray-50 dark:bg-gray-900 rounded-xl p-4">
                 <div class="text-xs font-semibold text-gray-500 dark:text-gray-500 uppercase tracking-wide mb-1">Type</div>
-                <p class="text-sm font-medium text-gray-900 dark:text-gray-100">{file.type || 'Unknown'}</p>
+                <p class="text-sm font-medium text-gray-900 dark:text-gray-100">
+                  {mediaType === 'sidecar' ? 'application/c2pa (sidecar)' : (file.type || 'Unknown')}
+                </p>
               </div>
               <div class="bg-gray-50 dark:bg-gray-900 rounded-xl p-4">
                 <div class="text-xs font-semibold text-gray-500 dark:text-gray-500 uppercase tracking-wide mb-1">Size</div>
@@ -727,6 +797,24 @@
                     Download PDF
                   </a>
                 </div>
+              {:else if mediaType === 'sidecar'}
+                <div class="text-center max-w-md">
+                  <div class="w-20 h-20 mx-auto bg-gradient-to-br from-blue-500 to-indigo-600 dark:from-gray-600 dark:to-gray-700 rounded-2xl flex items-center justify-center text-white mb-6 shadow-lg">
+                    <svg class="w-10 h-10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M14 3v4a1 1 0 0 0 1 1h4" /><path d="M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2z" /><path d="M9 17h6" /><path d="M9 13h6" /></svg>
+                  </div>
+                  <p class="text-gray-900 dark:text-gray-100 mb-2 text-lg font-semibold">Standalone manifest sidecar</p>
+                  <p class="text-sm text-gray-600 dark:text-gray-400 leading-relaxed mb-4">
+                    This is a <code class="font-mono text-xs bg-gray-200 dark:bg-gray-700 px-1.5 py-0.5 rounded">.c2pa</code> file &mdash; a
+                    C2PA manifest store detached from its referenced asset. No embedded media to preview; the manifest&rsquo;s
+                    contents are shown below.
+                  </p>
+                  <a href={mediaUrl} download={file.name} class="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-lg transition-colors shadow-sm">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                    </svg>
+                    Download .c2pa
+                  </a>
+                </div>
               {:else}
                 <div class="text-center">
                   <p class="text-gray-700 dark:text-gray-200 text-lg font-semibold mb-2">Preview not available</p>
@@ -742,6 +830,7 @@
             manifest={activeManifest}
             ingredients={ingredientsList}
             mimeType={file?.type ?? ''}
+            signals={activeManifestSignals}
             {usedITL}
             {isTrusted}
           />
@@ -765,43 +854,66 @@
             </div>
             <h3 class="text-xl font-semibold text-gray-900 dark:text-white">Validation Status Details</h3>
           </div>
-          {#if validationStatus && validationStatus.length > 0}
-            <div class="space-y-3">
-              {#each validationStatus as status}
-                <div class={`rounded-xl p-5 border-2 transition-all duration-200 ${
-                  status.isInterim
-                    ? 'bg-blue-50 dark:bg-gray-900 border-blue-300 dark:border-gray-700'
-                    : status.success
-                      ? 'bg-green-50 dark:bg-gray-900 border-green-300 dark:border-gray-700'
-                      : 'bg-red-50 dark:bg-gray-900 border-red-300 dark:border-gray-700'
-                }`}>
-                  <div class="flex items-start gap-3">
-                    <div class={`flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-white text-sm font-bold ${
-                      status.isInterim
-                        ? 'bg-blue-600 dark:bg-gray-600'
-                        : status.success
-                          ? 'bg-green-600 dark:bg-gray-600'
-                          : 'bg-red-600 dark:bg-gray-600'
-                    }`}>
-                      {status.isInterim ? 'i' : status.success ? '✓' : '✕'}
-                    </div>
-                    <div class="flex-1">
-                      <p class="font-bold text-gray-900 dark:text-gray-100 mb-1">
-                        {status.code}
-                        {#if status.isInterim}
-                          <span class="ml-2 px-2 py-0.5 bg-blue-200 dark:bg-gray-700 text-blue-900 dark:text-gray-100 text-xs font-semibold rounded">ITL</span>
-                        {/if}
-                      </p>
-                      {#if status.explanation}
-                        <p class={`text-sm leading-relaxed ${
-                          status.isInterim
-                            ? 'text-blue-800 dark:text-gray-300'
-                            : status.success
-                              ? 'text-green-800 dark:text-gray-300'
-                              : 'text-red-800 dark:text-gray-300'
-                        }`}>{status.explanation}</p>
-                      {/if}
-                    </div>
+          {#if validationGroups && validationGroups.length > 0}
+            <div class="space-y-6">
+              {#each validationGroups as group}
+                <div class="manifest-group-card border border-gray-200 dark:border-gray-700 rounded-2xl p-6 bg-gray-50/30 dark:bg-gray-900/10 shadow-sm">
+                  <h4 class="font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2 flex-wrap pb-3 border-b border-gray-100 dark:border-gray-800">
+                    {#if group.isActive}
+                      <span class="px-2.5 py-1 bg-blue-100 dark:bg-blue-900/50 text-blue-800 dark:text-blue-300 text-xs font-semibold rounded-full">Active Asset</span>
+                    {:else}
+                      <span class="px-2.5 py-1 bg-orange-100 dark:bg-orange-900/50 text-orange-800 dark:text-orange-300 text-xs font-semibold rounded-full">Ingredient {group.index}</span>
+                    {/if}
+                    <span class="text-xs font-mono text-gray-500 dark:text-gray-500 truncate max-w-xs md:max-w-md" title={group.label}>{group.label}</span>
+                    {#if group.sigInfo?.common_name}
+                      <span class="text-xs font-normal text-gray-500 dark:text-gray-400 ml-auto">
+                        signed by <span class="font-semibold text-gray-700 dark:text-gray-300">{group.sigInfo.common_name}</span>
+                      </span>
+                    {/if}
+                  </h4>
+
+                  <div class="space-y-3">
+                    <!-- Failures -->
+                    {#each group.failure as status}
+                      <div class="rounded-xl p-4 border bg-red-50/50 dark:bg-gray-900/30 border-red-100 dark:border-red-900/30 text-red-800 dark:text-red-300">
+                         <div class="flex items-start gap-3">
+                           <span class="flex-shrink-0 w-5 h-5 rounded-full bg-red-600 dark:bg-red-800 text-white flex items-center justify-center text-xs font-bold">✕</span>
+                           <div class="flex-1 text-left">
+                             <span class="font-bold text-xs font-mono block sm:inline mb-1 sm:mb-0 mr-2">{status.code}</span>
+                             <p class="text-sm leading-relaxed mt-1 text-red-700 dark:text-red-400">{status.explanation}</p>
+                           </div>
+                         </div>
+                      </div>
+                    {/each}
+
+                    <!-- Successes -->
+                    {#each group.success as status}
+                      <div class="rounded-xl p-4 border bg-green-50/50 dark:bg-gray-900/30 border-green-100 dark:border-green-900/30 text-green-800 dark:text-green-300">
+                         <div class="flex items-start gap-3">
+                           <span class="flex-shrink-0 w-5 h-5 rounded-full bg-green-600 dark:bg-green-800 text-white flex items-center justify-center text-xs font-bold">✓</span>
+                           <div class="flex-1 text-left">
+                             <span class="font-bold text-xs font-mono block sm:inline mb-1 sm:mb-0 mr-2">{status.code}</span>
+                             {#if status.isInterim}
+                               <span class="ml-2 px-2 py-0.5 bg-blue-200 dark:bg-gray-700 text-blue-900 dark:text-gray-100 text-xs font-semibold rounded">ITL</span>
+                             {/if}
+                             <p class="text-sm leading-relaxed mt-1 text-green-700 dark:text-green-400">{status.explanation}</p>
+                           </div>
+                         </div>
+                      </div>
+                    {/each}
+
+                    <!-- Informationals -->
+                    {#each group.informational as status}
+                      <div class="rounded-xl p-4 border bg-blue-50/50 dark:bg-gray-900/30 border-blue-100 dark:border-blue-900/30 text-blue-800 dark:text-blue-300">
+                         <div class="flex items-start gap-3">
+                           <span class="flex-shrink-0 w-5 h-5 rounded-full bg-blue-600 dark:bg-blue-800 text-white flex items-center justify-center text-xs font-bold">i</span>
+                           <div class="flex-1 text-left">
+                             <span class="font-bold text-xs font-mono block sm:inline mb-1 sm:mb-0 mr-2">{status.code}</span>
+                             <p class="text-sm leading-relaxed mt-1 text-blue-700 dark:text-blue-400">{status.explanation}</p>
+                           </div>
+                         </div>
+                      </div>
+                    {/each}
                   </div>
                 </div>
               {/each}
@@ -840,26 +952,19 @@
                   <p class="text-sm font-medium text-gray-900 dark:text-gray-100">{signatureInfo.time}</p>
                 </div>
               {/if}
-              {#if signatureInfo.alg}
-                <div class="bg-gray-50 dark:bg-gray-900 rounded-xl p-4">
-                  <div class="text-xs font-semibold text-gray-500 dark:text-gray-500 uppercase tracking-wide mb-2">Algorithm</div>
-                  <p class="text-sm font-medium text-gray-900 dark:text-gray-100">{signatureInfo.alg}</p>
-                </div>
-              {/if}
-
               <!-- Certificate Validity -->
               {#if certValidityStatus !== 'unknown'}
                 <div class="bg-gray-50 dark:bg-gray-900 rounded-xl p-4">
                   <div class="text-xs font-semibold text-gray-500 dark:text-gray-500 uppercase tracking-wide mb-2">Certificate Validity</div>
                   {#if certValidityStatus === 'valid'}
                     <div class="flex items-center gap-2">
-                      <svg class="w-4 h-4 text-green-600 dark:text-gray-400 shrink-0" viewBox="0 0 24 24" fill="currentColor"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M17 3.34a10 10 0 1 1 -14.995 8.984l-.005 -.324l.005 -.324a10 10 0 0 1 14.995 -8.336zm-1.293 5.953a1 1 0 0 0 -1.32 -.083l-.094 .083l-3.293 3.292l-1.293 -1.292l-.094 -.083a1 1 0 0 0 -1.403 1.403l.083 .094l2 2l.094 .083a1 1 0 0 0 1.226 0l.094 -.083l4 -4l.083 -.094a1 1 0 0 0 -.083 -1.32z" /></svg>
-                      <span class="text-sm font-medium text-green-700 dark:text-gray-300">Valid at time of signing</span>
+                      <svg class="w-4 h-4 text-green-600 dark:text-green-300 shrink-0" viewBox="0 0 24 24" fill="currentColor"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M17 3.34a10 10 0 1 1 -14.995 8.984l-.005 -.324l.005 -.324a10 10 0 0 1 14.995 -8.336zm-1.293 5.953a1 1 0 0 0 -1.32 -.083l-.094 .083l-3.293 3.292l-1.293 -1.292l-.094 -.083a1 1 0 0 0 -1.403 1.403l.083 .094l2 2l.094 .083a1 1 0 0 0 1.226 0l.094 -.083l4 -4l.083 -.094a1 1 0 0 0 -.083 -1.32z" /></svg>
+                      <span class="text-sm font-medium text-green-700 dark:text-green-300">Valid at time of signing</span>
                     </div>
                   {:else if certValidityStatus === 'expired'}
                     <div class="flex items-center gap-2">
-                      <svg class="w-4 h-4 text-red-600 dark:text-gray-400 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/></svg>
-                      <span class="text-sm font-medium text-red-700 dark:text-gray-300">Expired at time of signing</span>
+                      <svg class="w-4 h-4 text-red-600 dark:text-red-300 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/></svg>
+                      <span class="text-sm font-medium text-red-700 dark:text-red-300">Expired at time of signing</span>
                     </div>
                   {/if}
                 </div>
@@ -871,23 +976,23 @@
                   <div class="text-xs font-semibold text-gray-500 dark:text-gray-500 uppercase tracking-wide mb-2">OCSP Revocation</div>
                   {#if ocspStatus === 'not_revoked'}
                     <div class="flex items-center gap-2">
-                      <svg class="w-4 h-4 text-green-600 dark:text-gray-400 shrink-0" viewBox="0 0 24 24" fill="currentColor"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M17 3.34a10 10 0 1 1 -14.995 8.984l-.005 -.324l.005 -.324a10 10 0 0 1 14.995 -8.336zm-1.293 5.953a1 1 0 0 0 -1.32 -.083l-.094 .083l-3.293 3.292l-1.293 -1.292l-.094 -.083a1 1 0 0 0 -1.403 1.403l.083 .094l2 2l.094 .083a1 1 0 0 0 1.226 0l.094 -.083l4 -4l.083 -.094a1 1 0 0 0 -.083 -1.32z" /></svg>
-                      <span class="text-sm font-medium text-green-700 dark:text-gray-300">Not revoked</span>
+                      <svg class="w-4 h-4 text-green-600 dark:text-green-300 shrink-0" viewBox="0 0 24 24" fill="currentColor"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M17 3.34a10 10 0 1 1 -14.995 8.984l-.005 -.324l.005 -.324a10 10 0 0 1 14.995 -8.336zm-1.293 5.953a1 1 0 0 0 -1.32 -.083l-.094 .083l-3.293 3.292l-1.293 -1.292l-.094 -.083a1 1 0 0 0 -1.403 1.403l.083 .094l2 2l.094 .083a1 1 0 0 0 1.226 0l.094 -.083l4 -4l.083 -.094a1 1 0 0 0 -.083 -1.32z" /></svg>
+                      <span class="text-sm font-medium text-green-700 dark:text-green-300">Not revoked</span>
                     </div>
                   {:else if ocspStatus === 'revoked'}
                     <div class="flex items-center gap-2">
-                      <svg class="w-4 h-4 text-red-600 dark:text-gray-400 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/></svg>
-                      <span class="text-sm font-medium text-red-700 dark:text-gray-300">Revoked</span>
+                      <svg class="w-4 h-4 text-red-600 dark:text-red-300 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/></svg>
+                      <span class="text-sm font-medium text-red-700 dark:text-red-300">Revoked</span>
                     </div>
                   {:else if ocspStatus === 'no_staple'}
                     <div class="flex items-center gap-2">
-                      <svg class="w-4 h-4 text-amber-500 dark:text-gray-400 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
-                      <span class="text-sm font-medium text-amber-700 dark:text-gray-300">No OCSP staple present</span>
+                      <svg class="w-4 h-4 text-amber-500 dark:text-amber-300 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
+                      <span class="text-sm font-medium text-amber-700 dark:text-amber-300">No OCSP staple present</span>
                     </div>
                   {:else if ocspStatus === 'inaccessible'}
                     <div class="flex items-center gap-2">
-                      <svg class="w-4 h-4 text-amber-500 dark:text-gray-400 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
-                      <span class="text-sm font-medium text-amber-700 dark:text-gray-300">OCSP server inaccessible</span>
+                      <svg class="w-4 h-4 text-amber-500 dark:text-amber-300 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
+                      <span class="text-sm font-medium text-amber-700 dark:text-amber-300">OCSP server inaccessible</span>
                     </div>
                   {/if}
                 </div>
@@ -907,10 +1012,10 @@
             <div class="bg-gray-50 dark:bg-gray-900 rounded-xl p-4">
               <div class="text-xs font-semibold text-gray-500 dark:text-gray-500 uppercase tracking-wide mb-2">Claim Generator</div>
               <p class="text-sm font-medium text-gray-900 dark:text-gray-100">
-                {#if claimInfo?.claim_generator_info?.length > 0}
+                {#if claimInfo?.claim_generator_info?.[0]?.name}
                   {claimInfo.claim_generator_info[0].name}
                   {#if claimInfo.claim_generator_info[0].version}
-                    <span class="text-blue-600 dark:text-gray-400">v{claimInfo.claim_generator_info[0].version}</span>
+                    <span class="text-blue-600 dark:text-blue-300">v{claimInfo.claim_generator_info[0].version}</span>
                   {/if}
                 {:else if claimInfo?.claim_generator}
                   {claimInfo.claim_generator}
@@ -919,16 +1024,6 @@
                 {/if}
               </p>
             </div>
-            <div class="bg-gray-50 dark:bg-gray-900 rounded-xl p-4">
-              <div class="text-xs font-semibold text-gray-500 dark:text-gray-500 uppercase tracking-wide mb-2">Instance ID</div>
-              <p class="text-sm font-medium text-gray-900 dark:text-gray-100 break-all font-mono">{claimInfo?.instance_id ?? activeManifest?.label ?? 'N/A'}</p>
-            </div>
-            {#if activeManifest?.label}
-              <div class="bg-gray-50 dark:bg-gray-900 rounded-xl p-4 md:col-span-2">
-                <div class="text-xs font-semibold text-gray-500 dark:text-gray-500 uppercase tracking-wide mb-2">Label</div>
-                <p class="text-sm font-medium text-gray-900 dark:text-gray-100 break-all">{activeManifest.label}</p>
-              </div>
-            {/if}
           </div>
         </section>
 
@@ -971,7 +1066,7 @@
                       {index + 1}
                     </div>
                     <div class="flex-1">
-                      <p class="font-bold text-gray-900 dark:text-gray-100 text-lg">{assertion.label || assertion.url || 'Unknown'}</p>
+                      <p class="font-bold text-gray-900 dark:text-gray-100 text-lg">{assertion.label || 'Unknown'}</p>
                       {#if assertion.data}
                         <button
                           on:click={() => toggleAssertion(index)}
@@ -1058,183 +1153,6 @@
                       {/if}
                     </div>
                   {/if}
-                </div>
-              {/each}
-            </div>
-          </section>
-        {/if}
-
-        {#if ingredientsList.length > 0}
-          <section class="bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 rounded-2xl p-8 shadow-sm" id="ingredients">
-            <div class="flex items-center gap-3 mb-6 pb-4 border-b border-gray-200 dark:border-gray-700">
-              <div class="w-10 h-10 bg-gray-800 dark:bg-gray-700 rounded-lg flex items-center justify-center text-white shadow-md">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-                </svg>
-              </div>
-              <div class="flex-1">
-                <h3 class="text-xl font-semibold text-gray-900 dark:text-white">Ingredients</h3>
-              </div>
-              <div class="flex items-center gap-2">
-                <button
-                  on:click={expandAllIngredients}
-                  class="text-xs px-3 py-1 bg-orange-100 dark:bg-gray-800 hover:bg-orange-200 dark:hover:bg-gray-700 text-orange-700 dark:text-gray-300 rounded-lg transition-colors font-semibold"
-                  title="Expand all ingredients"
-                >
-                  Expand All
-                </button>
-                <button
-                  on:click={collapseAllIngredients}
-                  class="text-xs px-3 py-1 bg-orange-100 dark:bg-gray-800 hover:bg-orange-200 dark:hover:bg-gray-700 text-orange-700 dark:text-gray-300 rounded-lg transition-colors font-semibold"
-                  title="Collapse all ingredients"
-                >
-                  Collapse All
-                </button>
-                <div class="px-3 py-1 bg-orange-100 dark:bg-gray-800 text-orange-700 dark:text-gray-300 rounded-full text-sm font-bold">
-                  {ingredientsList.length}
-                </div>
-              </div>
-            </div>
-            <div class="space-y-4">
-              {#each ingredientsList as ingredient, index}
-                {@const ingredientManifest = getIngredientManifest(ingredient)}
-                {@const isExpanded = expandedIngredients.has(index)}
-                <div class="bg-gray-50 dark:bg-gray-900 rounded-xl p-5 border border-gray-200 dark:border-gray-700 hover:border-orange-300 dark:hover:border-gray-600 transition-colors">
-                  <div class="flex items-start gap-3 mb-3">
-                    <div class="flex-shrink-0 w-8 h-8 bg-orange-100 dark:bg-gray-800 rounded-lg flex items-center justify-center text-orange-700 dark:text-gray-300 font-bold text-sm">
-                      {index + 1}
-                    </div>
-                    <div class="flex-1">
-                      <p class="font-bold text-gray-900 dark:text-gray-100 text-lg">{ingredient.title || ingredient.instance_id || 'Unknown'}</p>
-                      {#if ingredientManifest}
-                        <button
-                          on:click={() => toggleIngredient(index)}
-                          class="mt-1 inline-flex items-center gap-1 text-xs font-semibold text-orange-600 dark:text-gray-400 hover:text-orange-700 dark:hover:text-gray-300 transition-colors"
-                        >
-                          <svg class="w-3 h-3 transition-transform {isExpanded ? 'rotate-90' : ''}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-                          </svg>
-                          {isExpanded ? 'Hide' : 'Show'} manifest details
-                        </button>
-                      {/if}
-                    </div>
-                  </div>
-                  <div class="ml-11 space-y-3">
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                      {#if ingredient.relationship}
-                        <div class="bg-white dark:bg-gray-800 rounded-lg p-3">
-                          <div class="text-xs font-semibold text-gray-500 dark:text-gray-500 uppercase tracking-wide mb-1">Relationship</div>
-                          <p class="text-sm font-medium text-gray-900 dark:text-gray-100">{ingredient.relationship}</p>
-                        </div>
-                      {/if}
-                      {#if ingredient.format}
-                        <div class="bg-white dark:bg-gray-800 rounded-lg p-3">
-                          <div class="text-xs font-semibold text-gray-500 dark:text-gray-500 uppercase tracking-wide mb-1">Format</div>
-                          <p class="text-sm font-medium text-gray-900 dark:text-gray-100">{ingredient.format}</p>
-                        </div>
-                      {/if}
-                    </div>
-                    {#if ingredient.document_id}
-                      <div class="bg-white dark:bg-gray-800 rounded-lg p-3">
-                        <div class="text-xs font-semibold text-gray-500 dark:text-gray-500 uppercase tracking-wide mb-1">Document ID</div>
-                        <p class="text-sm font-medium text-gray-900 dark:text-gray-100 break-all font-mono">{ingredient.document_id}</p>
-                      </div>
-                    {/if}
-                    {#if ingredient.instance_id && !ingredient.title}
-                      <div class="bg-white dark:bg-gray-800 rounded-lg p-3">
-                        <div class="text-xs font-semibold text-gray-500 dark:text-gray-500 uppercase tracking-wide mb-1">Instance ID</div>
-                        <p class="text-sm font-medium text-gray-900 dark:text-gray-100 break-all font-mono">{ingredient.instance_id}</p>
-                      </div>
-                    {/if}
-
-                    <!-- Ingredient Manifest Information (read from crJSON via getters) -->
-                    {#if ingredientManifest && isExpanded}
-                      {@const ingClaim = getClaimInfo(ingredientManifest)}
-                      {@const ingSig = getSignatureInfo(ingredientManifest)}
-                      {@const ingAssertions = getAssertionsList(ingredientManifest)}
-                      {@const ingIngredients = getIngredientsFromManifest(ingredientManifest)}
-                      <div class="mt-3 pt-3 border-t border-gray-300 dark:border-gray-600 animate-fade-in">
-                        <div class="flex items-center gap-2 mb-3">
-                          <svg class="w-4 h-4 text-orange-600 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                          </svg>
-                          <span class="text-xs font-bold text-orange-700 dark:text-gray-300 uppercase tracking-wide">Manifest Details</span>
-                        </div>
-
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                          {#if ingClaim?.claim_generator}
-                            <div class="bg-orange-50 dark:bg-gray-800/50 rounded-lg p-3">
-                              <div class="text-xs font-semibold text-gray-500 dark:text-gray-500 uppercase tracking-wide mb-1">Claim Generator</div>
-                              <p class="text-sm font-medium text-gray-900 dark:text-gray-100">{ingClaim.claim_generator}</p>
-                            </div>
-                          {/if}
-                          {#if ingClaim?.claim_generator_info?.length > 0}
-                            <div class="bg-orange-50 dark:bg-gray-800/50 rounded-lg p-3">
-                              <div class="text-xs font-semibold text-gray-500 dark:text-gray-500 uppercase tracking-wide mb-1">Claim Generator</div>
-                              <p class="text-sm font-medium text-gray-900 dark:text-gray-100">
-                                {ingClaim.claim_generator_info[0].name}
-                                {#if ingClaim.claim_generator_info[0].version}
-                                  <span class="text-orange-600 dark:text-gray-400">v{ingClaim.claim_generator_info[0].version}</span>
-                                {/if}
-                              </p>
-                            </div>
-                          {/if}
-                          {#if ingSig?.common_name}
-                            <div class="bg-orange-50 dark:bg-gray-800/50 rounded-lg p-3">
-                              <div class="text-xs font-semibold text-gray-500 dark:text-gray-500 uppercase tracking-wide mb-1">Signed By</div>
-                              <p class="text-sm font-medium text-gray-900 dark:text-gray-100 break-all">{ingSig.common_name}</p>
-                            </div>
-                          {/if}
-                          {#if ingSig?.time}
-                            <div class="bg-orange-50 dark:bg-gray-800/50 rounded-lg p-3">
-                              <div class="text-xs font-semibold text-gray-500 dark:text-gray-500 uppercase tracking-wide mb-1">Signature Time</div>
-                              <p class="text-sm font-medium text-gray-900 dark:text-gray-100">{ingSig.time}</p>
-                            </div>
-                          {/if}
-                          {#if ingSig?.issuer}
-                            <div class="bg-orange-50 dark:bg-gray-800/50 rounded-lg p-3">
-                              <div class="text-xs font-semibold text-gray-500 dark:text-gray-500 uppercase tracking-wide mb-1">Issuer</div>
-                              <p class="text-sm font-medium text-gray-900 dark:text-gray-100 break-all">{ingSig.issuer}</p>
-                            </div>
-                          {/if}
-                        </div>
-
-                        {#if ingAssertions.length > 0}
-                          <div class="mt-3 bg-orange-50 dark:bg-gray-800/50 rounded-lg p-3">
-                            <div class="flex items-center justify-between mb-2">
-                              <span class="text-xs font-semibold text-gray-500 dark:text-gray-500 uppercase tracking-wide">Assertions</span>
-                              <span class="px-2 py-1 bg-orange-200 dark:bg-gray-700 text-orange-800 dark:text-gray-200 rounded-full text-xs font-bold">{ingAssertions.length}</span>
-                            </div>
-                            <div class="space-y-1">
-                              {#each ingAssertions.slice(0, 5) as assertion}
-                                <div class="text-xs text-gray-700 dark:text-gray-300 font-mono">• {assertion.label || 'Unknown'}</div>
-                              {/each}
-                              {#if ingAssertions.length > 5}
-                                <div class="text-xs text-gray-500 dark:text-gray-500 italic">+ {ingAssertions.length - 5} more...</div>
-                              {/if}
-                            </div>
-                          </div>
-                        {/if}
-
-                        {#if ingIngredients.length > 0}
-                          <div class="mt-3 bg-orange-50 dark:bg-gray-800/50 rounded-lg p-3">
-                            <div class="flex items-center justify-between mb-2">
-                              <span class="text-xs font-semibold text-gray-500 dark:text-gray-500 uppercase tracking-wide">Nested Ingredients</span>
-                              <span class="px-2 py-1 bg-orange-200 dark:bg-gray-700 text-orange-800 dark:text-gray-200 rounded-full text-xs font-bold">{ingIngredients.length}</span>
-                            </div>
-                            <div class="space-y-1">
-                              {#each ingIngredients.slice(0, 3) as nestedIngredient}
-                                <div class="text-xs text-gray-700 dark:text-gray-300">• {nestedIngredient.title || nestedIngredient.instance_id || 'Unknown'}</div>
-                              {/each}
-                              {#if ingIngredients.length > 3}
-                                <div class="text-xs text-gray-500 dark:text-gray-500 italic">+ {ingIngredients.length - 3} more...</div>
-                              {/if}
-                            </div>
-                          </div>
-                        {/if}
-                      </div>
-                    {/if}
-                  </div>
                 </div>
               {/each}
             </div>

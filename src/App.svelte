@@ -1,7 +1,7 @@
 <svelte:head>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous" >
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
 </svelte:head>
 
 <script lang="ts">
@@ -9,12 +9,17 @@
   import FileUpload from './lib/FileUpload.svelte'
   import ReportViewer from './lib/ReportViewer.svelte'
   import CertificateManager from './lib/CertificateManager.svelte'
-  import AssetProfilePage from './lib/AssetProfilePage.svelte'
-  import { processFile } from './lib/c2pa'
+  import { processFile, processSidecarWithAsset, isSidecarFile } from './lib/c2pa'
   import { testTrustListFetch } from './lib/trustListTest'
   import type { ConformanceReport } from './lib/types'
 
-  type Page = 'main' | 'test-certificates' | 'asset-profiles'
+  type Page = 'main' | 'test-certificates'
+  // 'embedded' = normal asset with in-band manifest.
+  // 'sidecar+asset' = user supplied both the .c2pa and the asset; manifest is
+  //   read from the sidecar and the asset is shown for context only.
+  // 'sidecar-only' = user supplied a .c2pa without the asset; manifest is
+  //   parsed and inspected directly.
+  type ValidationMode = 'embedded' | 'sidecar+asset' | 'sidecar-only'
 
   let report: ConformanceReport | null = null
   let error: string | null = null
@@ -24,6 +29,9 @@
   let testCertificates: string[] = []
   let usedTestCertificates = false
   let selectedFile: File | null = null
+  let sidecarFile: File | null = null       // companion file when we processed a sidecar+asset pair
+  let pendingSidecar: File | null = null    // sidecar dropped, waiting for user to supply the asset
+  let validationMode: ValidationMode = 'embedded'
   let darkMode = false
   let infoSectionExpanded = false
   let testModeEnabled = false
@@ -31,8 +39,6 @@
   let processingStatus = 'Processing file...'
   let currentPage: Page = 'main'
   let menuOpen = false
-  let assetProfilePage: { handleExternalAssetFile: (file: File) => Promise<void> } | null = null
-
   // Test trust list fetching on component mount
   onMount(() => {
     console.log('=== C2PA Conformance Tool Initialized ===')
@@ -70,11 +76,7 @@
       globalDragOver = false
       const files = e.dataTransfer?.files
       if (files && files.length > 0) {
-        if (currentPage === 'asset-profiles') {
-          void handleAssetProfileFileSelect(files[0])
-        } else {
-          void handleFileSelect({ detail: files[0] } as CustomEvent<File>)
-        }
+        void handleFilesDropped(Array.from(files))
       }
     }
 
@@ -86,11 +88,7 @@
 
     const handleFileSelectedEvent = (e: Event) => {
       const customEvent = e as CustomEvent<File>
-      if (currentPage === 'asset-profiles') {
-        void handleAssetProfileFileSelect(customEvent.detail)
-      } else {
-        void handleFileSelect({ detail: customEvent.detail } as CustomEvent<File>)
-      }
+      void handleFilesDropped([customEvent.detail])
     }
 
     window.addEventListener('dragover', preventDefaults, false)
@@ -106,6 +104,57 @@
     }
   })
 
+  /**
+   * Entry point for any drop. Handles three pairing cases:
+   *   1. Two files dropped together, exactly one a .c2pa → auto-pair.
+   *   2. A single .c2pa, sidecar+asset supported, nothing pending → enter
+   *      "awaiting asset" state (show a prompt, don't process yet).
+   *   3. A single asset while a sidecar is pending → pair them.
+   *   4. Anything else → fall through to single-file processing.
+   */
+  async function handleFilesDropped(files: File[]) {
+    if (files.length === 0) return
+
+    // Case 1: Exactly one sidecar + one asset dropped together → pair them.
+    if (files.length >= 2) {
+      const sidecars = files.filter(isSidecarFile)
+      const assets = files.filter(f => !isSidecarFile(f))
+      if (sidecars.length === 1 && assets.length === 1) {
+        await processSidecarPair(sidecars[0], assets[0])
+        return
+      }
+    }
+
+    const file = files[0]
+
+    // Case 3: Pending sidecar + user supplied an asset → pair them.
+    if (pendingSidecar && !isSidecarFile(file)) {
+      await processSidecarPair(pendingSidecar, file)
+      return
+    }
+
+    // Case 2: Single sidecar, no asset yet → park it and prompt for the asset.
+    // We do this regardless of sidecarSupported so that even the packaged-SDK
+    // fallback path (no local WASM) shows the pairing prompt. JSON sidecars are
+    // parsed directly as crJSON reports so they never need the local WASM.
+    if (isSidecarFile(file) && !pendingSidecar) {
+      pendingSidecar = file
+      selectedFile = file
+      report = null
+      error = null
+      noManifest = false
+      processing = false
+      currentPage = 'main'
+      menuOpen = false
+      return
+    }
+
+    // Case 4 (default): single-file processing. Covers plain assets and —
+    //   when sidecar+asset validation isn't available — lone .c2pa files
+    //   which we just inspect without hash verification.
+    await handleFileSelect({ detail: file } as CustomEvent<File>)
+  }
+
   async function handleFileSelect(event: CustomEvent<File>) {
     const file = event.detail
     console.log('📄 File selected:', file.name, file.type, file.size, 'bytes')
@@ -119,6 +168,9 @@
     noManifest = false
     report = null
     selectedFile = file
+    sidecarFile = null
+    pendingSidecar = null
+    validationMode = isSidecarFile(file) ? 'sidecar-only' : 'embedded'
     usedTestCertificates = testCertificates.length > 0
 
     try {
@@ -155,68 +207,92 @@
     }
   }
 
-  async function handleAssetProfileFileSelect(file: File) {
-    currentPage = 'asset-profiles'
+  async function processSidecarPair(sidecar: File, asset: File) {
+    console.log('🔗 Pairing sidecar with asset:', sidecar.name, '+', asset.name)
+
+    currentPage = 'main'
     menuOpen = false
-    await assetProfilePage?.handleExternalAssetFile(file)
+
+    processing = true
+    error = null
+    noManifest = false
+    report = null
+    selectedFile = asset
+    sidecarFile = sidecar
+    pendingSidecar = null
+    validationMode = 'sidecar+asset'
+    usedTestCertificates = testCertificates.length > 0
+
+    try {
+      processingStatus = 'Initializing C2PA SDK...'
+      await new Promise(resolve => setTimeout(resolve, 100))
+
+      processingStatus = 'Validating manifest against asset...'
+      report = await processSidecarWithAsset(sidecar, asset, testCertificates)
+
+      processingStatus = 'Building report...'
+      await new Promise(resolve => setTimeout(resolve, 100))
+      console.log('✅ Sidecar+asset processed successfully:', report)
+    } catch (err) {
+      // Sidecar files should always contain a manifest — failures are errors, not "no credentials".
+      error = err instanceof Error ? err.message : 'An error occurred processing the files'
+      console.error('❌ Error processing sidecar pair:', err)
+    } finally {
+      processing = false
+      processingStatus = 'Processing file...'
+    }
+  }
+
+  function cancelPendingSidecar() {
+    pendingSidecar = null
+    selectedFile = null
+  }
+
+  function inspectSidecarWithoutAsset() {
+    if (!pendingSidecar) return
+    const sidecar = pendingSidecar
+    pendingSidecar = null
+    void handleFileSelect({ detail: sidecar } as CustomEvent<File>)
+  }
+
+  async function reprocessCurrentFile() {
+    if (!selectedFile || !report) return
+    processing = true
+    error = null
+    noManifest = false
+    report = null
+    usedTestCertificates = testCertificates.length > 0
+    try {
+      await new Promise(resolve => setTimeout(resolve, 0))
+      if (sidecarFile) {
+        report = await processSidecarWithAsset(sidecarFile, selectedFile, testCertificates)
+      } else {
+        report = await processFile(selectedFile, testCertificates)
+      }
+      console.log('✅ File reprocessed successfully')
+    } catch (err) {
+      error = err instanceof Error ? err.message : 'An error occurred processing the file'
+      console.error('❌ Error reprocessing file:', err)
+    } finally {
+      processing = false
+    }
   }
 
   async function handleTestModeChanged(event: CustomEvent<{ enabled: boolean; rootLoaded: boolean }>) {
     testModeEnabled = event.detail.enabled
     testRootLoaded = event.detail.rootLoaded
-
     if (selectedFile && report) {
       console.log('🔄 Test mode changed, reprocessing file...')
-      processing = true
-      error = null
-      noManifest = false
-      const previousReport = report
-      report = null
-
-      try {
-        await new Promise(resolve => setTimeout(resolve, 0))
-        usedTestCertificates = testCertificates.length > 0
-        if (testCertificates.length > 0) {
-          console.log('⚠️  Using', testCertificates.length, 'test certificate(s)')
-        } else {
-          console.log('✅ Using production trust list only')
-        }
-        report = await processFile(selectedFile, testCertificates)
-        console.log('✅ File reprocessed successfully')
-      } catch (err) {
-        error = err instanceof Error ? err.message : 'An error occurred processing the file'
-        console.error('❌ Error reprocessing file:', err)
-        report = previousReport
-      } finally {
-        processing = false
-      }
+      await reprocessCurrentFile()
     }
   }
 
   async function handleCertificatesUpdated(event: CustomEvent<string[]>) {
     console.log('🔔 handleCertificatesUpdated called with', event.detail.length, 'certificates')
     testCertificates = event.detail
-
     if (selectedFile && report) {
       console.log('🔄 Reprocessing file with updated certificates...')
-      processing = true
-      error = null
-      noManifest = false
-      report = null
-      usedTestCertificates = testCertificates.length > 0
-
-      try {
-        if (testCertificates.length > 0) {
-          console.log('⚠️  Using', testCertificates.length, 'test certificate(s)')
-        }
-        report = await processFile(selectedFile, testCertificates)
-        console.log('✅ File reprocessed successfully')
-      } catch (err) {
-        error = err instanceof Error ? err.message : 'An error occurred processing the file'
-        console.error('❌ Error reprocessing file:', err)
-      } finally {
-        processing = false
-      }
+      await reprocessCurrentFile()
     }
   }
 
@@ -247,11 +323,7 @@
     globalDragOver = false
     const files = event.dataTransfer?.files
     if (files && files.length > 0) {
-      if (currentPage === 'asset-profiles') {
-        void handleAssetProfileFileSelect(files[0])
-      } else {
-        void handleFileSelect({ detail: files[0] } as CustomEvent<File>)
-      }
+      void handleFilesDropped(Array.from(files))
     }
   }
 
@@ -292,7 +364,7 @@
   on:dragover={handleGlobalDragOver}
   on:dragleave={handleGlobalDragLeave}
   on:drop={handleGlobalDrop}
-  class="relative min-h-screen"
+  class="relative min-h-screen flex flex-col"
   class:pointer-events-none={globalDragOver}
 >
   {#if globalDragOver}
@@ -402,13 +474,6 @@
                     <span class="ml-auto px-1.5 py-0.5 bg-amber-600 dark:bg-gray-600 text-white rounded-full text-xs font-bold">{testCertificates.length}</span>
                   {/if}
                 </button>
-                <button
-                  on:click={() => navigateTo('asset-profiles')}
-                  class="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-left"
-                >
-                  <svg class="w-4 h-4 text-blue-600 dark:text-gray-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M14 3v4a1 1 0 0 0 1 1h4" /><path d="M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2" /><path d="M9 9l1 0" /><path d="M9 13l6 0" /><path d="M9 17l6 0" /></svg>
-                  <span>Asset Profiles</span>
-                </button>
               </div>
             {/if}
           </div>
@@ -417,6 +482,7 @@
     </div>
   </nav>
 
+  <div class="flex-1 flex flex-col">
   <!-- ── Test Certificates page ── -->
   {#if currentPage === 'test-certificates'}
     <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
@@ -444,43 +510,11 @@
       />
     </div>
 
-  <!-- ── Asset Profiles page ── -->
-  {:else if currentPage === 'asset-profiles'}
-    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-      <div class="mb-8">
-        <button
-          on:click={() => navigateTo('main')}
-          class="inline-flex items-center gap-2 text-sm font-semibold text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
-        >
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
-          </svg>
-          Back to main view
-        </button>
-        <h2 class="mt-4 text-2xl font-bold text-gray-900 dark:text-white">Asset Profiles</h2>
-        <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">
-          Define expected manifest shapes to validate assets against a specific profile.
-        </p>
-      </div>
-      <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl p-12 text-center shadow-sm">
-        <div class="inline-flex items-center justify-center w-16 h-16 bg-blue-50 dark:bg-gray-800 rounded-2xl mb-4">
-          <svg class="w-8 h-8 text-blue-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-          </svg>
-        </div>
-        <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">Coming soon</h3>
-        <p class="text-sm text-gray-500 dark:text-gray-400 max-w-sm mx-auto">
-          Asset profiles will let you define and validate C2PA manifests against expected content structures.
-        </p>
-      </div>
-      <AssetProfilePage bind:this={assetProfilePage} {testCertificates} />
-    </div>
-
   <!-- ── Main page ── -->
   {:else}
     {#if !report && !processing}
       <!-- Hero Section -->
-      <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center mb-12 mt-10">
+      <div class="w-full max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center mb-12 mt-10">
         <div class="mb-10">
           <h2 class="text-[34px] sm:text-[48px] font-bold text-[#444] dark:text-white mb-4 tracking-wide leading-tight">
              Content Credentials<br />
@@ -546,7 +580,7 @@
               </div>
               <div class="flex-1">
                 <h2 class="text-2xl font-bold text-gray-700 dark:text-gray-200 mb-3">No C2PA Content Credentials Found</h2>
-                <p class="text-gray-600 dark:text-gray-300 leading-relaxed mb-4">This file doesn't appear to contain C2PA content credentials.</p>
+                <p class="text-gray-600 dark:text-gray-300 leading-relaxed mb-4">This file doesn't appear to contain C2PA Content Credentials.</p>
                 <button
                   on:click={resetToHome}
                   class="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white text-sm font-semibold rounded-lg transition-colors"
@@ -578,14 +612,59 @@
           </div>
         {/if}
 
-        <!-- Upload Area -->
-        <div class="mb-6">
-          <FileUpload on:fileselect={handleFileSelect} compact={false} />
-        </div>
+        {#if pendingSidecar}
+          <!-- Pending sidecar: waiting for the matching asset to be dropped -->
+          <div class="bg-blue-50 dark:bg-gray-900 border-2 border-blue-400 dark:border-gray-600 border-dashed rounded-2xl p-8 mb-6 text-left shadow-sm">
+            <div class="flex items-start gap-4">
+              <div class="flex-shrink-0 w-12 h-12 bg-blue-600 dark:bg-gray-600 rounded-full flex items-center justify-center text-white">
+                <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M15 13l-3.5 3.5a1.5 1.5 0 0 1 -2 0l-.5 -.5a1.5 1.5 0 0 1 0 -2l3.5 -3.5" /><path d="M9 11l-1.5 -1.5a1.5 1.5 0 0 1 0 -2l.5 -.5a1.5 1.5 0 0 1 2 0l1.5 1.5" /><path d="M13 11l1 1" /><path d="M11 13l1 1" /><path d="M14 4l-2 2" /><path d="M5 13l-1 1" /><path d="M4 14l-1 2l1 3l3 1l2 -1" /><path d="M14 20l2 1l3 -1l1 -3l-1 -2" /><path d="M20 10l1 -2l-1 -3l-3 -1l-2 1" /></svg>
+              </div>
+              <div class="flex-1 min-w-0">
+                <h3 class="text-lg font-bold text-blue-900 dark:text-white mb-1">Sidecar received — now drop the matching asset</h3>
+                <p class="text-sm text-blue-700 dark:text-gray-300 mb-1 truncate">
+                  <span class="font-mono">{pendingSidecar.name}</span>
+                </p>
+                <p class="text-sm text-blue-600 dark:text-gray-400 mb-4">
+                  Drop or select the asset file this sidecar belongs to. The asset will be shown alongside the manifest for context.
+                </p>
+                <div class="flex flex-wrap gap-3">
+                  <FileUpload on:fileselect={(e) => handleFilesDropped([e.detail])} compact={true} />
+                  <button
+                    on:click={inspectSidecarWithoutAsset}
+                    class="inline-flex items-center gap-2 px-4 py-2 bg-white dark:bg-gray-700 border border-blue-300 dark:border-gray-500 text-blue-700 dark:text-gray-200 text-sm font-semibold rounded-lg hover:bg-blue-50 dark:hover:bg-gray-600 transition-colors"
+                  >
+                    Inspect sidecar only (no asset)
+                  </button>
+                  <button
+                    on:click={cancelPendingSidecar}
+                    class="inline-flex items-center gap-2 px-4 py-2 text-gray-500 dark:text-gray-400 text-sm font-semibold hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        {:else}
+          <!-- Upload Area -->
+          <!--
+            Always route through the pairing dispatcher so that selecting a
+            .c2pa via Browse Files lands in the same "waiting for asset"
+            state as dragging one in. Going directly to handleFileSelect
+            here would skip the pending-sidecar branch and process the
+            sidecar alone, which is exactly what we don't want.
+          -->
+          <div class="mb-6">
+            <FileUpload
+              on:fileselect={(e) => handleFilesDropped([e.detail])}
+              compact={false}
+            />
+          </div>
+        {/if}
       </div>
     {/if}
 
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-8">
+    <div class="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex-1 flex flex-col">
       {#if processing}
         <div
           class="flex flex-col items-center gap-6 py-20"
@@ -615,40 +694,15 @@
 
   {/if}
 
+  </div><!-- end flex-1 content -->
+
   <!-- Footer (always shown) -->
-  <footer class="border-t border-gray-200 dark:border-gray-700 mt-20">
-    <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-      <div class="flex flex-col md:flex-row md:items-start gap-10 text-sm">
-        <div class="space-y-3 flex-1">
-          <h3 class="font-bold text-gray-900 dark:text-gray-100 text-base mb-3">About This Tool</h3>
-          <p class="text-gray-600 dark:text-gray-400 leading-relaxed">
-            This tool validates C2PA manifests using the <a href="https://github.com/contentauth/c2pa-rs" target="_blank" rel="noopener noreferrer" class="text-blue-600 dark:text-gray-400 hover:text-blue-700 dark:hover:text-gray-300 transition-colors">c2pa-rs</a> SDK. All processing happens in your browser — files never leave your device.
-          </p>
-        </div>
-        <div class="space-y-3 flex-1">
-          <h3 class="font-bold text-gray-900 dark:text-gray-100 text-base mb-3">Learn More</h3>
-          <ul class="space-y-2">
-            <li>
-              <a href="https://c2pa.org" target="_blank" rel="noopener noreferrer" class="text-blue-600 dark:text-gray-400 hover:text-blue-700 dark:hover:text-gray-300 transition-colors inline-flex items-center gap-2 group">
-                <span>C2PA Specification</span>
-                <span class="transform group-hover:translate-x-1 transition-transform">→</span>
-              </a>
-            </li>
-            <li>
-              <a href="https://c2pa.org/conformance" target="_blank" rel="noopener noreferrer" class="text-blue-600 dark:text-gray-400 hover:text-blue-700 dark:hover:text-gray-300 transition-colors inline-flex items-center gap-2 group">
-                <span>Conformance Program</span>
-                <span class="transform group-hover:translate-x-1 transition-transform">→</span>
-              </a>
-            </li>
-          </ul>
-        </div>
-      </div>
-      <div class="mt-10 pt-6 border-t border-gray-100 dark:border-gray-800 flex items-center justify-between">
-        <span class="text-xs text-gray-400 dark:text-gray-500">Built with ❤️ by the C2PA Conformance community</span>
-        <a href="https://c2pa.org" target="_blank" rel="noopener noreferrer" aria-label="Visit C2PA website">
-          <img src="{import.meta.env.BASE_URL}c2pa_icon.svg" alt="C2PA" class="h-7 w-auto opacity-60 hover:opacity-100 transition-opacity dark:brightness-0 dark:invert" />
-        </a>
-      </div>
+  <footer class="border-t border-gray-200 dark:border-gray-700">
+    <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between">
+      <span class="text-xs text-gray-400 dark:text-gray-500">Built with ❤️ by the C2PA Conformance community</span>
+      <a href="https://c2pa.org" target="_blank" rel="noopener noreferrer" aria-label="Visit C2PA website">
+        <img src="{import.meta.env.BASE_URL}c2pa_icon.svg" alt="C2PA" class="h-6 w-auto opacity-60 hover:opacity-100 transition-opacity dark:brightness-0 dark:invert" />
+      </a>
     </div>
   </footer>
 </main>

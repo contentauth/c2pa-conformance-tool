@@ -82,7 +82,7 @@ export interface CrJsonClaimInfo {
 /** Detect if parsed JSON is crJSON format */
 export function isCrJson(obj: unknown): obj is CrJson {
   const o = obj as Record<string, unknown>
-  return Array.isArray(o?.manifests) && o.manifests.length > 0 && o['@context'] != null
+  return Array.isArray(o?.manifests) && o.manifests.length > 0
 }
 
 /** Read assertions as list from crJSON manifest.assertions (object → array of { label, data }) */
@@ -198,6 +198,88 @@ export function getActiveManifestValidationStatus(report: CrJson): CrJsonActiveM
   }
   return docLevel ?? (perManifest ? { success: perManifest.success, informational: perManifest.informational, failure: perManifest.failure } : undefined)
 }
+
+/**
+ * Get all validation failures from the report, including document-level,
+ * active manifest, and all ingredient manifests.
+ */
+export function getAllValidationFailures(report: CrJson): CrJsonValidationStatus[] {
+  const failures: CrJsonValidationStatus[] = []
+
+  // 1. Document-level failures
+  if (report.validationResults?.failure) {
+    failures.push(...report.validationResults.failure)
+  }
+  if (report.validationResults?.activeManifest?.failure) {
+    failures.push(...report.validationResults.activeManifest.failure)
+  }
+
+  // 2. Per-manifest failures (active and ingredients)
+  if (report.manifests) {
+    for (const manifest of report.manifests) {
+      const perManifest = manifest.validationResults as CrJsonValidationResults | undefined
+      if (perManifest?.failure) {
+        failures.push(...perManifest.failure)
+      }
+    }
+  }
+
+  // De-duplicate by code
+  const uniqueFailures: CrJsonValidationStatus[] = []
+  const seenCodes = new Set<string>()
+  for (const f of failures) {
+    if (!seenCodes.has(f.code)) {
+      seenCodes.add(f.code)
+      uniqueFailures.push(f)
+    }
+  }
+
+  return uniqueFailures
+}
+
+/**
+ * Get validation status for a specific manifest from crJSON.
+ * - Supports per-manifest results (native crJSON) on `m.validationResults`.
+ * - Fallback to document-level results (legacy) for the active manifest (isFirst = true).
+ */
+export function getManifestValidationStatus(
+  report: CrJson,
+  m: CrJsonManifestEntry,
+  isFirst: boolean
+): CrJsonActiveManifestStatus | undefined {
+  // 1. Try per-manifest status (c2pa-rs style crJSON)
+  const perManifest = m.validationResults as CrJsonValidationResults | undefined
+  if (perManifest && (perManifest.success?.length ?? 0) + (perManifest.failure?.length ?? 0) + (perManifest.informational?.length ?? 0) > 0) {
+    return {
+      success: perManifest.success,
+      informational: perManifest.informational,
+      failure: perManifest.failure
+    }
+  }
+
+  // 2. Fallback to document-level for active manifest (legacy)
+  if (isFirst) {
+    const docLevel = report.validationResults?.activeManifest
+    if (docLevel && (docLevel.success?.length ?? 0) + (docLevel.failure?.length ?? 0) + (docLevel.informational?.length ?? 0) > 0) {
+      return docLevel
+    }
+    // If legacy has it flat at root
+    if (report.validationResults) {
+      const vr = report.validationResults
+      if ((vr.success?.length ?? 0) + (vr.failure?.length ?? 0) + (vr.informational?.length ?? 0) > 0) {
+        return {
+          success: vr.success,
+          informational: vr.informational,
+          failure: vr.failure
+        }
+      }
+    }
+  }
+
+  return undefined
+}
+
+
 
 /**
  * Convert legacy ManifestStore (from Reader.json() / packaged SDK) to crJSON.

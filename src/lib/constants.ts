@@ -58,3 +58,22 @@ export const PEM_MARKERS = {
   TRUSTED_CERT_BEGIN: '-----BEGIN TRUSTED CERTIFICATE-----',
   TRUSTED_CERT_END: '-----END TRUSTED CERTIFICATE-----'
 } as const
+
+// Validation Failure Descriptions (used when these codes appear in the failure list)
+export const VALIDATION_FAILURE_DESCRIPTIONS: Record<string, string> = {
+  [VALIDATION_STATUS.SIGNING_CREDENTIAL_UNTRUSTED]: 'The signing certificate is not trusted by the configured trust store.',
+  [VALIDATION_STATUS.SIGNING_CREDENTIAL_EXPIRED]: 'The signing certificate has expired.',
+  [VALIDATION_STATUS.SIGNING_CREDENTIAL_OCSP_REVOKED]: 'The signing certificate has been revoked.',
+  [VALIDATION_STATUS.TIMESTAMP_UNTRUSTED]: 'The timestamp signature is untrusted.',
+  [VALIDATION_STATUS.CLAIM_SIGNATURE_INVALID]: 'The claim signature is invalid (the manifest may have been tampered with).',
+  [VALIDATION_STATUS.ASSERTION_HASHED_URI_MATCH]: 'An assertion hash did not match (possible tampering of assertion data).',
+  [VALIDATION_STATUS.ASSERTION_DATA_HASH_MATCH]: 'An assertion data hash did not match.',
+  'assertion.hashedURI.mismatch': 'An assertion hash did not match (possible tampering of assertion data).',
+  'assertion.dataHash.mismatch': 'An assertion data hash did not match.',
+  'assertion.bmffHash.mismatch': 'BMFF hash mismatch. The media content may have been tampered with.',
+  'manifest.multipleActive': 'Multiple active manifests found.',
+  'manifest.update.invalid': 'Invalid manifest update.',
+  'algorithm.unsupported': 'Unsupported cryptographic algorithm.',
+  'general.error': 'An unexpected validation error occurred.'
+} as const
+

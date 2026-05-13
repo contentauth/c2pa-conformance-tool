@@ -1,0 +1,75 @@
+{
+  "rubricName": "C2PA Asset Signals Rubric (Local)",
+  "rubricVersion": "1.0.0",
+  "manifests": [
+    {
+      "assertedBy": {
+        "CN": "Google Media Processing Services",
+        "O": "Google LLC",
+        "OU": "Google System 60032"
+      },
+      "mimeType": null,
+      "localInceptions": [
+        {
+          "trait": "inception:signal_fullyGenAIMedia",
+          "reportText": "Contains Fully GenAI Media",
+          "multiple": false
+        }
+      ],
+      "localTransformations": [
+        {
+          "trait": "transformation:signal_editorialAI",
+          "reportText": "Contains Editorial GenAI Transformations",
+          "multiple": false
+        }
+      ],
+      "allActionsIncluded": false,
+      "ingredients": [
+        {
+          "index": 1,
+          "relationship": "inputTo"
+        }
+      ]
+    },
+    {
+      "assertedBy": {
+        "CN": "Google Media Processing Services",
+        "O": "Google LLC",
+        "OU": "Google System 90291"
+      },
+      "mimeType": "image/jpeg",
+      "localInceptions": [],
+      "localTransformations": [
+        {
+          "trait": "transformation:signal_nonEditorial",
+          "reportText": "Contains Non-editorial Transformations",
+          "multiple": false
+        }
+      ],
+      "allActionsIncluded": false,
+      "ingredients": [
+        {
+          "index": 2,
+          "relationship": "parentOf"
+        }
+      ]
+    },
+    {
+      "assertedBy": {
+        "CN": "Pixel Camera",
+        "O": "Google LLC"
+      },
+      "mimeType": "image/jpeg",
+      "localInceptions": [
+        {
+          "trait": "inception:signal_capturedMedia",
+          "reportText": "Contains Captured Media",
+          "multiple": false
+        }
+      ],
+      "localTransformations": [],
+      "allActionsIncluded": false,
+      "ingredients": []
+    }
+  ]
+}

@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { CrJsonManifestEntry, CrJsonIngredientItem } from './types'
+  import type { ManifestSignalsResult } from './rubrics/types'
   import { generateManifestSummary } from './generateSummary'
 
   export let manifest: CrJsonManifestEntry | null = null
@@ -7,8 +8,15 @@
   export let mimeType: string = ''
   export let usedITL: boolean = false
   export let isTrusted: boolean = true
+  /**
+   * Per-manifest signals from the signals rubric, or `null` if the rubric
+   * isn't yet loaded / failed to load. When null, the summary falls back to
+   * a minimal "{a/an} {media} from {signer}" sentence that doesn't claim
+   * any property the rubric would.
+   */
+  export let signals: ManifestSignalsResult | null = null
 
-  $: summary = generateManifestSummary(manifest, ingredients, mimeType, usedITL, isTrusted)
+  $: summary = generateManifestSummary(manifest, signals, ingredients, mimeType, usedITL, isTrusted)
 </script>
 
 {#if summary.sentence}

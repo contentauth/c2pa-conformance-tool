@@ -6,7 +6,7 @@
 
 @layer base {
   :root {
-    font-family: "DM Sans", system-ui, Avenir, Helvetica, Arial, sans-serif;
+    font-family: "Inter", system-ui, Avenir, Helvetica, Arial, sans-serif;
     font-optical-sizing: auto;
     font-synthesis: none;
     text-rendering: optimizeLegibility;

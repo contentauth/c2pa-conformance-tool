@@ -3,7 +3,7 @@
  * Report format is crJSON (native) + conformance-tool metadata.
  */
 
-import type { CrJson } from './crjson'
+import type { CrJson, CrJsonSignatureInfo } from './crjson'
 
 export type {
   CrJson,
@@ -36,7 +36,45 @@ export interface ValidationStatusItem {
   code: string
   success: boolean
   isInterim?: boolean
+  isInformational?: boolean
   explanation?: string
+}
+
+/** Node in the overview provenance tree */
+export interface OverviewNode {
+  manifestIdx: number
+  claimGenerator?: string
+  mimeType?: string | null
+  thumbnailSrc?: string
+  date?: string
+  ingredientCount: number
+  inceptions: string[]
+  transformations: string[]
+  relationship?: string
+  isStub?: boolean
+  children: OverviewNode[]
+}
+
+/** Node in the ingredient provenance tree */
+export interface IngredientTreeNode {
+  title: string
+  format?: string
+  relationship?: string
+  thumbnailSrc?: string
+  claimGenerator?: string
+  isRoot: boolean
+  children: IngredientTreeNode[]
+}
+
+/** Grouped validation status by manifest */
+export interface ManifestValidationGroup {
+  label: string
+  isActive: boolean
+  index: number
+  sigInfo?: CrJsonSignatureInfo
+  success: ValidationStatusItem[]
+  failure: ValidationStatusItem[]
+  informational: ValidationStatusItem[]
 }
 
 /** Assertion summary row for display */

@@ -3,6 +3,12 @@ import { svelte } from '@sveltejs/vite-plugin-svelte'
 
 export default defineConfig({
   plugins: [svelte({ hot: !process.env.VITEST })],
+  resolve: {
+    alias: {
+      '$lib': '/src/lib'
+    },
+    conditions: process.env.VITEST ? ['browser'] : []
+  },
   test: {
     globals: true,
     environment: 'jsdom',
@@ -18,11 +24,6 @@ export default defineConfig({
         '**/mockData',
         '**/dist'
       ]
-    }
-  },
-  resolve: {
-    alias: {
-      '$lib': '/src/lib'
     }
   }
 })

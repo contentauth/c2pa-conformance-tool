@@ -1,54 +1,309 @@
 /**
- * Generates a human-readable summary of a C2PA manifest.
- * e.g. "This photo was taken with a Sony camera and edited in Adobe Photoshop."
- * Reads directly from crJSON manifest entry via getters.
+ * Build a one-line, human-readable summary of a C2PA manifest:
+ *   "This is an image taken with a Pixel Camera, edited in Adobe Photoshop."
+ *
+ * The detection layer (what kind of asset is this? was it AI-generated? was
+ * it edited?) is sourced from the **signals rubric**
+ * (`public/rubrics/asset-rubric-signals-local.yml`) so the truth source is
+ * the same YAML the Conformance TF maintains. This file only handles the
+ * narrative composition: picking templates, joining clauses, getting
+ * grammar right, and pulling a few precision fields (camera make/model,
+ * editing-software names) that the rubric doesn't return.
+ *
+ * To regenerate the input `signals: ManifestSignalsResult`, run the signals
+ * rubric via `evaluatePerManifest()` (see `lib/rubrics/perManifest.ts`).
  */
 
 import type { CrJsonManifestEntry, CrJsonIngredientItem } from './types'
-import { getAssertionDataByLabel, getClaimInfo, getSignatureInfo, getAssertionsList } from './crjson'
+import {
+  getAssertionDataByLabel,
+  getAssertionsList,
+  getClaimInfo,
+  getSignatureInfo,
+} from './crjson'
+import type { ManifestSignalsResult } from './rubrics/types'
 
-// IPTC digital source types
-const SOURCE_TYPE = {
-  TRAINED_ALGORITHMIC: 'trainedAlgorithmicMedia',
-  COMPOSITE_AI: 'compositeWithTrainedAlgorithmicMedia',
-  DIGITAL_CAPTURE: 'digitalCapture',
-  DIGITAL_ART: 'digitalArt',
-  SCREEN_CAPTURE: 'screenCapture',
-  COMPUTATIONAL: 'computationalMedia',
-  COMPOSITE: 'compositeSynthetic',
-  MINOR_HUMAN_EDITS: 'minorHumanEdits',
-  ALGORITHMIC_MEDIA: 'algorithmicMedia',
+// Signal ids exposed by `asset-rubric-signals-local.yml`. Centralised here
+// so a typo or upstream rename surfaces as a single point of change.
+const INCEPTION = {
+  BLANK_CANVAS: 'inception:signal_blankCanvas',
+  CAPTURED_MEDIA: 'inception:signal_capturedMedia',
+  CAPTURED_MEDIA_STITCHED: 'inception:signal_capturedMediaStitched',
+  COMPOSITION_MAY_GENAI: 'inception:signal_compositionMayContainGenAI',
+  FULLY_GENAI: 'inception:signal_fullyGenAIMedia',
+  UNKNOWN_PROVENANCE: 'inception:signal_mediaUnknownProvenance',
+  NON_GENAI_DIGITAL_CREATION: 'inception:signal_nonGenAIDigitalCreation',
+  PARTLY_GENAI: 'inception:signal_partlyGenAICreation',
+  SCREEN_CAPTURE_MAY_GENAI: 'inception:signal_screenCaptureMayContainGenAI',
 } as const
 
-// C2PA action types
-const ACTION = {
-  CONVERTED: 'c2pa.converted',
-  EDITED: 'c2pa.edited',
-  FILTERED: 'c2pa.filtered',
-  COLOR_ADJUSTED: 'c2pa.color_adjustments',
-  RESIZED: 'c2pa.resized',
-  OPENED: 'c2pa.opened',
-  PLACED: 'c2pa.placed',
-  CREATED: 'c2pa.created',
-  PUBLISHED: 'c2pa.published',
-  TRANSCODED: 'c2pa.transcoded',
-  AI_GENERATED: 'c2pa.ai.generatedContent',
-  DREW: 'c2pa.drew',
-  CROPPED: 'c2pa.cropped',
-  REPACKAGED: 'c2pa.repackaged',
+const TRANSFORMATION = {
+  EDITORIAL_AI: 'transformation:signal_editorialAI',
+  EDITORIAL_NON_AI: 'transformation:signal_editorialNonAI',
+  EDITORIAL_POSSIBLY_GENAI: 'transformation:signal_editorialPossiblyGenAI',
+  NON_EDITORIAL: 'transformation:signal_nonEditorial',
 } as const
 
-function cleanName(name: string): string {
+export interface ManifestSummary {
+  /** The composed sentence, capitalised and terminated with a period. */
+  sentence: string
+  /** Footnote-style facts (e.g. "Certificate issued by …"). */
+  details: string[]
+}
+
+/**
+ * Compose the summary. Pure function; all inputs explicit.
+ *
+ * `signals` carries the per-manifest result for THIS manifest from the
+ * signals rubric. When the caller can't load the rubric (e.g. offline /
+ * dev fallback), pass `null` and we'll do a minimal "{a/an} {media} from
+ * {signer}" fallback that never claims a property the rubric would.
+ */
+export function generateManifestSummary(
+  manifest: CrJsonManifestEntry | null | undefined,
+  signals: ManifestSignalsResult | null,
+  ingredients: CrJsonIngredientItem[],
+  mimeType: string,
+  usedITL: boolean = false,
+  isTrusted: boolean = true,
+): ManifestSummary {
+  if (!manifest) return { sentence: '', details: [] }
+
+  const mediaWord = getMediaWord(mimeType)
+  const article = articleFor(mediaWord)
+  const signerName = getSignerName(manifest, usedITL)
+
+  const parts: string[] = []
+  const details: string[] = []
+
+  if (!isTrusted) {
+    parts.push(buildUntrustedOrigin(manifest, mediaWord, article))
+  } else {
+    parts.push(buildOriginPhrase(manifest, signals, mediaWord, article, signerName))
+    const mods = buildModificationPhrases(manifest, signals)
+    if (mods.length > 0) parts.push(joinAnd(mods))
+  }
+
+  // Footnote: signing certificate issuer.
+  const issuer = getSignatureInfo(manifest)?.issuer
+  if (issuer) details.push(`Certificate issued by ${issuer}`)
+
+  // Footnote: ingredient count.
+  const n = ingredients?.length ?? 0
+  if (n > 0) details.push(`Based on ${n} source asset${n > 1 ? 's' : ''}`)
+
+  return { sentence: composeSentence(parts), details }
+}
+
+// ── Origin phrase ─────────────────────────────────────────────────────
+
+function buildUntrustedOrigin(
+  manifest: CrJsonManifestEntry,
+  mediaWord: string,
+  article: string,
+): string {
+  const claimGenerator = getClaimGeneratorName(manifest)
+  const commonName = getCommonName(manifest)
+  let phrase = `This is ${article} ${mediaWord}`
+  if (claimGenerator) phrase += ` from ${claimGenerator}`
+  if (commonName) phrase += ` signed by ${commonName}`
+  return phrase
+}
+
+function buildOriginPhrase(
+  manifest: CrJsonManifestEntry,
+  signals: ManifestSignalsResult | null,
+  mediaWord: string,
+  article: string,
+  signerName: string,
+): string {
+  const has = makeHas(signals)
+  const editingSoftware = getEditingSoftware(manifest)
+  const creator = editingSoftware[0] || signerName
+
+  // Fully GenAI overrides everything else — the asset *is* AI output.
+  if (has(INCEPTION.FULLY_GENAI)) {
+    return creator
+      ? `This is ${article} ${mediaWord} generated by ${creator}`
+      : `This is an AI-generated ${mediaWord}`
+  }
+
+  // Captured media (with optional camera precision from EXIF).
+  if (has(INCEPTION.CAPTURED_MEDIA) || has(INCEPTION.CAPTURED_MEDIA_STITCHED)) {
+    const camera = getCameraInfo(manifest)
+    if (camera) {
+      const stitched = has(INCEPTION.CAPTURED_MEDIA_STITCHED)
+      return stitched
+        ? `This is a stitched photo taken with a ${camera}`
+        : `This is a photo taken with a ${camera}`
+    }
+    return `This is a captured ${mediaWord}`
+  }
+
+  // Screen capture (rubric framing: "may contain GenAI"); we keep it short.
+  if (has(INCEPTION.SCREEN_CAPTURE_MAY_GENAI)) {
+    return `This is a screen capture`
+  }
+
+  // Hand-crafted digital art / blank canvas / non-GenAI digital creation.
+  if (has(INCEPTION.NON_GENAI_DIGITAL_CREATION) || has(INCEPTION.BLANK_CANVAS)) {
+    return creator
+      ? `This is a digital artwork created with ${creator}`
+      : `This is a digital artwork`
+  }
+
+  // Composite with GenAI mixed in — the asset isn't fully synthetic but is
+  // partly so. Sentence stays neutral; the modification clause carries the
+  // "uses GenAI" detail.
+  if (has(INCEPTION.PARTLY_GENAI) || has(INCEPTION.COMPOSITION_MAY_GENAI)) {
+    return creator
+      ? `This is ${article} ${mediaWord} composed by ${creator}`
+      : `This is ${article} composed ${mediaWord}`
+  }
+
+  // Generic fallback — no inception signal fired. We say what we can without
+  // claiming the asset is anything specific.
+  return creator
+    ? `This is ${article} ${mediaWord} from ${creator}`
+    : `This is ${article} ${mediaWord}`
+}
+
+// ── Modification phrases ──────────────────────────────────────────────
+
+function buildModificationPhrases(
+  manifest: CrJsonManifestEntry,
+  signals: ManifestSignalsResult | null,
+): string[] {
+  const has = makeHas(signals)
+  const phrases: string[] = []
+
+  // GenAI usage takes precedence over editorial-non-AI: if both fire, the
+  // GenAI signal is the one we want to surface.
+  if (has(TRANSFORMATION.EDITORIAL_AI) || has(TRANSFORMATION.EDITORIAL_POSSIBLY_GENAI)) {
+    phrases.push('modified using generative AI')
+  } else if (has(TRANSFORMATION.EDITORIAL_NON_AI)) {
+    const tools = getEditingSoftware(manifest).slice(0, 2).join(' and ')
+    phrases.push(tools ? `edited in ${tools}` : 'edited')
+  }
+
+  if (has(TRANSFORMATION.NON_EDITORIAL)) {
+    phrases.push('converted to a different format')
+  }
+
+  return phrases
+}
+
+// ── Signal lookup helper ──────────────────────────────────────────────
+
+/**
+ * Returns a closure `has(traitId)` that's true when the signals rubric
+ * fired that trait on this manifest. When `signals` is null (rubric not
+ * loaded), every check returns false — the generic fallback then takes
+ * over so we never make claims we can't back up.
+ */
+function makeHas(signals: ManifestSignalsResult | null) {
+  if (!signals) return () => false
+  // Cache the union once; `has()` is called many times per render.
+  const traits = new Set<string>([
+    ...signals.localInceptions.map((s) => s.trait),
+    ...signals.localTransformations.map((s) => s.trait),
+  ])
+  return (id: string) => traits.has(id)
+}
+
+// ── Manifest field extractors (precision the rubric doesn't carry) ────
+
+interface AssertionData {
+  digitalSourceType?: string
+  make?: string
+  model?: string
+  softwareAgent?: string | { name?: string }
+  actions?: Array<{
+    action?: string
+    softwareAgent?: string | { name?: string }
+  }>
+}
+
+function getAssertionData(manifest: CrJsonManifestEntry, label: string): AssertionData | null {
+  return (getAssertionDataByLabel(manifest, label) as AssertionData | undefined) ?? null
+}
+
+/** Names of every `softwareAgent` referenced from any action. Order-preserving, deduplicated. */
+function getEditingSoftware(manifest: CrJsonManifestEntry): string[] {
+  const tools = new Set<string>()
+  // Collect from all assertions whose payload looks like an actions list.
+  for (const { data } of getAssertionsList(manifest)) {
+    const actions = (data as AssertionData)?.actions
+    if (!Array.isArray(actions)) continue
+    for (const a of actions) {
+      const name = softwareAgentName(a.softwareAgent)
+      if (name) tools.add(name)
+    }
+  }
+  // Also check the `c2pa.actions` shape directly in case the iterator missed it.
+  const actionsAssertion = getAssertionData(manifest, 'c2pa.actions')
+  if (actionsAssertion?.actions) {
+    for (const a of actionsAssertion.actions) {
+      const name = softwareAgentName(a.softwareAgent)
+      if (name) tools.add(name)
+    }
+  }
+  return [...tools]
+}
+
+function softwareAgentName(agent: AssertionData['softwareAgent']): string {
+  if (!agent) return ''
+  return cleanAgentName(typeof agent === 'string' ? agent : (agent.name ?? ''))
+}
+
+/** Strip `Tool/version` and `Tool 1.0.0` suffixes; trim whitespace. */
+function cleanAgentName(name: string): string {
   if (!name) return ''
-  // Strip version suffixes like "AppName/1.0" or "AppName 1.0.0"
   return name.split('/')[0].trim()
 }
 
-function getSourceType(url: string | undefined): string {
-  if (!url) return ''
-  const parts = url.split('/')
-  return parts[parts.length - 1] || ''
+/**
+ * Best-effort camera identification from any assertion that carries
+ * `make`/`model`. We scan all assertions because the field appears under
+ * various labels (`stds.exif`, `c2pa.exif`, etc.) and we don't want to
+ * hardcode a specific one.
+ */
+function getCameraInfo(manifest: CrJsonManifestEntry): string {
+  for (const { data } of getAssertionsList(manifest)) {
+    const d = data as AssertionData
+    if (!d?.make && !d?.model) continue
+    const make = d.make ?? ''
+    const model = d.model ?? ''
+    if (make && model) return `${make} ${model}`
+    if (make) return `${make} camera`
+    if (model) return model
+  }
+  return ''
 }
+
+// ── Identity / signer extractors ──────────────────────────────────────
+
+function getSignerName(manifest: CrJsonManifestEntry, usedITL: boolean): string {
+  // When the ITL signed the cert, prefer the claim-generator's friendly
+  // name over the cert CN — the CN is often the ITL's own identity, not
+  // the asset's creator.
+  if (usedITL) {
+    const generator = getClaimInfo(manifest)?.claim_generator_info?.[0]?.name
+    if (generator) return cleanAgentName(generator)
+  }
+  return getSignatureInfo(manifest)?.common_name ?? ''
+}
+
+function getClaimGeneratorName(manifest: CrJsonManifestEntry): string {
+  const name = getClaimInfo(manifest)?.claim_generator_info?.[0]?.name
+  return name ? cleanAgentName(name) : ''
+}
+
+function getCommonName(manifest: CrJsonManifestEntry): string {
+  return getSignatureInfo(manifest)?.common_name ?? ''
+}
+
+// ── Grammar / composition helpers ─────────────────────────────────────
 
 function getMediaWord(mimeType: string): string {
   if (mimeType.startsWith('image/')) return 'image'
@@ -58,245 +313,22 @@ function getMediaWord(mimeType: string): string {
   return 'file'
 }
 
-interface AssertionData {
-  actions?: Array<{
-    action?: string
-    digitalSourceType?: string
-    softwareAgent?: string | { name?: string }
-    description?: string
-  }>
-  digitalSourceType?: string
-  make?: string
-  model?: string
-  softwareAgent?: string | { name?: string }
+/** Pick `a` vs `an` based on the next word's leading sound. */
+function articleFor(nextWord: string): string {
+  return /^[aeiou]/i.test(nextWord) ? 'an' : 'a'
 }
 
-function getAssertionData(manifest: CrJsonManifestEntry, label: string): AssertionData | null {
-  const data = getAssertionDataByLabel(manifest, label)
-  return (data as AssertionData) ?? null
+function joinAnd(items: string[]): string {
+  if (items.length <= 1) return items[0] ?? ''
+  if (items.length === 2) return `${items[0]} and ${items[1]}`
+  return `${items.slice(0, -1).join(', ')}, and ${items[items.length - 1]}`
 }
 
-function getAllActions(manifest: CrJsonManifestEntry): Array<{ action: string; digitalSourceType?: string; softwareAgent?: string }> {
-  const actionsAssertion = getAssertionData(manifest, 'c2pa.actions')
-  if (!actionsAssertion?.actions) return []
-  return actionsAssertion.actions.map(a => ({
-    action: a.action ?? '',
-    digitalSourceType: a.digitalSourceType,
-    softwareAgent: typeof a.softwareAgent === 'string'
-      ? a.softwareAgent
-      : a.softwareAgent?.name,
-  }))
-}
-
-function getPrimaryDigitalSourceType(manifest: CrJsonManifestEntry): string {
-  // Check top-level assertion first
-  const actionsData = getAssertionData(manifest, 'c2pa.actions')
-  if (actionsData?.digitalSourceType) {
-    return getSourceType(actionsData.digitalSourceType)
-  }
-
-  // Check individual actions
-  const actions = getAllActions(manifest)
-  for (const action of actions) {
-    if (action.digitalSourceType) {
-      return getSourceType(action.digitalSourceType)
-    }
-  }
-
-  // Check creative work assertion
-  const creativeWork = getAssertionData(manifest, 'stds.schema.org/CreativeWork')
-  if (creativeWork?.digitalSourceType) {
-    return getSourceType(creativeWork.digitalSourceType as unknown as string)
-  }
-
-  return ''
-}
-
-function getSoftwareAgentName(agent: string | { name?: string } | undefined): string {
-  if (!agent) return ''
-  if (typeof agent === 'string') return cleanName(agent)
-  return cleanName(agent.name ?? '')
-}
-
-function getEditingSoftware(manifest: CrJsonManifestEntry): string[] {
-  const tools = new Set<string>()
-  const actions = getAllActions(manifest)
-  for (const action of actions) {
-    if (action.softwareAgent) {
-      const name = getSoftwareAgentName(action.softwareAgent)
-      if (name) tools.add(name)
-    }
-  }
-  return [...tools]
-}
-
-function getCameraInfo(manifest: CrJsonManifestEntry): string {
-  for (const { data } of getAssertionsList(manifest)) {
-    const d = data as AssertionData
-    if (d?.make || d?.model) {
-      const make = d.make ?? ''
-      const model = d.model ?? ''
-      if (make && model) return `${make} ${model}`
-      if (make) return `${make} camera`
-      if (model) return model
-    }
-  }
-  return ''
-}
-
-function getSignerName(manifest: CrJsonManifestEntry, usedITL: boolean): string {
-  const claimInfo = getClaimInfo(manifest)
-  const sigInfo = getSignatureInfo(manifest)
-  if (usedITL) {
-    const generatorName = claimInfo?.claim_generator_info?.[0]?.name
-    if (generatorName) return cleanName(generatorName)
-  }
-  return sigInfo?.common_name ?? ''
-}
-
-function getClaimGeneratorName(manifest: CrJsonManifestEntry): string {
-  const claimInfo = getClaimInfo(manifest)
-  const generatorName = claimInfo?.claim_generator_info?.[0]?.name
-  if (generatorName) return cleanName(generatorName)
-  return ''
-}
-
-function getCommonName(manifest: CrJsonManifestEntry): string {
-  return getSignatureInfo(manifest)?.common_name ?? ''
-}
-
-function hasAIActions(manifest: CrJsonManifestEntry): boolean {
-  const actions = getAllActions(manifest)
-  return actions.some(a => a.action === ACTION.AI_GENERATED)
-}
-
-function getHumanReadableActions(manifest: CrJsonManifestEntry): string[] {
-  const actions = getAllActions(manifest)
-  const descriptions: string[] = []
-
-  const editActions = [ACTION.EDITED, ACTION.FILTERED, ACTION.COLOR_ADJUSTED, ACTION.CROPPED, ACTION.RESIZED, ACTION.DREW]
-  const hasEdit = actions.some(a => editActions.includes(a.action as typeof editActions[number]))
-  if (hasEdit) descriptions.push('edited')
-
-  if (actions.some(a => a.action === ACTION.CONVERTED || a.action === ACTION.TRANSCODED || a.action === ACTION.REPACKAGED)) {
-    descriptions.push('converted')
-  }
-
-  return descriptions
-}
-
-export interface ManifestSummary {
-  sentence: string
-  details: string[]
-}
-
-export function generateManifestSummary(
-  manifest: CrJsonManifestEntry | null | undefined,
-  ingredients: CrJsonIngredientItem[],
-  mimeType: string,
-  usedITL: boolean = false,
-  isTrusted: boolean = true,
-): ManifestSummary {
-  if (!manifest) return { sentence: '', details: [] }
-
-  const mediaWord = getMediaWord(mimeType)
-  const sourceType = getPrimaryDigitalSourceType(manifest)
-  const signerName = getSignerName(manifest, usedITL)
-  const cameraInfo = getCameraInfo(manifest)
-  const editingSoftware = getEditingSoftware(manifest)
-  const aiActions = hasAIActions(manifest)
-  const humanActions = getHumanReadableActions(manifest)
-
-  const parts: string[] = []
-  const details: string[] = []
-
-  if (!isTrusted) {
-    // For untrusted signatures: "This is a [media] from [claim_generator] signed by [common_name]"
-    const claimGenerator = getClaimGeneratorName(manifest)
-    const commonName = getCommonName(manifest)
-    const articleSuffix = mimeType.startsWith('image/') ? 'n' : ''
-    let originPhrase = `This is a${articleSuffix} ${mediaWord}`
-    if (claimGenerator) originPhrase += ` from ${claimGenerator}`
-    if (commonName) originPhrase += ` signed by ${commonName}`
-    parts.push(originPhrase)
-  } else {
-    // --- Determine the origin phrase ---
-    const isFullyAIGenerated = sourceType === SOURCE_TYPE.TRAINED_ALGORITHMIC || sourceType === SOURCE_TYPE.ALGORITHMIC_MEDIA
-    const hasAIComposite = sourceType === SOURCE_TYPE.COMPOSITE_AI || aiActions
-    const isCameraCapture = sourceType === SOURCE_TYPE.DIGITAL_CAPTURE || !!cameraInfo
-
-    if (isFullyAIGenerated) {
-      // "This is an AI-generated image"
-      const creator = editingSoftware[0] || signerName
-      if (creator) {
-        parts.push(`This is a${mimeType.startsWith('image/') ? 'n' : ''} ${mediaWord} generated by ${creator}`)
-      } else {
-        parts.push(`This is an AI-generated ${mediaWord}`)
-      }
-    } else if (isCameraCapture) {
-      // "This is a photo from a Sony camera"
-      if (cameraInfo) {
-        parts.push(`This is a photo taken with a ${cameraInfo}`)
-      } else {
-        parts.push(`This is a captured ${mediaWord}`)
-      }
-    } else if (sourceType === SOURCE_TYPE.DIGITAL_ART) {
-      const creator = editingSoftware[0] || signerName
-      parts.push(creator ? `This is a digital artwork created with ${creator}` : `This is a digital artwork`)
-    } else if (sourceType === SOURCE_TYPE.SCREEN_CAPTURE) {
-      parts.push(`This is a screen capture`)
-    } else {
-      // Generic fallback
-      const creator = editingSoftware[0] || signerName
-      parts.push(creator ? `This is a${mimeType.startsWith('image/') ? 'n' : ''} ${mediaWord} from ${creator}` : `This is a${mimeType.startsWith('image/') ? 'n' : ''} ${mediaWord}`)
-    }
-
-    // --- Determine modifications ---
-    const modifications: string[] = []
-
-    if (hasAIComposite) {
-      modifications.push('modified using generative AI')
-    } else if (humanActions.includes('edited') && editingSoftware.length > 0) {
-      const toolList = editingSoftware.slice(0, 2).join(' and ')
-      modifications.push(`edited in ${toolList}`)
-    } else if (humanActions.includes('edited')) {
-      modifications.push('edited')
-    }
-
-    if (humanActions.includes('converted')) {
-      modifications.push('converted to a different format')
-    }
-
-    if (modifications.length > 0) {
-      parts.push(modifications.join(' and '))
-    }
-
-  }
-
-  // --- Certificate issuer (from crJSON manifest.signature) ---
-  const issuer = getSignatureInfo(manifest)?.issuer
-  if (issuer) {
-    details.push(`Certificate issued by ${issuer}`)
-  }
-
-  // --- Ingredient provenance ---
-  const ingredientCount = ingredients?.length ?? 0
-  if (ingredientCount > 0) {
-    details.push(`Based on ${ingredientCount} source asset${ingredientCount > 1 ? 's' : ''}`)
-  }
-
-  // Combine parts into a sentence
-  let sentence = ''
-  if (parts.length === 1) {
-    sentence = parts[0] + '.'
-  } else if (parts.length === 2) {
-    sentence = parts[0] + ', ' + parts[1] + '.'
-  } else if (parts.length > 2) {
-    sentence = parts.slice(0, -1).join(', ') + ', and ' + parts[parts.length - 1] + '.'
-  }
-
-  // Capitalize first letter
-  sentence = sentence.charAt(0).toUpperCase() + sentence.slice(1)
-
-  return { sentence, details }
+function composeSentence(parts: string[]): string {
+  if (parts.length === 0) return ''
+  let s: string
+  if (parts.length === 1) s = parts[0]
+  else if (parts.length === 2) s = `${parts[0]}, ${parts[1]}`
+  else s = `${parts.slice(0, -1).join(', ')}, and ${parts[parts.length - 1]}`
+  return s.charAt(0).toUpperCase() + s.slice(1) + '.'
 }

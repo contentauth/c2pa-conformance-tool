@@ -45,20 +45,20 @@ npm run copy:profile-evaluator  # Copy profile evaluator from ../profile-evaluat
 
 **`src/lib/types.ts`** — `ConformanceReport` extends `CrJson` with conformance-specific fields: `usedITL`, `usedTestCerts`, and `_conformanceToolVersion` (git metadata injected at build time).
 
-**`src/lib/profileEvaluator.ts`** — Dynamically imports the profile evaluator WASM from `public/profile-evaluator/`. Used by `AssetProfilePage.svelte`.
+**`src/lib/rubrics/`** — Client-side evaluator for YAML-authored C2PA asset rubrics. Ported from the Python reference at `../../c2pa/conformance/asset-rubrics`. See the Rubrics section below for details.
 
 **`src/lib/version.ts`** — Auto-generated before each build/dev start via `scripts/generate-version.js`. Do not edit manually.
 
 ### Routing
-`App.svelte` handles navigation between three pages:
+`App.svelte` handles navigation between two pages:
 - Main validation page (default)
 - Test Certificates (`CertificateManager.svelte`)
-- Asset Profiles (`AssetProfilePage.svelte`)
 
 ### WASM Modules
-Two WASM binaries are committed to `public/`:
+One WASM binary is committed to `public/`:
 - `public/c2pa.wasm` — Official C2PA reader (copied from `@contentauth/c2pa-web` during `postinstall`)
-- `public/profile-evaluator/` — Profile evaluator (from sibling `profile-evaluator-rs` repo, updated via `copy:profile-evaluator` script)
+
+(`public/profile-evaluator/` is a legacy directory — the profile-evaluator page was removed when Rubrics replaced it. Safe to delete when convenient.)
 
 ### Trust Lists
 - **C2PA Trust List**: Fetched at runtime from GitHub

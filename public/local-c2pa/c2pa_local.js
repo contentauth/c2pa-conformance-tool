@@ -38,6 +38,40 @@ export function read_manifest_store(file_bytes, format, settings_json) {
     return ret;
 }
 
+/**
+ * Validate a detached (`.c2pa`) manifest store against its referenced asset.
+ *
+ * This is the sidecar-with-asset case: the C2PA manifest lives in its own file
+ * (`manifest_bytes`) and the asset whose hash-bindings the manifest claims
+ * lives separately (`asset_bytes`). We feed both into c2pa-rs's
+ * `with_manifest_data_and_stream_async`, which evaluates the asset-hash
+ * assertions *against the actual asset bytes* — something we cannot do with
+ * the single-blob `read_manifest_store` path.
+ *
+ * * `manifest_bytes` - raw bytes of the `.c2pa` sidecar (JUMBF manifest store).
+ * * `asset_bytes` - raw bytes of the referenced asset.
+ * * `asset_format` - MIME type of the asset (e.g. "image/jpeg"). The
+ *   sidecar's own format is always `application/c2pa` and the SDK infers that.
+ * * `settings_json` - trust settings (same shape as `read_manifest_store`).
+ * @param {Uint8Array} manifest_bytes
+ * @param {Uint8Array} asset_bytes
+ * @param {string} asset_format
+ * @param {string | null} [settings_json]
+ * @returns {Promise<string>}
+ */
+export function read_sidecar_manifest_store(manifest_bytes, asset_bytes, asset_format, settings_json) {
+    const ptr0 = passArray8ToWasm0(manifest_bytes, wasm.__wbindgen_malloc);
+    const len0 = WASM_VECTOR_LEN;
+    const ptr1 = passArray8ToWasm0(asset_bytes, wasm.__wbindgen_malloc);
+    const len1 = WASM_VECTOR_LEN;
+    const ptr2 = passStringToWasm0(asset_format, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+    const len2 = WASM_VECTOR_LEN;
+    var ptr3 = isLikeNone(settings_json) ? 0 : passStringToWasm0(settings_json, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+    var len3 = WASM_VECTOR_LEN;
+    const ret = wasm.read_sidecar_manifest_store(ptr0, len0, ptr1, len1, ptr2, len2, ptr3, len3);
+    return ret;
+}
+
 function __wbg_get_imports() {
     const import0 = {
         __proto__: null,
@@ -195,7 +229,7 @@ function __wbg_get_imports() {
                     const a = state0.a;
                     state0.a = 0;
                     try {
-                        return wasm_bindgen__convert__closures_____invoke__h2986024ebf27e018(a, state0.b, arg0, arg1);
+                        return wasm_bindgen__convert__closures_____invoke__h27230f37ec4b6815(a, state0.b, arg0, arg1);
                     } finally {
                         state0.a = a;
                     }
@@ -316,13 +350,13 @@ function __wbg_get_imports() {
             return ret;
         },
         __wbindgen_cast_0000000000000001: function(arg0, arg1) {
-            // Cast intrinsic for `Closure(Closure { dtor_idx: 188, function: Function { arguments: [Externref], shim_idx: 299, ret: Result(Unit), inner_ret: Some(Result(Unit)) }, mutable: true }) -> Externref`.
-            const ret = makeMutClosure(arg0, arg1, wasm.wasm_bindgen__closure__destroy__h0667ea7aa0a255a7, wasm_bindgen__convert__closures_____invoke__hca39902318df4249);
+            // Cast intrinsic for `Closure(Closure { dtor_idx: 232, function: Function { arguments: [Externref], shim_idx: 302, ret: Result(Unit), inner_ret: Some(Result(Unit)) }, mutable: true }) -> Externref`.
+            const ret = makeMutClosure(arg0, arg1, wasm.wasm_bindgen__closure__destroy__h82fa2966358c4802, wasm_bindgen__convert__closures_____invoke__h7a7db0cf662510dd);
             return ret;
         },
         __wbindgen_cast_0000000000000002: function(arg0, arg1) {
-            // Cast intrinsic for `Closure(Closure { dtor_idx: 188, function: Function { arguments: [], shim_idx: 433, ret: Unit, inner_ret: Some(Unit) }, mutable: true }) -> Externref`.
-            const ret = makeMutClosure(arg0, arg1, wasm.wasm_bindgen__closure__destroy__h0667ea7aa0a255a7, wasm_bindgen__convert__closures_____invoke__hdd2e4c5eb311bd94);
+            // Cast intrinsic for `Closure(Closure { dtor_idx: 232, function: Function { arguments: [], shim_idx: 435, ret: Unit, inner_ret: Some(Unit) }, mutable: true }) -> Externref`.
+            const ret = makeMutClosure(arg0, arg1, wasm.wasm_bindgen__closure__destroy__h82fa2966358c4802, wasm_bindgen__convert__closures_____invoke__h6775f40242fbe8e0);
             return ret;
         },
         __wbindgen_cast_0000000000000003: function(arg0, arg1) {
@@ -346,19 +380,19 @@ function __wbg_get_imports() {
     };
 }
 
-function wasm_bindgen__convert__closures_____invoke__hdd2e4c5eb311bd94(arg0, arg1) {
-    wasm.wasm_bindgen__convert__closures_____invoke__hdd2e4c5eb311bd94(arg0, arg1);
+function wasm_bindgen__convert__closures_____invoke__h6775f40242fbe8e0(arg0, arg1) {
+    wasm.wasm_bindgen__convert__closures_____invoke__h6775f40242fbe8e0(arg0, arg1);
 }
 
-function wasm_bindgen__convert__closures_____invoke__hca39902318df4249(arg0, arg1, arg2) {
-    const ret = wasm.wasm_bindgen__convert__closures_____invoke__hca39902318df4249(arg0, arg1, arg2);
+function wasm_bindgen__convert__closures_____invoke__h7a7db0cf662510dd(arg0, arg1, arg2) {
+    const ret = wasm.wasm_bindgen__convert__closures_____invoke__h7a7db0cf662510dd(arg0, arg1, arg2);
     if (ret[1]) {
         throw takeFromExternrefTable0(ret[0]);
     }
 }
 
-function wasm_bindgen__convert__closures_____invoke__h2986024ebf27e018(arg0, arg1, arg2, arg3) {
-    wasm.wasm_bindgen__convert__closures_____invoke__h2986024ebf27e018(arg0, arg1, arg2, arg3);
+function wasm_bindgen__convert__closures_____invoke__h27230f37ec4b6815(arg0, arg1, arg2, arg3) {
+    wasm.wasm_bindgen__convert__closures_____invoke__h27230f37ec4b6815(arg0, arg1, arg2, arg3);
 }
 
 

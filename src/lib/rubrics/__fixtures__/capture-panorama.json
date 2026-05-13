@@ -1,0 +1,461 @@
+{
+  "@context": {
+    "@vocab": "https://contentcredentials.org/crjson",
+    "extras": "https://contentcredentials.org/crjson/extras"
+  },
+  "manifests": [
+    {
+      "label": "urn:c2pa:bbc6882f-c24f-2263-4516-43bec19c9255",
+      "assertions": {
+        "c2pa.hash.multi-asset": {
+          "parts": [
+            {
+              "location": {
+                "byteOffset": 0,
+                "length": 4920752
+              },
+              "hashAssertion": {
+                "url": "self#jumbf=/c2pa/urn:c2pa:bbc6882f-c24f-2263-4516-43bec19c9255/c2pa.assertions/c2pa.hash.data.part",
+                "alg": "",
+                "hash": "b64'y0kpFXeDy86udKXF+kj3j8Gc7uRjUfLeOn3T1IjMeik=",
+                "pad": "b64'"
+              },
+              "optional": false
+            },
+            {
+              "location": {
+                "byteOffset": 4920752,
+                "length": 83067
+              },
+              "hashAssertion": {
+                "url": "self#jumbf=/c2pa/urn:c2pa:bbc6882f-c24f-2263-4516-43bec19c9255/c2pa.assertions/c2pa.hash.data.part__1",
+                "alg": "",
+                "hash": "b64'9hj61bEFiY955OMGx0bMnHus9uo+OXPYumvu9SlgPqs=",
+                "pad": "b64'"
+              },
+              "optional": true
+            }
+          ],
+          "pad": "b64'AAAAAAAAAAAAAAAAAAAAAAAAAAA=",
+          "pad2": "b64'AA=="
+        },
+        "c2pa.hash.data.part__1": {
+          "alg": "sha256",
+          "hash": "b64'q1SZYPsEms/e0tD3k3XGgBgFqPy7O5VVEVDZRCYeHuQ=",
+          "pad": "b64'"
+        },
+        "c2pa.hash.data.part": {
+          "exclusions": [
+            {
+              "start": 6,
+              "length": 1019
+            },
+            {
+              "start": 1043,
+              "length": 7840
+            },
+            {
+              "start": 9501,
+              "length": 1063
+            },
+            {
+              "start": 10568,
+              "length": 65458
+            },
+            {
+              "start": 76030,
+              "length": 65458
+            },
+            {
+              "start": 141492,
+              "length": 65458
+            },
+            {
+              "start": 206954,
+              "length": 65458
+            },
+            {
+              "start": 272416,
+              "length": 65458
+            },
+            {
+              "start": 337878,
+              "length": 65458
+            },
+            {
+              "start": 403340,
+              "length": 65458
+            },
+            {
+              "start": 468802,
+              "length": 65458
+            },
+            {
+              "start": 534264,
+              "length": 65458
+            },
+            {
+              "start": 599726,
+              "length": 65458
+            },
+            {
+              "start": 665188,
+              "length": 65458
+            },
+            {
+              "start": 730650,
+              "length": 65458
+            },
+            {
+              "start": 796112,
+              "length": 65458
+            },
+            {
+              "start": 861574,
+              "length": 65458
+            },
+            {
+              "start": 927036,
+              "length": 65458
+            },
+            {
+              "start": 992498,
+              "length": 65458
+            },
+            {
+              "start": 1057960,
+              "length": 65458
+            },
+            {
+              "start": 1123422,
+              "length": 65458
+            },
+            {
+              "start": 1188884,
+              "length": 65458
+            },
+            {
+              "start": 1254346,
+              "length": 65458
+            },
+            {
+              "start": 1319808,
+              "length": 65458
+            },
+            {
+              "start": 1385270,
+              "length": 65458
+            },
+            {
+              "start": 1450732,
+              "length": 65458
+            },
+            {
+              "start": 1516194,
+              "length": 65458
+            },
+            {
+              "start": 1581656,
+              "length": 65458
+            },
+            {
+              "start": 1647118,
+              "length": 37405
+            }
+          ],
+          "alg": "sha256",
+          "hash": "b64'caEich5nUouL2TIbXXRBm71EEizfj/QpXjRB8YvtN6o=",
+          "pad": "b64'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "pad2": "b64'"
+        },
+        "c2pa.hash.data": {
+          "exclusions": [
+            {
+              "start": 6,
+              "length": 1019
+            },
+            {
+              "start": 1043,
+              "length": 7840
+            },
+            {
+              "start": 9501,
+              "length": 1063
+            },
+            {
+              "start": 10568,
+              "length": 65458
+            },
+            {
+              "start": 76030,
+              "length": 65458
+            },
+            {
+              "start": 141492,
+              "length": 65458
+            },
+            {
+              "start": 206954,
+              "length": 65458
+            },
+            {
+              "start": 272416,
+              "length": 65458
+            },
+            {
+              "start": 337878,
+              "length": 65458
+            },
+            {
+              "start": 403340,
+              "length": 65458
+            },
+            {
+              "start": 468802,
+              "length": 65458
+            },
+            {
+              "start": 534264,
+              "length": 65458
+            },
+            {
+              "start": 599726,
+              "length": 65458
+            },
+            {
+              "start": 665188,
+              "length": 65458
+            },
+            {
+              "start": 730650,
+              "length": 65458
+            },
+            {
+              "start": 796112,
+              "length": 65458
+            },
+            {
+              "start": 861574,
+              "length": 65458
+            },
+            {
+              "start": 927036,
+              "length": 65458
+            },
+            {
+              "start": 992498,
+              "length": 65458
+            },
+            {
+              "start": 1057960,
+              "length": 65458
+            },
+            {
+              "start": 1123422,
+              "length": 65458
+            },
+            {
+              "start": 1188884,
+              "length": 65458
+            },
+            {
+              "start": 1254346,
+              "length": 65458
+            },
+            {
+              "start": 1319808,
+              "length": 65458
+            },
+            {
+              "start": 1385270,
+              "length": 65458
+            },
+            {
+              "start": 1450732,
+              "length": 65458
+            },
+            {
+              "start": 1516194,
+              "length": 65458
+            },
+            {
+              "start": 1581656,
+              "length": 65458
+            },
+            {
+              "start": 1647118,
+              "length": 37405
+            }
+          ],
+          "alg": "sha256",
+          "hash": "b64'NmSnOIEpWA7upBObXvx80VvNYbUPqJiwhGB3Di2BVaI=",
+          "pad": "b64'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "pad2": "b64'"
+        },
+        "c2pa.actions.v2": {
+          "actions": [
+            {
+              "action": "c2pa.created",
+              "description": "Created by Pixel Camera.",
+              "digitalSourceType": "http://cv.iptc.org/newscodes/digitalsourcetype/compositeCapture"
+            }
+          ]
+        }
+      },
+      "claim.v2": {
+        "instanceID": "a766bf25-d150-664e-85b4-45cae2cb8737",
+        "signature": "self#jumbf=/c2pa/urn:c2pa:bbc6882f-c24f-2263-4516-43bec19c9255/c2pa.signature",
+        "claim_generator_info": {
+          "name": "Google C2PA SDK for Android",
+          "version": "781252796:793865596"
+        },
+        "alg": "sha256",
+        "created_assertions": [
+          {
+            "url": "self#jumbf=/c2pa/urn:c2pa:bbc6882f-c24f-2263-4516-43bec19c9255/c2pa.assertions/c2pa.hash.multi-asset",
+            "hash": "b64'UMaw/K9C0CkbpdBnDbkS/GkIdIYYKkoP1iTge8Xieuo="
+          },
+          {
+            "url": "self#jumbf=c2pa.assertions/c2pa.hash.data",
+            "hash": "b64'kpFvIuZxaDgFDgnaGmwl1sIrgXstpMhfJzimgPPk6ic="
+          },
+          {
+            "url": "self#jumbf=c2pa.assertions/c2pa.actions.v2",
+            "hash": "b64'2dgXjElqRv/Bpvv0Bu54W9pi4Ua+S2zIfVYmEIEtUn0="
+          },
+          {
+            "url": "self#jumbf=/c2pa/urn:c2pa:bbc6882f-c24f-2263-4516-43bec19c9255/c2pa.assertions/c2pa.hash.data.part",
+            "hash": "b64'y0kpFXeDy86udKXF+kj3j8Gc7uRjUfLeOn3T1IjMeik="
+          },
+          {
+            "url": "self#jumbf=/c2pa/urn:c2pa:bbc6882f-c24f-2263-4516-43bec19c9255/c2pa.assertions/c2pa.hash.data.part__1",
+            "hash": "b64'9hj61bEFiY955OMGx0bMnHus9uo+OXPYumvu9SlgPqs="
+          }
+        ],
+        "gathered_assertions": []
+      },
+      "signature": {
+        "algorithm": "es256",
+        "certificateInfo": {
+          "serialNumber": "b0e50c36040555550a8780d3d6c78494bf8652",
+          "issuer": {
+            "C": "US",
+            "O": "Google LLC",
+            "CN": "Google C2PA Mobile A 1P ICA G3 L1"
+          },
+          "subject": {
+            "C": "US",
+            "O": "Google LLC",
+            "CN": "Pixel Camera"
+          },
+          "validity": {
+            "notBefore": "2025-08-14T04:44:09+00:00",
+            "notAfter": "2025-11-11T04:44:08+00:00"
+          }
+        },
+        "timeStampInfo": {
+          "timestamp": "2025-08-14T05:51:25+00:00",
+          "certificateInfo": {
+            "serialNumber": "801dd6ca0e3a76f622533f629162f7faa703c9",
+            "issuer": {
+              "C": "US",
+              "O": "Google LLC",
+              "CN": "Google C2PA Pixel Time-Stamping ICA G3"
+            },
+            "subject": {
+              "C": "US",
+              "O": "Google",
+              "CN": "Google Pixel Time Stamping Authority"
+            },
+            "validity": {
+              "notBefore": "2025-05-12T23:43:02+00:00",
+              "notAfter": "2032-11-11T08:43:01+00:00"
+            }
+          }
+        }
+      },
+      "validationResults": {
+        "success": [
+          {
+            "code": "timeStamp.validated",
+            "url": "self#jumbf=/c2pa/urn:c2pa:bbc6882f-c24f-2263-4516-43bec19c9255/c2pa.signature",
+            "explanation": "timestamp message digest matched: Google Pixel Time Stamping Authority"
+          },
+          {
+            "code": "timeStamp.trusted",
+            "url": "self#jumbf=/c2pa/urn:c2pa:bbc6882f-c24f-2263-4516-43bec19c9255/c2pa.signature",
+            "explanation": "timestamp cert trusted: Google Pixel Time Stamping Authority"
+          },
+          {
+            "code": "signingCredential.trusted",
+            "url": "self#jumbf=/c2pa/urn:c2pa:bbc6882f-c24f-2263-4516-43bec19c9255/c2pa.signature",
+            "explanation": "signing certificate trusted, found in System trust anchors"
+          },
+          {
+            "code": "claimSignature.insideValidity",
+            "url": "self#jumbf=/c2pa/urn:c2pa:bbc6882f-c24f-2263-4516-43bec19c9255/c2pa.signature",
+            "explanation": "claim signature valid"
+          },
+          {
+            "code": "claimSignature.validated",
+            "url": "self#jumbf=/c2pa/urn:c2pa:bbc6882f-c24f-2263-4516-43bec19c9255/c2pa.signature",
+            "explanation": "claim signature valid"
+          },
+          {
+            "code": "assertion.hashedURI.match",
+            "url": "self#jumbf=/c2pa/urn:c2pa:bbc6882f-c24f-2263-4516-43bec19c9255/c2pa.assertions/c2pa.hash.multi-asset",
+            "explanation": "hashed uri matched: self#jumbf=/c2pa/urn:c2pa:bbc6882f-c24f-2263-4516-43bec19c9255/c2pa.assertions/c2pa.hash.multi-asset"
+          },
+          {
+            "code": "assertion.hashedURI.match",
+            "url": "self#jumbf=/c2pa/urn:c2pa:bbc6882f-c24f-2263-4516-43bec19c9255/c2pa.assertions/c2pa.hash.data",
+            "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/c2pa.hash.data"
+          },
+          {
+            "code": "assertion.hashedURI.match",
+            "url": "self#jumbf=/c2pa/urn:c2pa:bbc6882f-c24f-2263-4516-43bec19c9255/c2pa.assertions/c2pa.actions.v2",
+            "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/c2pa.actions.v2"
+          },
+          {
+            "code": "assertion.hashedURI.match",
+            "url": "self#jumbf=/c2pa/urn:c2pa:bbc6882f-c24f-2263-4516-43bec19c9255/c2pa.assertions/c2pa.hash.data.part",
+            "explanation": "hashed uri matched: self#jumbf=/c2pa/urn:c2pa:bbc6882f-c24f-2263-4516-43bec19c9255/c2pa.assertions/c2pa.hash.data.part"
+          },
+          {
+            "code": "assertion.hashedURI.match",
+            "url": "self#jumbf=/c2pa/urn:c2pa:bbc6882f-c24f-2263-4516-43bec19c9255/c2pa.assertions/c2pa.hash.data.part__1",
+            "explanation": "hashed uri matched: self#jumbf=/c2pa/urn:c2pa:bbc6882f-c24f-2263-4516-43bec19c9255/c2pa.assertions/c2pa.hash.data.part__1"
+          },
+          {
+            "code": "assertion.dataHash.match",
+            "url": "self#jumbf=/c2pa/urn:c2pa:bbc6882f-c24f-2263-4516-43bec19c9255/c2pa.assertions/c2pa.hash.data",
+            "explanation": "data hash valid"
+          }
+        ],
+        "informational": [
+          {
+            "code": "assertion.dataHash.additionalExclusionsPresent",
+            "url": "self#jumbf=/c2pa/urn:c2pa:bbc6882f-c24f-2263-4516-43bec19c9255/c2pa.assertions/c2pa.hash.data",
+            "explanation": "extra data hash exclusions found"
+          }
+        ],
+        "failure": [],
+        "specVersion": "2.3.0",
+        "validationTime": "2026-03-31T06:07:04.965+00:00"
+      }
+    }
+  ],
+  "jsonGenerator": {
+    "name": "c2pa-rs",
+    "version": "0.78.0"
+  },
+  "usedITL": false,
+  "usedTestCerts": false,
+  "_conformanceToolVersion": {
+    "commit": "d291fb884e02665d169a38928392c2710f6f0953",
+    "shortCommit": "d291fb8",
+    "date": "2026-03-19 20:11:48 -0400",
+    "branch": "HEAD",
+    "generatedAt": "2026-03-23T18:42:00.448Z"
+  }
+}

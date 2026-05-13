@@ -9,3 +9,10 @@ afterEach(() => {
 
 // Mock fetch for tests
 global.fetch = vi.fn() as any
+
+// Mock ResizeObserver (used by Svelte bind:clientWidth, not available in jsdom)
+global.ResizeObserver = class ResizeObserver {
+  observe() {}
+  unobserve() {}
+  disconnect() {}
+}

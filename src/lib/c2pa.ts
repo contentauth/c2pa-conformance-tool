@@ -1,5 +1,5 @@
 import { createC2pa } from '@contentauth/c2pa-web'
-import type { Settings, ValidationStatus } from '@contentauth/c2pa-web'
+import type { Settings } from '@contentauth/c2pa-web'
 import { VERSION_INFO } from './version'
 import type { ConformanceReport } from './types'
 import { VALIDATION_STATUS } from './constants'
@@ -8,11 +8,18 @@ import { isCrJson, legacyToCrJson, getActiveManifestValidationStatus, type CrJso
 type ReaderHandle = {
   manifestStore: () => Promise<CrJson>
   free: () => Promise<void>
+  resourceToBytes?: (uri: string) => Promise<Uint8Array>
 }
 
 type C2paInstance = {
   reader: {
     fromBlob: (format: string, file: Blob, settings?: Settings) => Promise<ReaderHandle | null>
+    fromSidecarAndBlob?: (
+      sidecarBytes: Uint8Array,
+      assetFormat: string,
+      assetFile: Blob,
+      settings?: Settings,
+    ) => Promise<ReaderHandle | null>
   }
   getVersion?: () => Promise<string> | string
 }
@@ -21,6 +28,12 @@ type LocalC2paModule = {
   default: () => Promise<unknown>
   get_version: () => string
   read_manifest_store: (fileBytes: Uint8Array, format: string, settingsJson?: string) => Promise<string>
+  read_sidecar_manifest_store?: (
+    manifestBytes: Uint8Array,
+    assetBytes: Uint8Array,
+    assetFormat: string,
+    settingsJson?: string,
+  ) => Promise<string>
 }
 
 type ExtractedCrJsonResult = {
@@ -34,6 +47,9 @@ const importModule = new Function('modulePath', 'return import(modulePath)') as 
 type ITL = { allowed: string; anchors: string }
 
 let c2paInstance: C2paInstance | null = null
+let packagedC2paInstance: C2paInstance | null = null
+// Cached raw packaged-SDK promise, shared between getPackagedC2pa() and enrichThumbnailsViaPackagedSdk().
+let packagedSdkPromise: ReturnType<typeof createC2pa> | null = null
 let mainTrustListPem: string | null = null
 let itl: ITL | null = null
 
@@ -80,6 +96,14 @@ async function createLocalC2pa(): Promise<C2paInstance | null> {
     const localModule = await importModule(moduleUrl)
     await localModule.default()
 
+    const parseCrJson = (raw: string): CrJson => {
+      const parsed = JSON.parse(raw) as CrJson
+      if (!isCrJson(parsed)) {
+        throw new Error('Local WASM returned non-crJSON format')
+      }
+      return parsed
+    }
+
     return {
       reader: {
         fromBlob: async (format: string, file: Blob, settings?: Settings) => ({
@@ -90,14 +114,32 @@ async function createLocalC2pa(): Promise<C2paInstance | null> {
               format,
               toLocalSettingsJson(settings)
             )
-            const parsed = JSON.parse(manifestStoreJson) as CrJson
-            if (!isCrJson(parsed)) {
-              throw new Error('Local WASM returned non-crJSON format')
-            }
-            return parsed
+            return parseCrJson(manifestStoreJson)
           },
           free: async () => {},
         }),
+        ...(typeof localModule.read_sidecar_manifest_store === 'function'
+          ? {
+              fromSidecarAndBlob: async (
+                sidecarBytes: Uint8Array,
+                assetFormat: string,
+                assetFile: Blob,
+                settings?: Settings,
+              ) => ({
+                manifestStore: async () => {
+                  const assetBytes = new Uint8Array(await assetFile.arrayBuffer())
+                  const json = await localModule.read_sidecar_manifest_store!(
+                    sidecarBytes,
+                    assetBytes,
+                    assetFormat,
+                    toLocalSettingsJson(settings),
+                  )
+                  return parseCrJson(json)
+                },
+                free: async () => {},
+              }),
+            }
+          : {}),
       },
       getVersion: () => localModule.get_version(),
     }
@@ -180,6 +222,39 @@ async function fetchITL(): Promise<ITL> {
   }
 }
 
+/** Wrap a @contentauth/c2pa-web SDK instance as a C2paInstance (legacy JSON → crJSON). */
+function wrapPackagedSdk(sdk: Awaited<ReturnType<typeof createC2pa>>): C2paInstance {
+  return {
+    reader: {
+      fromBlob: async (format: string, file: Blob, settings?: Settings) => {
+        const reader = await sdk.reader.fromBlob(format, file, settings)
+        if (!reader) return null
+        return {
+          manifestStore: async () => {
+            const legacy = await reader.manifestStore() as Record<string, unknown>
+            return legacyToCrJson(legacy)
+          },
+          free: async () => { await reader.free() },
+          ...(reader.resourceToBytes && { resourceToBytes: reader.resourceToBytes.bind(reader) }),
+        }
+      },
+    },
+    getVersion: () => '@contentauth/c2pa-web v0.6.1',
+  }
+}
+
+/**
+ * Return the packaged SDK as a C2paInstance, lazily initialised and cached.
+ * Used for sidecar files and thumbnail fallback — never replaced by the local WASM.
+ */
+async function getPackagedC2pa(): Promise<C2paInstance> {
+  if (!packagedC2paInstance) {
+    if (!packagedSdkPromise) packagedSdkPromise = createC2pa({ wasmSrc: `${base}c2pa.wasm` })
+    packagedC2paInstance = wrapPackagedSdk(await packagedSdkPromise)
+  }
+  return packagedC2paInstance
+}
+
 /**
  * Initialize the C2PA SDK
  */
@@ -189,37 +264,7 @@ async function initC2pa(): Promise<C2paInstance> {
   }
 
   try {
-    c2paInstance = await createLocalC2pa()
-
-    if (!c2paInstance) {
-      const fallbackSdk = await createC2pa({
-        wasmSrc: `${base}c2pa.wasm`
-      })
-
-      c2paInstance = {
-        reader: {
-          fromBlob: async (format: string, file: Blob, settings?: Settings) => {
-            const reader = await fallbackSdk.reader.fromBlob(format, file, settings)
-
-            if (!reader) {
-              return null
-            }
-
-            return {
-              manifestStore: async () => {
-                const legacy = await reader.manifestStore() as Record<string, unknown>
-                return legacyToCrJson(legacy)
-              },
-              free: async () => {
-                await reader.free()
-              },
-            }
-          },
-        },
-        getVersion: () => '@contentauth/c2pa-web v0.6.1',
-      }
-    }
-
+    c2paInstance = await createLocalC2pa() ?? await getPackagedC2pa()
     return c2paInstance
   } catch (error) {
     console.error('Failed to initialize C2PA SDK:', error)
@@ -241,7 +286,10 @@ const MIME_TYPE_MAP: Record<string, string> = {
   'image/dng': 'image/x-adobe-dng',
 }
 
-// Fallback MIME types by file extension, for when the browser can't determine the type
+// Fallback MIME types by file extension, for when the browser can't determine the type.
+// `.c2pa` is the standalone manifest-store sidecar format (RFC-style, no embedded asset).
+// Browsers universally leave its type empty or fall back to application/octet-stream, so
+// we resolve by extension.
 const EXTENSION_MIME_MAP: Record<string, string> = {
   'dng': 'image/x-adobe-dng',
   'arw': 'image/x-sony-arw',
@@ -250,9 +298,28 @@ const EXTENSION_MIME_MAP: Record<string, string> = {
   'nef': 'image/x-nikon-nef',
   'orf': 'image/x-olympus-orf',
   'rw2': 'image/x-panasonic-rw2',
+  'c2pa': 'application/c2pa',
 }
 
-function resolveMimeType(file: File): string {
+/**
+ * The MIME type the C2PA SDK uses for standalone manifest-store sidecars.
+ * Re-exported so UI code can detect this class of file consistently.
+ */
+export const SIDECAR_MIME = 'application/c2pa'
+
+/**
+ * True when the given File looks like a C2PA sidecar (standalone manifest store).
+ * Matches either the MIME type (if the browser somehow set it) or the `.c2pa`
+ * extension — which is how we'll detect it in ~100% of real drops, since no
+ * browser recognises the type natively yet.
+ */
+export function isSidecarFile(file: File): boolean {
+  if (file.type === SIDECAR_MIME) return true
+  const ext = file.name.split('.').pop()?.toLowerCase() ?? ''
+  return ext === 'c2pa' || ext === 'json'
+}
+
+export function resolveMimeType(file: File): string {
   const mapped = MIME_TYPE_MAP[file.type]
   if (mapped) return mapped
   if (file.type && file.type !== 'application/octet-stream') return file.type
@@ -261,189 +328,290 @@ function resolveMimeType(file: File): string {
   return EXTENSION_MIME_MAP[ext] ?? file.type
 }
 
+/**
+ * Read the manifest store under a given set of trust settings. Returning
+ * `null` means "the SDK could not construct a reader for these inputs" —
+ * typically no manifest present, or (in the sidecar+asset case) the asset
+ * bytes don't match the manifest's hash bindings.
+ */
+type ReadManifestStore = (settings: Settings) => Promise<CrJson | null>
+
+/**
+ * Three-step trust validation flow, independent of how bytes are sourced:
+ *
+ *   1. Official C2PA trust list.
+ *   2. + Session-only test certificates, if they change the outcome.
+ *   3. + ITL (Interim Trust List), as a last-resort fallback.
+ *
+ * The "how do I read the manifest store" piece is injected so this flow
+ * works identically for embedded (`fromBlob`) and sidecar+asset
+ * (`fromSidecarAndBlob`) validation.
+ */
+async function runTrustValidationFlow(
+  readManifestStore: ReadManifestStore,
+  testCertificates: string[],
+  noManifestErrorMessage: string,
+): Promise<ExtractedCrJsonResult> {
+  console.log('Fetching official C2PA trust lists...')
+  const [mainTrustList, itlData] = await Promise.all([
+    fetchMainTrustList(),
+    fetchITL()
+  ])
+
+  console.log('Step 1: Validating with official trust list only...')
+  const officialSettings: Settings = {
+    verify: { verifyTrust: true, verifyAfterReading: true },
+    trust: { trustAnchors: mainTrustList }
+  }
+
+  const officialCrJson = await readManifestStore(officialSettings)
+  if (!officialCrJson) {
+    throw new Error(noManifestErrorMessage)
+  }
+
+  console.log('📋 Raw crJSON keys:', Object.keys(officialCrJson))
+  console.log('📋 validationResults:', JSON.stringify(officialCrJson.validationResults ?? null))
+  console.log('📋 manifests[0] vr:', JSON.stringify((officialCrJson.manifests?.[0] as Record<string, unknown>)?.validationResults ?? null))
+
+  const officialVr = getActiveManifestValidationStatus(officialCrJson)
+  const officialUntrusted = officialVr?.failure?.some(
+    (status) => status.code === VALIDATION_STATUS.SIGNING_CREDENTIAL_UNTRUSTED
+  )
+
+  console.log('Official TL validation results:', {
+    isUntrusted: officialUntrusted,
+    success: officialVr?.success?.map((s) => s.code),
+    failure: officialVr?.failure?.map((f) => f.code)
+  })
+
+  let crJson = officialCrJson
+  let usedTestCerts = false
+
+  if (testCertificates.length > 0) {
+    console.log('Step 2: Validating with test certificates added...')
+    const testSettings: Settings = {
+      verify: { verifyTrust: true, verifyAfterReading: true },
+      trust: { trustAnchors: mainTrustList + '\n' + testCertificates.join('\n') }
+    }
+
+    const testCrJson = await readManifestStore(testSettings)
+    if (testCrJson) {
+      const testVr = getActiveManifestValidationStatus(testCrJson)
+      const testUntrusted = testVr?.failure?.some(
+        (status) => status.code === VALIDATION_STATUS.SIGNING_CREDENTIAL_UNTRUSTED
+      )
+
+      console.log('Test cert validation results:', {
+        isUntrusted: testUntrusted,
+        success: testVr?.success?.map((s) => s.code),
+        failure: testVr?.failure?.map((f) => f.code)
+      })
+
+      if (officialUntrusted && !testUntrusted) {
+        console.log('✅ Test certificates made the difference - signature now trusted')
+        usedTestCerts = true
+        crJson = testCrJson
+      } else {
+        console.log('ℹ️  Test certificates loaded but not needed for validation')
+      }
+    }
+  }
+
+  const mainVr = getActiveManifestValidationStatus(crJson)
+  const isUntrusted = mainVr?.failure?.some(
+    (status) => status.code === VALIDATION_STATUS.SIGNING_CREDENTIAL_UNTRUSTED
+  )
+
+  console.log('Main validation results:', {
+    isUntrusted,
+    success: mainVr?.success?.map((s) => s.code),
+    failure: mainVr?.failure?.map((f) => f.code)
+  })
+
+  let usedITL = false
+  let finalCrJson = crJson
+
+  if (isUntrusted) {
+    console.log('⚠️  Signature untrusted on main list, checking ITL...')
+
+    // allowed.pem = leaf/end-entity certs → allowedList
+    // anchors.pem = root CAs → appended to trustAnchors
+    const itlSettings: Settings = {
+      verify: { verifyTrust: true, verifyAfterReading: true },
+      trust: {
+        trustAnchors: mainTrustList + '\n' + itlData.anchors,
+        allowedList: itlData.allowed,
+      }
+    }
+
+    const itlCrJson = await readManifestStore(itlSettings)
+    if (itlCrJson) {
+      const itlVr = getActiveManifestValidationStatus(itlCrJson)
+      console.log('ITL validation results:', {
+        success: itlVr?.success?.map((s) => s.code),
+        failure: itlVr?.failure?.map((f) => ({ code: f.code, explanation: f.explanation }))
+      })
+
+      const itlTrusted = itlVr?.success?.some(
+        (status) => status.code === VALIDATION_STATUS.SIGNING_CREDENTIAL_TRUSTED
+      )
+      const itlStillUntrusted = itlVr?.failure?.some(
+        (status) => status.code === VALIDATION_STATUS.SIGNING_CREDENTIAL_UNTRUSTED
+      )
+
+      console.log('ITL validation check:', { itlTrusted, itlStillUntrusted })
+      if (itlStillUntrusted) {
+        const untrustedFailure = itlVr?.failure?.find(
+          (status) => status.code === VALIDATION_STATUS.SIGNING_CREDENTIAL_UNTRUSTED
+        )
+        console.log('ITL still untrusted, reason:', untrustedFailure?.explanation)
+      }
+
+      if (itlTrusted && !itlStillUntrusted) {
+        console.log('✅ Signature validated by ITL')
+        usedITL = true
+        finalCrJson = itlCrJson
+      } else {
+        console.log('❌ Signature still not trusted even with ITL')
+      }
+    }
+  }
+
+  console.log('✅ Manifest store retrieved with trust validation')
+
+  return {
+    crJson: finalCrJson,
+    usedITL,
+    usedTestCerts,
+  }
+}
+
+/**
+ * When using the local WASM reader (which doesn't expose `resourceToBytes`),
+ * fall back to a packaged-SDK reader from the same file solely for resource resolution.
+ * The packaged SDK instance is cached so only one Web Worker is created.
+ */
+async function enrichThumbnailsViaPackagedSdk(crJson: CrJson, file: Blob, mimeType: string): Promise<void> {
+  // Quick check: any unresolved thumbnail identifiers?
+  let hasUnresolved = false
+  outer: for (const manifest of (crJson.manifests ?? [])) {
+    const assertions = (manifest.assertions ?? {}) as Record<string, Record<string, unknown>>
+    for (const [key, assertion] of Object.entries(assertions)) {
+      if (key.startsWith('c2pa.thumbnail') && assertion && !assertion.data && typeof assertion.identifier === 'string') {
+        hasUnresolved = true
+        break outer
+      }
+    }
+  }
+  if (!hasUnresolved) return
+
+  try {
+    const sdk = await getPackagedC2pa()
+    const reader = await sdk.reader.fromBlob(mimeType, file)
+    if (!reader || !reader.resourceToBytes) return
+    try {
+      await enrichThumbnails(crJson, reader.resourceToBytes.bind(reader))
+    } finally {
+      await reader.free()
+    }
+  } catch (e) {
+    console.warn('[thumbnails] Could not resolve thumbnails via packaged SDK:', e)
+  }
+}
+
+/**
+ * Resolve JUMBF `identifier` URIs in thumbnail assertions to inline base64 `data` fields.
+ * Only runs when the reader exposes `resourceToBytes`; silently skips failures.
+ */
+async function enrichThumbnails(crJson: CrJson, resourceToBytes: (uri: string) => Promise<Uint8Array>): Promise<void> {
+  for (const manifest of (crJson.manifests ?? [])) {
+    const assertions = (manifest.assertions ?? {}) as Record<string, Record<string, unknown>>
+    for (const [key, assertion] of Object.entries(assertions)) {
+      if (!key.startsWith('c2pa.thumbnail') || !assertion || typeof assertion !== 'object') continue
+      if (assertion.data) continue // already inlined
+      const identifier = assertion.identifier
+      if (typeof identifier !== 'string') continue
+      try {
+        const bytes = await resourceToBytes(identifier)
+        // Convert to base64 in chunks to avoid call-stack limits on large thumbnails
+        const chunkSize = 8192
+        let binary = ''
+        for (let i = 0; i < bytes.length; i += chunkSize) {
+          binary += String.fromCharCode(...bytes.subarray(i, i + chunkSize))
+        }
+        assertion.data = `b64'${btoa(binary)}'`
+      } catch {
+        // Non-fatal: skip thumbnails we can't resolve
+      }
+    }
+  }
+}
+
 async function extractCrJsonWithMetadata(file: File, testCertificates: string[] = []): Promise<ExtractedCrJsonResult> {
+  // JSON sidecars are crJSON reports — parse them directly without the SDK.
+  const ext = file.name.split('.').pop()?.toLowerCase() ?? ''
+  if (ext === 'json' || file.type === 'application/json') {
+    let parsed: unknown
+    try {
+      parsed = JSON.parse(await file.text())
+    } catch {
+      throw new Error('This file is not valid JSON.')
+    }
+    if (!isCrJson(parsed)) {
+      throw new Error('No C2PA manifest found in this file.')
+    }
+    return { crJson: parsed, usedITL: false, usedTestCerts: false }
+  }
+
   const mimeType = resolveMimeType(file)
   console.log('🔍 Starting file processing for:', file.name, 'Type:', file.type, mimeType !== file.type ? `(remapped to ${mimeType})` : '')
 
-  // Initialize C2PA SDK if not already initialized
+  // Sidecar JUMBF files must go through the packaged SDK. The local WASM's
+  // read_manifest_store verifies data hash assertions against the sidecar bytes
+  // (not the actual asset), which always mismatches. The packaged SDK uses
+  // from_manifest_data internally, which reads the sidecar without an asset stream
+  // and correctly skips asset-hash assertion verification.
   console.log('Initializing C2PA SDK...')
-  const c2pa = await initC2pa()
+  const c2pa = mimeType === SIDECAR_MIME ? await getPackagedC2pa() : await initC2pa()
   console.log('✅ C2PA SDK initialized')
 
+  const readManifestStore: ReadManifestStore = async (settings) => {
+    const reader = await c2pa.reader.fromBlob(mimeType, file, settings)
+    if (!reader) return null
+    try {
+      const crJson = await reader.manifestStore()
+      if (reader.resourceToBytes) {
+        await enrichThumbnails(crJson, reader.resourceToBytes.bind(reader))
+      } else {
+        await enrichThumbnailsViaPackagedSdk(crJson, file, mimeType)
+      }
+      return crJson
+    } finally {
+      await reader.free()
+    }
+  }
+
   try {
-    console.log('Fetching official C2PA trust lists...')
-
-    // Fetch main trust list and ITL separately
-    const [mainTrustList, itlData] = await Promise.all([
-      fetchMainTrustList(),
-      fetchITL()
-    ])
-
-    console.log('Step 1: Validating with official trust list only...')
-    const officialSettings: Settings = {
-      verify: {
-        verifyTrust: true,
-        verifyAfterReading: true
-      },
-      trust: {
-        trustAnchors: mainTrustList
-      }
-    }
-
-    // First validation with official trust list only (no test certs)
-    const reader1 = await c2pa.reader.fromBlob(mimeType, file, officialSettings)
-    if (!reader1) {
-      throw new Error('No C2PA manifest found in this file')
-    }
-
-    const officialCrJson = await reader1.manifestStore()
-    await reader1.free()
-
-    console.log('📋 Raw crJSON keys:', Object.keys(officialCrJson))
-    console.log('📋 validationResults:', JSON.stringify(officialCrJson.validationResults ?? null))
-    console.log('📋 manifests[0] vr:', JSON.stringify((officialCrJson.manifests?.[0] as Record<string, unknown>)?.validationResults ?? null))
-
-    const vr = getActiveManifestValidationStatus(officialCrJson)
-    const officialUntrusted = vr?.failure?.some(
-      (status: ValidationStatus) => status.code === VALIDATION_STATUS.SIGNING_CREDENTIAL_UNTRUSTED
+    return await runTrustValidationFlow(
+      readManifestStore,
+      testCertificates,
+      mimeType === SIDECAR_MIME
+        ? 'No C2PA manifest could be read from this sidecar. It may be corrupted or not a valid .c2pa file.'
+        : 'No C2PA manifest found in this file',
     )
-
-    console.log('Official TL validation results:', {
-      isUntrusted: officialUntrusted,
-      success: vr?.success?.map((s: ValidationStatus) => s.code),
-      failure: vr?.failure?.map((f: ValidationStatus) => f.code)
-    })
-
-    let crJson = officialCrJson
-    let usedTestCerts = false
-
-    if (testCertificates.length > 0) {
-      console.log('Step 2: Validating with test certificates added...')
-      const testSettings: Settings = {
-        verify: {
-          verifyTrust: true,
-          verifyAfterReading: true
-        },
-        trust: {
-          trustAnchors: mainTrustList + '\n' + testCertificates.join('\n')
-        }
-      }
-
-      const reader2 = await c2pa.reader.fromBlob(mimeType, file, testSettings)
-      if (reader2) {
-        const testCrJson = await reader2.manifestStore()
-        await reader2.free()
-
-        const testVr = getActiveManifestValidationStatus(testCrJson)
-        const testUntrusted = testVr?.failure?.some(
-          (status: ValidationStatus) => status.code === VALIDATION_STATUS.SIGNING_CREDENTIAL_UNTRUSTED
-        )
-
-        console.log('Test cert validation results:', {
-          isUntrusted: testUntrusted,
-          success: testVr?.success?.map((s: ValidationStatus) => s.code),
-          failure: testVr?.failure?.map((f: ValidationStatus) => f.code)
-        })
-
-        if (officialUntrusted && !testUntrusted) {
-          console.log('✅ Test certificates made the difference - signature now trusted')
-          usedTestCerts = true
-          crJson = testCrJson
-        } else {
-          console.log('ℹ️  Test certificates loaded but not needed for validation')
-        }
-      }
-    }
-
-    const mainVr = getActiveManifestValidationStatus(crJson)
-    const isUntrusted = mainVr?.failure?.some(
-      (status: ValidationStatus) => status.code === VALIDATION_STATUS.SIGNING_CREDENTIAL_UNTRUSTED
-    )
-
-    console.log('Main validation results:', {
-      isUntrusted,
-      success: mainVr?.success?.map((s: ValidationStatus) => s.code),
-      failure: mainVr?.failure?.map((f: ValidationStatus) => f.code)
-    })
-
-    let usedITL = false
-    let finalCrJson = crJson
-
-    if (isUntrusted) {
-      console.log('⚠️  Signature untrusted on main list, checking ITL...')
-
-      // allowed.pem = leaf/end-entity certs → allowedList
-      // anchors.pem = root CAs → appended to trustAnchors
-      const itlSettings: Settings = {
-        verify: {
-          verifyTrust: true,
-          verifyAfterReading: true
-        },
-        trust: {
-          trustAnchors: mainTrustList + '\n' + itlData.anchors,
-          allowedList: itlData.allowed,
-        }
-      }
-
-      const reader2 = await c2pa.reader.fromBlob(mimeType, file, itlSettings)
-      if (reader2) {
-        const itlCrJson = await reader2.manifestStore()
-        await reader2.free()
-
-        const itlVr = getActiveManifestValidationStatus(itlCrJson)
-        console.log('ITL validation results:', {
-          success: itlVr?.success?.map((s: ValidationStatus) => s.code),
-          failure: itlVr?.failure?.map((f: ValidationStatus) => ({ code: f.code, explanation: f.explanation }))
-        })
-
-        const itlTrusted = itlVr?.success?.some(
-          (status: ValidationStatus) => status.code === VALIDATION_STATUS.SIGNING_CREDENTIAL_TRUSTED
-        )
-        const itlStillUntrusted = itlVr?.failure?.some(
-          (status: ValidationStatus) => status.code === VALIDATION_STATUS.SIGNING_CREDENTIAL_UNTRUSTED
-        )
-
-        console.log('ITL validation check:', { itlTrusted, itlStillUntrusted })
-        if (itlStillUntrusted) {
-          const untrustedFailure = itlVr?.failure?.find(
-            (status: ValidationStatus) => status.code === VALIDATION_STATUS.SIGNING_CREDENTIAL_UNTRUSTED
-          )
-          console.log('ITL still untrusted, reason:', untrustedFailure?.explanation)
-        }
-
-        if (itlTrusted && !itlStillUntrusted) {
-          console.log('✅ Signature validated by ITL')
-          usedITL = true
-          finalCrJson = itlCrJson
-        } else {
-          console.log('❌ Signature still not trusted even with ITL')
-        }
-      }
-    }
-
-    console.log('✅ Manifest store retrieved with trust validation')
-
-    return {
-      crJson: finalCrJson,
-      usedITL,
-      usedTestCerts,
-    }
   } catch (error) {
     console.error('❌ Error in processFile:', error)
-    if (error instanceof Error) {
-      const msg = error.message
-      if (msg.includes('UnsupportedFormatError') || msg.includes('Unsupported format')) {
-        throw new Error(`Unsupported file format (${mimeType}). Supported formats include JPEG, PNG, WebP, AVIF, MP4, MOV, MP3, WAV, and PDF.`)
-      }
-      if (msg.includes('InvalidAsset') || msg.includes('Box size extends beyond') || msg.includes('box size')) {
-        throw new Error(`Could not parse this file. It may be corrupted, use an unsupported codec, or the C2PA manifest may be malformed.`)
-      }
-      if (msg.includes('NoManifest') || msg.includes('no manifest')) {
-        throw new Error(`No C2PA manifest found in this file.`)
-      }
-      throw new Error(`Failed to process file: ${msg}`)
+    const msg = error instanceof Error ? error.message : String(error)
+    if (msg.includes('UnsupportedFormatError') || msg.includes('Unsupported format')) {
+      throw new Error(`Unsupported file format (${mimeType}). Supported formats include JPEG, PNG, WebP, AVIF, MP4, MOV, MP3, WAV, and PDF.`)
     }
-    throw error
+    if (msg.includes('InvalidAsset') || msg.includes('Box size extends beyond') || msg.includes('box size')) {
+      throw new Error(`Could not parse this file. It may be corrupted, use an unsupported codec, or the C2PA manifest may be malformed.`)
+    }
+    if (msg.includes('NoManifest') || msg.includes('no manifest') || msg.includes('No C2PA manifest') || msg.includes('no JUMBF data')) {
+      throw new Error(`No C2PA manifest found in this file.`)
+    }
+    throw new Error(`Failed to process file: ${msg}`)
   }
 }
 
@@ -452,13 +620,11 @@ export async function extractCrJson(file: File, testCertificates: string[] = [])
   return crJson
 }
 
-export async function processFile(file: File, testCertificates: string[] = []): Promise<ConformanceReport> {
-  const { crJson, usedITL, usedTestCerts } = await extractCrJsonWithMetadata(file, testCertificates)
-
+function buildConformanceReport(extracted: ExtractedCrJsonResult): ConformanceReport {
   return {
-    ...crJson,
-    usedITL,
-    usedTestCerts,
+    ...extracted.crJson,
+    usedITL: extracted.usedITL,
+    usedTestCerts: extracted.usedTestCerts,
     _conformanceToolVersion: {
       commit: VERSION_INFO.sha,
       shortCommit: VERSION_INFO.shortSha,
@@ -467,6 +633,68 @@ export async function processFile(file: File, testCertificates: string[] = []): 
       generatedAt: VERSION_INFO.timestamp
     }
   }
+}
+
+export async function processFile(file: File, testCertificates: string[] = []): Promise<ConformanceReport> {
+  return buildConformanceReport(await extractCrJsonWithMetadata(file, testCertificates))
+}
+
+async function extractSidecarWithAssetCrJsonWithMetadata(
+  sidecar: File,
+  asset: File,
+  testCertificates: string[] = [],
+): Promise<ExtractedCrJsonResult> {
+  const c2pa = await initC2pa()
+  const fromSidecarAndBlob = c2pa.reader.fromSidecarAndBlob
+  if (!fromSidecarAndBlob) {
+    throw new Error('read_sidecar_manifest_store is not available in the local WASM build.')
+  }
+
+  const assetMimeType = resolveMimeType(asset)
+  const sidecarBytes = new Uint8Array(await sidecar.arrayBuffer())
+
+  const readManifestStore: ReadManifestStore = async (settings) => {
+    const reader = await fromSidecarAndBlob(sidecarBytes, assetMimeType, asset, settings)
+    if (!reader) return null
+    try {
+      const crJson = await reader.manifestStore()
+      if (reader.resourceToBytes) {
+        await enrichThumbnails(crJson, reader.resourceToBytes.bind(reader))
+      } else {
+        await enrichThumbnailsViaPackagedSdk(crJson, asset, assetMimeType)
+      }
+      return crJson
+    } finally {
+      await reader.free()
+    }
+  }
+
+  try {
+    return await runTrustValidationFlow(
+      readManifestStore,
+      testCertificates,
+      `No C2PA manifest could be read from sidecar "${sidecar.name}" paired with "${asset.name}".`,
+    )
+  } catch (error) {
+    const msg = error instanceof Error ? error.message : String(error)
+    if (msg.includes('HashMismatch') || msg.includes('dataHash') || msg.includes('bmffHash')) {
+      throw new Error(
+        `Asset hash mismatch: the sidecar's hash bindings don't match "${asset.name}". ` +
+        `The sidecar and asset are probably not a matched pair.`,
+      )
+    }
+    throw error
+  }
+}
+
+export async function processSidecarWithAsset(
+  sidecar: File,
+  asset: File,
+  testCertificates: string[] = [],
+): Promise<ConformanceReport> {
+  return buildConformanceReport(
+    await extractSidecarWithAssetCrJsonWithMetadata(sidecar, asset, testCertificates),
+  )
 }
 
 /**

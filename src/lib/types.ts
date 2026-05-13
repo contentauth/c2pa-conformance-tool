@@ -44,6 +44,7 @@ export interface ValidationStatusItem {
 export interface OverviewNode {
   manifestIdx: number
   claimGenerator?: string
+  signer?: string
   mimeType?: string | null
   thumbnailSrc?: string
   date?: string

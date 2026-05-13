@@ -5,6 +5,7 @@
   import type { SignalsRubricResult } from './rubrics/types'
   import { getClaimInfo, getSignatureInfo } from './crjson'
   import { evaluateReportSignals } from './summarySignals'
+  import { getSignerName } from './generateSummary'
 
   export let report: ConformanceReport
   export let file: File | null = null
@@ -308,6 +309,7 @@
     return {
       manifestIdx: -1,
       claimGenerator: edge.stubTitle,
+      signer: edge.stubTitle,
       mimeType: edge.stubFormat ?? null,
       thumbnailSrc: undefined,
       date: undefined,
@@ -369,6 +371,7 @@
     return {
       manifestIdx: rootIdx,
       claimGenerator: claimInfo.claim_generator_info?.[0]?.name ?? claimInfo.claim_generator,
+      signer: getSignerName(manifest, r.usedITL === true),
       mimeType: sigData?.mimeType ?? manifestFormat(manifest) ?? null,
       thumbnailSrc: thumbnailSrc(manifest),
       date,
@@ -414,7 +417,6 @@
         isRoot={true}
         fileSrc={fileSrc}
         fileMimeType={file?.type}
-        fileName={file?.name}
       />
     </div>
 

@@ -492,7 +492,7 @@ async function runTrustValidationFlow(
  * The packaged SDK instance is cached so only one Web Worker is created.
  */
 async function enrichThumbnailsViaPackagedSdk(crJson: CrJson, file: Blob, mimeType: string): Promise<void> {
-  // Quick check: any unresolved thumbnail identifiers?
+  // Quick check: any unresolved thumbnail identifiers? (manifest-level or ingredient-embedded)
   let hasUnresolved = false
   outer: for (const manifest of (crJson.manifests ?? [])) {
     const assertions = (manifest.assertions ?? {}) as Record<string, Record<string, unknown>>
@@ -500,6 +500,13 @@ async function enrichThumbnailsViaPackagedSdk(crJson: CrJson, file: Blob, mimeTy
       if (key.startsWith('c2pa.thumbnail') && assertion && !assertion.data && typeof assertion.identifier === 'string') {
         hasUnresolved = true
         break outer
+      }
+      if (key.startsWith('c2pa.ingredient') && assertion) {
+        const thumb = assertion.thumbnail as Record<string, unknown> | undefined
+        if (thumb && !thumb.data && typeof thumb.identifier === 'string') {
+          hasUnresolved = true
+          break outer
+        }
       }
     }
   }
@@ -521,27 +528,39 @@ async function enrichThumbnailsViaPackagedSdk(crJson: CrJson, file: Blob, mimeTy
 
 /**
  * Resolve JUMBF `identifier` URIs in thumbnail assertions to inline base64 `data` fields.
+ * Handles both manifest-level (c2pa.thumbnail*) and ingredient-embedded (c2pa.ingredient*.thumbnail) thumbnails.
  * Only runs when the reader exposes `resourceToBytes`; silently skips failures.
  */
 async function enrichThumbnails(crJson: CrJson, resourceToBytes: (uri: string) => Promise<Uint8Array>): Promise<void> {
   for (const manifest of (crJson.manifests ?? [])) {
     const assertions = (manifest.assertions ?? {}) as Record<string, Record<string, unknown>>
     for (const [key, assertion] of Object.entries(assertions)) {
-      if (!key.startsWith('c2pa.thumbnail') || !assertion || typeof assertion !== 'object') continue
-      if (assertion.data) continue // already inlined
-      const identifier = assertion.identifier
-      if (typeof identifier !== 'string') continue
-      try {
-        const bytes = await resourceToBytes(identifier)
-        // Convert to base64 in chunks to avoid call-stack limits on large thumbnails
-        const chunkSize = 8192
-        let binary = ''
-        for (let i = 0; i < bytes.length; i += chunkSize) {
-          binary += String.fromCharCode(...bytes.subarray(i, i + chunkSize))
+      if (!assertion || typeof assertion !== 'object') continue
+
+      const targets: Array<Record<string, unknown>> = []
+      if (key.startsWith('c2pa.thumbnail')) {
+        targets.push(assertion)
+      } else if (key.startsWith('c2pa.ingredient')) {
+        const thumb = assertion.thumbnail as Record<string, unknown> | undefined
+        if (thumb && typeof thumb === 'object') targets.push(thumb)
+      }
+
+      for (const target of targets) {
+        if (target.data) continue // already inlined
+        const identifier = target.identifier
+        if (typeof identifier !== 'string') continue
+        try {
+          const bytes = await resourceToBytes(identifier)
+          // Convert to base64 in chunks to avoid call-stack limits on large thumbnails
+          const chunkSize = 8192
+          let binary = ''
+          for (let i = 0; i < bytes.length; i += chunkSize) {
+            binary += String.fromCharCode(...bytes.subarray(i, i + chunkSize))
+          }
+          target.data = `b64'${btoa(binary)}'`
+        } catch {
+          // Non-fatal: skip thumbnails we can't resolve
         }
-        assertion.data = `b64'${btoa(binary)}'`
-      } catch {
-        // Non-fatal: skip thumbnails we can't resolve
       }
     }
   }

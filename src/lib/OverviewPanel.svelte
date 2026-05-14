@@ -278,7 +278,7 @@
     if (!thumb || typeof thumb !== 'object') return undefined
     const t = thumb as Record<string, unknown>
 
-    // v2: inline data on the thumbnail object itself
+    // 1. v2 inline base64 data on the thumbnail reference itself
     if (typeof t.data === 'string' && t.data) {
       const fmt = typeof t.format === 'string' ? t.format : 'image/jpeg'
       const raw = t.data
@@ -286,20 +286,41 @@
       return `data:${fmt};base64,${b64}`
     }
 
-    // v1: thumbnail.url is a JUMBF reference to a c2pa.thumbnail.* assertion in this manifest
-    // e.g. "self#jumbf=c2pa.assertions/c2pa.thumbnail.ingredient.jpeg"
+    // 2. Robust Hash Match: If a hash is present, search local assertions for matching hash
+    if (typeof t.hash === 'string' && t.hash) {
+      const match = Object.values(m.assertions ?? {}).find(
+        a => a && typeof a === 'object' && (a as Record<string, unknown>).hash === t.hash
+      ) as Record<string, unknown> | undefined
+      if (match && typeof match.data === 'string' && match.data) {
+        const fmt = typeof match.format === 'string' ? match.format : 'image/jpeg'
+        const raw = match.data
+        const b64 = raw.startsWith("b64'") && raw.endsWith("'") ? raw.slice(4, -1) : raw
+        return `data:${fmt};base64,${b64}`
+      }
+    }
+
+    // 3. JUMBF URL Lookup fallback: handles relative/absolute/flat JUMBF URIs
     const url = typeof t.url === 'string' ? t.url : undefined
     if (!url) return undefined
-    const prefix = 'c2pa.assertions/'
-    const prefixIdx = url.indexOf(prefix)
-    if (prefixIdx < 0) return undefined
-    const assertionLabel = url.slice(prefixIdx + prefix.length)
-    const assertion = (m.assertions ?? {})[assertionLabel] as Record<string, unknown> | undefined
-    if (!assertion || typeof assertion.data !== 'string' || !assertion.data) return undefined
-    const fmt = typeof assertion.format === 'string' ? assertion.format : 'image/jpeg'
-    const raw = assertion.data
-    const b64 = raw.startsWith("b64'") && raw.endsWith("'") ? raw.slice(4, -1) : raw
-    return `data:${fmt};base64,${b64}`
+
+    // Extract the last path segment (e.g. self#jumbf=c2pa.assertions/c2pa.thumbnail.ingredient.jpeg -> c2pa.thumbnail.ingredient.jpeg)
+    let path = url
+    if (path.startsWith('self#jumbf=')) {
+      path = path.slice('self#jumbf='.length)
+    }
+    const segments = path.split('/')
+    const lastSegment = segments[segments.length - 1]
+    if (!lastSegment) return undefined
+
+    const assertion = (m.assertions ?? {})[lastSegment] as Record<string, unknown> | undefined
+    if (assertion && typeof assertion.data === 'string' && assertion.data) {
+      const fmt = typeof assertion.format === 'string' ? assertion.format : 'image/jpeg'
+      const raw = assertion.data
+      const b64 = raw.startsWith("b64'") && raw.endsWith("'") ? raw.slice(4, -1) : raw
+      return `data:${fmt};base64,${b64}`
+    }
+
+    return undefined
   }
 
   function crJsonEdges(

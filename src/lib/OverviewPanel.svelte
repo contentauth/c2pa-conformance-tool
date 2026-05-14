@@ -271,7 +271,36 @@
     return undefined
   }
 
-  type Edge = { childIdx: number | null; relationship?: string; stubTitle?: string; stubFormat?: string }
+  type Edge = { childIdx: number | null; relationship?: string; stubTitle?: string; stubFormat?: string; stubThumbnailSrc?: string }
+
+  function ingredientThumbnailSrc(v: Record<string, unknown>, m: CrJsonManifestEntry): string | undefined {
+    const thumb = v.thumbnail
+    if (!thumb || typeof thumb !== 'object') return undefined
+    const t = thumb as Record<string, unknown>
+
+    // v2: inline data on the thumbnail object itself
+    if (typeof t.data === 'string' && t.data) {
+      const fmt = typeof t.format === 'string' ? t.format : 'image/jpeg'
+      const raw = t.data
+      const b64 = raw.startsWith("b64'") && raw.endsWith("'") ? raw.slice(4, -1) : raw
+      return `data:${fmt};base64,${b64}`
+    }
+
+    // v1: thumbnail.url is a JUMBF reference to a c2pa.thumbnail.* assertion in this manifest
+    // e.g. "self#jumbf=c2pa.assertions/c2pa.thumbnail.ingredient.jpeg"
+    const url = typeof t.url === 'string' ? t.url : undefined
+    if (!url) return undefined
+    const prefix = 'c2pa.assertions/'
+    const prefixIdx = url.indexOf(prefix)
+    if (prefixIdx < 0) return undefined
+    const assertionLabel = url.slice(prefixIdx + prefix.length)
+    const assertion = (m.assertions ?? {})[assertionLabel] as Record<string, unknown> | undefined
+    if (!assertion || typeof assertion.data !== 'string' || !assertion.data) return undefined
+    const fmt = typeof assertion.format === 'string' ? assertion.format : 'image/jpeg'
+    const raw = assertion.data
+    const b64 = raw.startsWith("b64'") && raw.endsWith("'") ? raw.slice(4, -1) : raw
+    return `data:${fmt};base64,${b64}`
+  }
 
   function crJsonEdges(
     m: CrJsonManifestEntry,
@@ -284,6 +313,7 @@
       const relationship = v.relationship as string | undefined
       const stubTitle = (v.title ?? v.dc_title) as string | undefined
       const stubFormat = (v.format ?? v.dc_format) as string | undefined
+      const stubThumbnailSrc = ingredientThumbnailSrc(v, m)
       // v1: c2pa_manifest is an object { url, alg, hash }
       // v2: active_manifest is a direct string (manifest label)
       const manifestRef = (v.c2pa_manifest ?? v.activeManifest) as Record<string, unknown> | undefined
@@ -291,14 +321,14 @@
       const url = (manifestRef?.url as string | undefined) ?? (typeof activeManifestStr === 'string' ? activeManifestStr : undefined)
       if (!url) {
         // No manifest reference — ingredient has no Content Credentials
-        out.push({ childIdx: null, relationship, stubTitle, stubFormat })
+        out.push({ childIdx: null, relationship, stubTitle, stubFormat, stubThumbnailSrc })
       } else {
         const childIdx = idx.get(parseManifestLabel(url))
         if (childIdx != null) {
           out.push({ childIdx, relationship })
         } else {
           // Manifest referenced but not present in this report
-          out.push({ childIdx: null, relationship, stubTitle, stubFormat })
+          out.push({ childIdx: null, relationship, stubTitle, stubFormat, stubThumbnailSrc })
         }
       }
     }
@@ -311,7 +341,7 @@
       claimGenerator: edge.stubTitle,
       signer: edge.stubTitle,
       mimeType: edge.stubFormat ?? null,
-      thumbnailSrc: undefined,
+      thumbnailSrc: edge.stubThumbnailSrc,
       date: undefined,
       ingredientCount: 0,
       inceptions: [],

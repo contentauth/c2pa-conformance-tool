@@ -251,7 +251,7 @@
     const claim = ((m['claim.v2'] ?? m.claim) ?? {}) as Record<string, unknown>
     if (typeof claim['dc:format'] === 'string') return claim['dc:format'] as string
     for (const [key, value] of Object.entries((m.assertions ?? {}) as Record<string, unknown>)) {
-      if (!key.startsWith('c2pa.thumbnail') || !value || typeof value !== 'object') continue
+      if (!key.startsWith('c2pa.thumbnail') || key.startsWith('c2pa.thumbnail.ingredient') || !value || typeof value !== 'object') continue
       const fmt = (value as Record<string, unknown>).format
       if (typeof fmt === 'string') return fmt
     }
@@ -260,7 +260,7 @@
 
   function thumbnailSrc(m: CrJsonManifestEntry): string | undefined {
     for (const [key, value] of Object.entries((m.assertions ?? {}) as Record<string, unknown>)) {
-      if (!key.startsWith('c2pa.thumbnail') || !value || typeof value !== 'object') continue
+      if (!key.startsWith('c2pa.thumbnail') || key.startsWith('c2pa.thumbnail.ingredient') || !value || typeof value !== 'object') continue
       const v = value as Record<string, unknown>
       if (typeof v.data !== 'string' || !v.data) continue
       const fmt = typeof v.format === 'string' ? v.format : 'image/jpeg'

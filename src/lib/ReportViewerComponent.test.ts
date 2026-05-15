@@ -179,5 +179,63 @@ describe('ReportViewer Component', () => {
     expect(childImg).toBeTruthy()
     expect(childImg?.getAttribute('src')).toBe('data:image/png;base64,ingredient_claim_thumb_b64')
   })
+
+  it('should fall back to parent-resolved ingredient thumbnail for child manifest node if it lacks its own claim thumbnail', () => {
+    const mockReport: ConformanceReport = {
+      manifests: [
+        {
+          label: 'urn:c2pa:active',
+          assertions: {
+            'c2pa.thumbnail.ingredient': {
+              format: 'image/jpeg',
+              data: 'active_ingredient_thumb_b64'
+            },
+            'c2pa.ingredient.v3': {
+              relationship: 'parentOf',
+              thumbnail: {
+                url: 'self#jumbf=c2pa.assertions/c2pa.thumbnail.ingredient'
+              },
+              activeManifest: {
+                url: 'self#jumbf=/c2pa/urn:c2pa:ingredient',
+                hash: "b64'child_hash"
+              }
+            }
+          },
+          signature: {
+            certificateInfo: {
+              subject: { CN: 'Active Signer' }
+            }
+          },
+          validationResults: { success: [], failure: [] }
+        },
+        {
+          label: 'urn:c2pa:ingredient',
+          assertions: {
+            // No claim thumbnail assertion here!
+          },
+          signature: {
+            certificateInfo: {
+              subject: { CN: 'Child Signer' }
+            }
+          },
+          validationResults: { success: [], failure: [] }
+        }
+      ]
+    } as unknown as ConformanceReport
+
+    const { container } = render(ReportViewer, { report: mockReport })
+
+    const nodeCards = container.querySelectorAll('button.relative')
+    expect(nodeCards.length).toBe(2)
+
+    // Root node (active manifest): should NOT render an image.
+    const rootImg = nodeCards[0].querySelector('img.object-cover')
+    expect(rootImg).toBeFalsy()
+
+    // Ingredient node: should fall back to parent's resolved ingredient thumbnail ("active_ingredient_thumb_b64")
+    const childImg = nodeCards[1].querySelector('img.object-cover')
+    expect(childImg).toBeTruthy()
+    expect(childImg?.getAttribute('src')).toBe('data:image/jpeg;base64,active_ingredient_thumb_b64')
+  })
 })
 

@@ -271,7 +271,7 @@
     return undefined
   }
 
-  type Edge = { childIdx: number | null; relationship?: string; stubTitle?: string; stubFormat?: string; stubThumbnailSrc?: string }
+  type Edge = { childIdx: number | null; relationship?: string; stubTitle?: string; stubFormat?: string; thumbnailSrc?: string }
 
   function ingredientThumbnailSrc(v: Record<string, unknown>, m: CrJsonManifestEntry): string | undefined {
     const thumb = v.thumbnail
@@ -334,7 +334,7 @@
       const relationship = v.relationship as string | undefined
       const stubTitle = (v.title ?? v.dc_title) as string | undefined
       const stubFormat = (v.format ?? v.dc_format) as string | undefined
-      const stubThumbnailSrc = ingredientThumbnailSrc(v, m)
+      const resolvedThumbnailSrc = ingredientThumbnailSrc(v, m)
       // v1: c2pa_manifest is an object { url, alg, hash }
       // v2: active_manifest is a direct string (manifest label)
       const manifestRef = (v.c2pa_manifest ?? v.activeManifest) as Record<string, unknown> | undefined
@@ -342,14 +342,14 @@
       const url = (manifestRef?.url as string | undefined) ?? (typeof activeManifestStr === 'string' ? activeManifestStr : undefined)
       if (!url) {
         // No manifest reference — ingredient has no Content Credentials
-        out.push({ childIdx: null, relationship, stubTitle, stubFormat, stubThumbnailSrc })
+        out.push({ childIdx: null, relationship, stubTitle, stubFormat, thumbnailSrc: resolvedThumbnailSrc })
       } else {
         const childIdx = idx.get(parseManifestLabel(url))
         if (childIdx != null) {
-          out.push({ childIdx, relationship })
+          out.push({ childIdx, relationship, thumbnailSrc: resolvedThumbnailSrc })
         } else {
           // Manifest referenced but not present in this report
-          out.push({ childIdx: null, relationship, stubTitle, stubFormat, stubThumbnailSrc })
+          out.push({ childIdx: null, relationship, stubTitle, stubFormat, thumbnailSrc: resolvedThumbnailSrc })
         }
       }
     }
@@ -362,7 +362,7 @@
       claimGenerator: edge.stubTitle,
       signer: edge.stubTitle,
       mimeType: edge.stubFormat ?? null,
-      thumbnailSrc: edge.stubThumbnailSrc,
+      thumbnailSrc: edge.thumbnailSrc,
       date: undefined,
       ingredientCount: 0,
       inceptions: [],
@@ -378,7 +378,8 @@
     r: ConformanceReport,
     s: SignalsRubricResult | null,
     idx: Map<string, number>,
-    visited: Set<number> = new Set()
+    visited: Set<number> = new Set(),
+    parentResolvedThumbnailSrc?: string
   ): OverviewNode | null {
     if (visited.has(rootIdx)) return null
     visited.add(rootIdx)
@@ -393,7 +394,10 @@
     const edges: Edge[] = sigData
       ? [
           // sigData has better relationship/index data for credentialed ingredients
-          ...sigData.ingredients.map(e => ({ childIdx: e.index, relationship: e.relationship })),
+          ...sigData.ingredients.map(e => {
+            const crEdge = allCrJsonEdges.find(ce => ce.childIdx === e.index)
+            return { childIdx: e.index, relationship: e.relationship, thumbnailSrc: crEdge?.thumbnailSrc }
+          }),
           // but extractIngredients skips uncredentialed ones — add them from crJsonEdges
           ...allCrJsonEdges.filter(e => e.childIdx === null),
         ]
@@ -404,7 +408,7 @@
       if (edge.childIdx == null) {
         children.push(makeStubNode(edge))
       } else {
-        const child = buildTree(edge.childIdx, r, s, idx, new Set(visited))
+        const child = buildTree(edge.childIdx, r, s, idx, new Set(visited), edge.thumbnailSrc)
         if (child) {
           child.relationship = edge.relationship
           children.push(child)
@@ -424,7 +428,7 @@
       claimGenerator: claimInfo.claim_generator_info?.[0]?.name ?? claimInfo.claim_generator,
       signer: getSignerName(manifest, r.usedITL === true),
       mimeType: sigData?.mimeType ?? manifestFormat(manifest) ?? null,
-      thumbnailSrc: thumbnailSrc(manifest),
+      thumbnailSrc: thumbnailSrc(manifest) ?? parentResolvedThumbnailSrc,
       date,
       ingredientCount: children.length,
       inceptions: sigData?.localInceptions.map(h => h.reportText) ?? [],

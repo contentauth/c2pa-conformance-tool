@@ -70,6 +70,7 @@ export function evaluatePerManifest(
       localInceptions,
       localTransformations,
       allActionsIncluded: computeAllActionsIncluded(manifest),
+      additionalSignalsInGathered: computeAdditionalSignalsInGathered(manifest),
       ingredients: extractIngredients(manifest, indexMapping),
     }
   })
@@ -180,6 +181,19 @@ function computeAllActionsIncluded(manifest: CrJsonManifestEntry): boolean {
     }
   }
   return actionsFound && allIncluded
+}
+
+/** True iff any gathered_assertions entry in the active claim has a c2pa.actions URL. */
+function computeAdditionalSignalsInGathered(manifest: CrJsonManifestEntry): boolean {
+  const claim = ((manifest['claim.v2'] ?? manifest.claim) ?? {}) as Record<string, unknown>
+  const gathered = Array.isArray(claim.gathered_assertions) ? claim.gathered_assertions : []
+  for (const ga of gathered) {
+    if (ga && typeof ga === 'object') {
+      const url = (ga as Record<string, unknown>).url
+      if (typeof url === 'string' && url.includes('c2pa.actions')) return true
+    }
+  }
+  return false
 }
 
 function extractIngredients(

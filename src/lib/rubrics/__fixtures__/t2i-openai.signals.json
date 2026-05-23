@@ -12,6 +12,7 @@
       "localInceptions": [],
       "localTransformations": [],
       "allActionsIncluded": false,
+      "additionalSignalsInGathered": false,
       "ingredients": [
         {
           "index": 1,
@@ -41,6 +42,7 @@
         }
       ],
       "allActionsIncluded": false,
+      "additionalSignalsInGathered": false,
       "ingredients": []
     }
   ]

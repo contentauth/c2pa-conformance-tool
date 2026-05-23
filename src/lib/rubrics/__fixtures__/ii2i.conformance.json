@@ -5,67 +5,85 @@
     "validation": [
       {
         "trait": "active_manifest_urn",
-        "reportText": "Active manifest URN uses standard 'urn:c2pa:' prefix"
+        "reportText": "Active manifest URN uses standard 'urn:c2pa:' prefix",
+        "report_text": "Active manifest URN uses standard 'urn:c2pa:' prefix"
       },
       {
         "trait": "inception_action_position",
-        "reportText": "Inception action is correctly positioned as the first item in the first created actions assertion"
+        "reportText": "Inception action is correctly positioned as the first item in the first created actions assertion",
+        "report_text": "Inception action is correctly positioned as the first item in the first created actions assertion"
       },
       {
         "trait": "ingredient_relationship_values",
-        "reportText": "All ingredient assertions have valid relationship values"
+        "reportText": "All ingredient assertions have valid relationship values",
+        "report_text": "All ingredient assertions have valid relationship values"
       },
       {
         "trait": "ingredient_v3_no_active_manifest",
-        "reportText": "Ingredient v3 assertions without activeManifest correctly omit validationResults"
+        "reportText": "Ingredient v3 assertions without activeManifest correctly omit validationResults",
+        "report_text": "Ingredient v3 assertions without activeManifest correctly omit validationResults"
       },
       {
         "trait": "no_deprecated_actions",
-        "reportText": "No deprecated actions used"
+        "reportText": "No deprecated actions used",
+        "report_text": "No deprecated actions used"
       },
       {
         "trait": "no_deprecated_assertions",
-        "reportText": "No deprecated standard assertions found"
+        "reportText": "No deprecated standard assertions found",
+        "report_text": "No deprecated standard assertions found"
       },
       {
-        "trait": "no_unsupported_assertions",
-        "reportText": "All standard assertions are supported for Spec 2.2"
+        "trait": "no_dst_for_opened_action",
+        "reportText": "No c2pa.opened actions have a digitalSourceType",
+        "report_text": "No c2pa.opened actions have a digitalSourceType"
       },
       {
         "trait": "review_ratings_datasource",
-        "reportText": "No invalid co-occurrence of reviewRatings and human entry dataSource"
+        "reportText": "No invalid co-occurrence of reviewRatings and human entry dataSource",
+        "report_text": "No invalid co-occurrence of reviewRatings and human entry dataSource"
       },
       {
         "trait": "trusted_data_present",
-        "reportText": "Validation results are present for trust analysis"
+        "reportText": "Validation results are present for trust analysis",
+        "report_text": "Validation results are present for trust analysis"
       },
       {
         "trait": "trusted_success",
-        "reportText": "Asset is trusted"
+        "reportText": "Asset is trusted",
+        "report_text": "Asset is trusted"
       },
       {
         "trait": "update_manifest_constraints",
-        "reportText": "Update manifest constraints are satisfied (or manifest is not an update manifest)"
+        "reportText": "Update manifest constraints are satisfied (or manifest is not an update manifest)",
+        "report_text": "Update manifest constraints are satisfied (or manifest is not an update manifest)"
       },
       {
         "trait": "valid_data_present",
-        "reportText": "Validation results are present for integrity analysis"
+        "reportText": "Validation results are present for integrity analysis",
+        "report_text": "Validation results are present for integrity analysis"
       },
       {
         "trait": "valid_success",
-        "reportText": "No validation mismatches found"
+        "reportText": "No validation mismatches found",
+        "report_text": "No validation mismatches found"
       },
       {
         "trait": "well_formed_data_present",
-        "reportText": "Validation results are present for structural analysis"
+        "reportText": "Validation results are present for structural analysis",
+        "report_text": "Validation results are present for structural analysis"
       },
       {
         "trait": "well_formed_success",
-        "reportText": "No structural failures found"
+        "reportText": "No structural failures found",
+        "report_text": "No structural failures found"
+      },
+      {
+        "trait": "no_unsupported_assertions",
+        "reportText": "All standard assertions are supported for Spec 2.2",
+        "report_text": "All standard assertions are supported for Spec 2.2"
       }
     ]
   },
-  "false": {
-    "validation": []
-  }
+  "false": {}
 }

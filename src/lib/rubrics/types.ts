@@ -129,6 +129,8 @@ export interface ManifestSignalsResult {
   localTransformations: SignalHit[]
   /** True iff at least one actions assertion exists and all have allActionsIncluded === true. */
   allActionsIncluded: boolean
+  /** True iff any gathered_assertions entry in the active claim has a c2pa.actions URL. */
+  additionalSignalsInGathered: boolean
   ingredients: IngredientEdge[]
 }
 

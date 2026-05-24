@@ -257,7 +257,7 @@ function softwareAgentName(agent: AssertionData['softwareAgent']): string {
 }
 
 /** Strip `Tool/version` and `Tool 1.0.0` suffixes; trim whitespace. */
-function cleanAgentName(name: string): string {
+export function cleanAgentName(name: string): string {
   if (!name) return ''
   return name.split('/')[0].trim()
 }
@@ -283,7 +283,7 @@ function getCameraInfo(manifest: CrJsonManifestEntry): string {
 
 // ── Identity / signer extractors ──────────────────────────────────────
 
-function getSignerName(manifest: CrJsonManifestEntry, usedITL: boolean): string {
+export function getSignerName(manifest: CrJsonManifestEntry, usedITL: boolean): string {
   // When the ITL signed the cert, prefer the claim-generator's friendly
   // name over the cert CN — the CN is often the ITL's own identity, not
   // the asset's creator.

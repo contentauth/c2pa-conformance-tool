@@ -6,7 +6,6 @@
   export let isRoot = false
   export let fileSrc: string | undefined = undefined
   export let fileMimeType: string | undefined = undefined
-  export let fileName: string | undefined = undefined
 
   $: previewSrc = fileSrc ?? node.thumbnailSrc
 
@@ -106,9 +105,9 @@
     <!-- Tool / filename -->
     <p class="text-xs font-semibold {node.isStub ? 'text-gray-400 dark:text-gray-500' : 'text-gray-800 dark:text-gray-200'} truncate">
       {#if node.isStub}
-        {node.claimGenerator ?? 'Unknown file'}
+        {node.signer ?? 'Unknown file'}
       {:else}
-        {isRoot ? (fileName ?? 'This File') : (node.claimGenerator ?? 'Unknown')}
+        {node.signer ?? 'Unknown'}
       {/if}
     </p>
 

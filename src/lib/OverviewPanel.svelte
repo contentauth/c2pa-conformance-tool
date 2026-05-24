@@ -5,6 +5,7 @@
   import type { SignalsRubricResult } from './rubrics/types'
   import { getClaimInfo, getSignatureInfo } from './crjson'
   import { evaluateReportSignals } from './summarySignals'
+  import { getSignerName } from './generateSummary'
 
   export let report: ConformanceReport
   export let file: File | null = null
@@ -250,7 +251,7 @@
     const claim = ((m['claim.v2'] ?? m.claim) ?? {}) as Record<string, unknown>
     if (typeof claim['dc:format'] === 'string') return claim['dc:format'] as string
     for (const [key, value] of Object.entries((m.assertions ?? {}) as Record<string, unknown>)) {
-      if (!key.startsWith('c2pa.thumbnail') || !value || typeof value !== 'object') continue
+      if (!key.startsWith('c2pa.thumbnail') || key.startsWith('c2pa.thumbnail.ingredient') || !value || typeof value !== 'object') continue
       const fmt = (value as Record<string, unknown>).format
       if (typeof fmt === 'string') return fmt
     }
@@ -259,7 +260,7 @@
 
   function thumbnailSrc(m: CrJsonManifestEntry): string | undefined {
     for (const [key, value] of Object.entries((m.assertions ?? {}) as Record<string, unknown>)) {
-      if (!key.startsWith('c2pa.thumbnail') || !value || typeof value !== 'object') continue
+      if (!key.startsWith('c2pa.thumbnail') || key.startsWith('c2pa.thumbnail.ingredient') || !value || typeof value !== 'object') continue
       const v = value as Record<string, unknown>
       if (typeof v.data !== 'string' || !v.data) continue
       const fmt = typeof v.format === 'string' ? v.format : 'image/jpeg'
@@ -270,7 +271,57 @@
     return undefined
   }
 
-  type Edge = { childIdx: number | null; relationship?: string; stubTitle?: string; stubFormat?: string }
+  type Edge = { childIdx: number | null; relationship?: string; stubTitle?: string; stubFormat?: string; thumbnailSrc?: string }
+
+  function ingredientThumbnailSrc(v: Record<string, unknown>, m: CrJsonManifestEntry): string | undefined {
+    const thumb = v.thumbnail
+    if (!thumb || typeof thumb !== 'object') return undefined
+    const t = thumb as Record<string, unknown>
+
+    // 1. v2 inline base64 data on the thumbnail reference itself
+    if (typeof t.data === 'string' && t.data) {
+      const fmt = typeof t.format === 'string' ? t.format : 'image/jpeg'
+      const raw = t.data
+      const b64 = raw.startsWith("b64'") && raw.endsWith("'") ? raw.slice(4, -1) : raw
+      return `data:${fmt};base64,${b64}`
+    }
+
+    // 2. Robust Hash Match: If a hash is present, search local assertions for matching hash
+    if (typeof t.hash === 'string' && t.hash) {
+      const match = Object.values(m.assertions ?? {}).find(
+        a => a && typeof a === 'object' && (a as Record<string, unknown>).hash === t.hash
+      ) as Record<string, unknown> | undefined
+      if (match && typeof match.data === 'string' && match.data) {
+        const fmt = typeof match.format === 'string' ? match.format : 'image/jpeg'
+        const raw = match.data
+        const b64 = raw.startsWith("b64'") && raw.endsWith("'") ? raw.slice(4, -1) : raw
+        return `data:${fmt};base64,${b64}`
+      }
+    }
+
+    // 3. JUMBF URL Lookup fallback: handles relative/absolute/flat JUMBF URIs
+    const url = typeof t.url === 'string' ? t.url : undefined
+    if (!url) return undefined
+
+    // Extract the last path segment (e.g. self#jumbf=c2pa.assertions/c2pa.thumbnail.ingredient.jpeg -> c2pa.thumbnail.ingredient.jpeg)
+    let path = url
+    if (path.startsWith('self#jumbf=')) {
+      path = path.slice('self#jumbf='.length)
+    }
+    const segments = path.split('/')
+    const lastSegment = segments[segments.length - 1]
+    if (!lastSegment) return undefined
+
+    const assertion = (m.assertions ?? {})[lastSegment] as Record<string, unknown> | undefined
+    if (assertion && typeof assertion.data === 'string' && assertion.data) {
+      const fmt = typeof assertion.format === 'string' ? assertion.format : 'image/jpeg'
+      const raw = assertion.data
+      const b64 = raw.startsWith("b64'") && raw.endsWith("'") ? raw.slice(4, -1) : raw
+      return `data:${fmt};base64,${b64}`
+    }
+
+    return undefined
+  }
 
   function crJsonEdges(
     m: CrJsonManifestEntry,
@@ -283,6 +334,7 @@
       const relationship = v.relationship as string | undefined
       const stubTitle = (v.title ?? v.dc_title) as string | undefined
       const stubFormat = (v.format ?? v.dc_format) as string | undefined
+      const resolvedThumbnailSrc = ingredientThumbnailSrc(v, m)
       // v1: c2pa_manifest is an object { url, alg, hash }
       // v2: active_manifest is a direct string (manifest label)
       const manifestRef = (v.c2pa_manifest ?? v.activeManifest) as Record<string, unknown> | undefined
@@ -290,14 +342,14 @@
       const url = (manifestRef?.url as string | undefined) ?? (typeof activeManifestStr === 'string' ? activeManifestStr : undefined)
       if (!url) {
         // No manifest reference — ingredient has no Content Credentials
-        out.push({ childIdx: null, relationship, stubTitle, stubFormat })
+        out.push({ childIdx: null, relationship, stubTitle, stubFormat, thumbnailSrc: resolvedThumbnailSrc })
       } else {
         const childIdx = idx.get(parseManifestLabel(url))
         if (childIdx != null) {
-          out.push({ childIdx, relationship })
+          out.push({ childIdx, relationship, thumbnailSrc: resolvedThumbnailSrc })
         } else {
           // Manifest referenced but not present in this report
-          out.push({ childIdx: null, relationship, stubTitle, stubFormat })
+          out.push({ childIdx: null, relationship, stubTitle, stubFormat, thumbnailSrc: resolvedThumbnailSrc })
         }
       }
     }
@@ -308,8 +360,9 @@
     return {
       manifestIdx: -1,
       claimGenerator: edge.stubTitle,
+      signer: edge.stubTitle,
       mimeType: edge.stubFormat ?? null,
-      thumbnailSrc: undefined,
+      thumbnailSrc: edge.thumbnailSrc,
       date: undefined,
       ingredientCount: 0,
       inceptions: [],
@@ -325,7 +378,8 @@
     r: ConformanceReport,
     s: SignalsRubricResult | null,
     idx: Map<string, number>,
-    visited: Set<number> = new Set()
+    visited: Set<number> = new Set(),
+    parentResolvedThumbnailSrc?: string
   ): OverviewNode | null {
     if (visited.has(rootIdx)) return null
     visited.add(rootIdx)
@@ -340,7 +394,10 @@
     const edges: Edge[] = sigData
       ? [
           // sigData has better relationship/index data for credentialed ingredients
-          ...sigData.ingredients.map(e => ({ childIdx: e.index, relationship: e.relationship })),
+          ...sigData.ingredients.map(e => {
+            const crEdge = allCrJsonEdges.find(ce => ce.childIdx === e.index)
+            return { childIdx: e.index, relationship: e.relationship, thumbnailSrc: crEdge?.thumbnailSrc }
+          }),
           // but extractIngredients skips uncredentialed ones — add them from crJsonEdges
           ...allCrJsonEdges.filter(e => e.childIdx === null),
         ]
@@ -351,7 +408,7 @@
       if (edge.childIdx == null) {
         children.push(makeStubNode(edge))
       } else {
-        const child = buildTree(edge.childIdx, r, s, idx, new Set(visited))
+        const child = buildTree(edge.childIdx, r, s, idx, new Set(visited), edge.thumbnailSrc)
         if (child) {
           child.relationship = edge.relationship
           children.push(child)
@@ -369,8 +426,9 @@
     return {
       manifestIdx: rootIdx,
       claimGenerator: claimInfo.claim_generator_info?.[0]?.name ?? claimInfo.claim_generator,
+      signer: getSignerName(manifest, r.usedITL === true),
       mimeType: sigData?.mimeType ?? manifestFormat(manifest) ?? null,
-      thumbnailSrc: thumbnailSrc(manifest),
+      thumbnailSrc: thumbnailSrc(manifest) ?? parentResolvedThumbnailSrc,
       date,
       ingredientCount: children.length,
       inceptions: sigData?.localInceptions.map(h => h.reportText) ?? [],
@@ -414,7 +472,6 @@
         isRoot={true}
         fileSrc={fileSrc}
         fileMimeType={file?.type}
-        fileName={file?.name}
       />
     </div>
 

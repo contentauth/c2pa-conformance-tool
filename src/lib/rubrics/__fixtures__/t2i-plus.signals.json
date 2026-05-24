@@ -33,6 +33,7 @@
         }
       ],
       "allActionsIncluded": false,
+      "additionalSignalsInGathered": false,
       "ingredients": [
         {
           "index": 1,
@@ -56,6 +57,7 @@
       ],
       "localTransformations": [],
       "allActionsIncluded": false,
+      "additionalSignalsInGathered": false,
       "ingredients": [
         {
           "index": 2,
@@ -79,6 +81,7 @@
       ],
       "localTransformations": [],
       "allActionsIncluded": false,
+      "additionalSignalsInGathered": false,
       "ingredients": []
     }
   ]

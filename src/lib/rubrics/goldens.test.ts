@@ -157,6 +157,7 @@ interface SignalsFixture {
     localInceptions: Array<{ trait: string; reportText: string; multiple: boolean }>
     localTransformations: Array<{ trait: string; reportText: string; multiple: boolean }>
     allActionsIncluded: boolean
+    additionalSignalsInGathered: boolean
     ingredients: Array<{ index: number; relationship?: string }>
   }>
 }
@@ -187,6 +188,10 @@ describe('signals rubric · parameterized golden parity (local)', () => {
         expect(got.allActionsIncluded, `${name} manifest[${i}] allActionsIncluded`).toEqual(
           want.allActionsIncluded,
         )
+        expect(
+          got.additionalSignalsInGathered,
+          `${name} manifest[${i}] additionalSignalsInGathered`,
+        ).toEqual(want.additionalSignalsInGathered)
         expect(got.localInceptions, `${name} manifest[${i}] localInceptions`).toEqual(
           want.localInceptions,
         )

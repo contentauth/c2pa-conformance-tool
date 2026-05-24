@@ -17,6 +17,7 @@
       ],
       "localTransformations": [],
       "allActionsIncluded": false,
+      "additionalSignalsInGathered": false,
       "ingredients": []
     }
   ]

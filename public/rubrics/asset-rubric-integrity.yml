@@ -65,8 +65,9 @@ variables:
   - signingCredential.untrusted
   - MISSING_VALIDATION_RESULTS
 expressions:
-  _validationResults: |-
-    (manifests[0].validationResults || { failure: [{code: "MISSING_VALIDATION_RESULTS"}] })
+  _manifest_validationResults: '($arg0.validationResults || { failure: [{code: "MISSING_VALIDATION_RESULTS"}] })'
+  _activeManifest: manifests[0]
+  _validationResults: _manifest_validationResults(_activeManifest())
 
 ---
 

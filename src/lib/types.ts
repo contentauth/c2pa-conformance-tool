@@ -15,10 +15,18 @@ export type {
   CrJsonClaimInfo
 } from './crjson'
 
+/** OCSP revocation check result from the server-side proxy */
+export interface OcspServerResult {
+  status: 'good' | 'revoked' | 'unknown' | 'error'
+  nextUpdate?: string
+  error?: string
+}
+
 /** Report returned by processFile: crJSON (native format) plus conformance-tool metadata */
 export interface ConformanceReport extends CrJson {
   usedITL?: boolean
   usedTestCerts?: boolean
+  ocspServerResult?: OcspServerResult
   _conformanceToolVersion?: {
     commit: string
     shortCommit: string

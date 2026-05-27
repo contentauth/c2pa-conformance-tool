@@ -10,6 +10,7 @@ A web application for validating C2PA (Coalition for Content Provenance and Auth
 - **Client-Side Processing**: Uses the official C2PA SDK compiled to WebAssembly for fast, private processing
 - **Official C2PA Trust List**: Validates signatures against the official [C2PA Conformance Trust List](https://c2pa.org/conformance)
 - **Interim Trust List (ITL)**: Automatically detects and validates signatures against the ITL with distinct visual indicators
+- **Server-Side OCSP Revocation Checking**: When a signing certificate's OCSP responder is unreachable from the browser (typically because the URL is HTTP and the tool is served over HTTPS), the tool automatically extracts the certificate chain client-side and checks revocation status via a server-side proxy — no file content is ever sent to the server
 - **Test Certificate Mode**: Enable test mode to load the C2PA Conformance Test Root, download the test signing cert (ZIP), and add custom test certificates (session-only, clearly marked)
 - **Version Tracking**: Every report includes git commit SHA and date for reproducibility ([details](VERSION_TRACKING.md))
 - **Modern Tailwind CSS UI**: Clean, responsive design matching verify.contentauthenticity.org
@@ -79,6 +80,9 @@ See [DEPLOYMENT.md](./DEPLOYMENT.md) for details on the build process and previe
 
 ```
 conformance-tool/
+├── netlify/
+│   └── functions/
+│       └── ocsp-proxy.ts           # Server-side OCSP proxy with in-memory cache
 ├── src/
 │   ├── lib/
 │   │   ├── FileUpload.svelte       # Drag-and-drop file upload component
@@ -88,6 +92,7 @@ conformance-tool/
 │   │   ├── c2pa.ts                 # TypeScript interface to @contentauth/c2pa-web
 │   │   ├── crjson.ts               # crJSON types and helpers
 │   │   ├── generateSummary.ts      # Report summary generation
+│   │   ├── ocspExtract.ts          # Client-side cert extraction from JUMBF/COSE
 │   │   ├── trustListTest.ts        # Trust list (C2PA vs ITL) detection
 │   │   └── types.ts                # Shared types
 │   ├── App.svelte                  # Main application component
@@ -97,6 +102,7 @@ conformance-tool/
 │   ├── generate-version.js        # Build-time git version (see VERSION_TRACKING.md)
 │   └── build-local-wasm.mjs       # Optional local WASM build (see scripts/README.md)
 ├── index.html
+├── netlify.toml                    # Netlify build config and function settings
 ├── package.json
 └── vite.config.ts
 ```
@@ -143,8 +149,9 @@ The tool supports any file format that can contain C2PA manifests:
 3. **Trust Validation**: Signatures are validated against the official C2PA trust lists:
    - **C2PA-TRUST-LIST.pem** - Approved signing certificates for conformant products
    - **C2PA-TSA-TRUST-LIST.pem** - Trusted Time Stamp Authorities
-4. **Report Generation**: C2PA manifest data is extracted, validated, and formatted
-5. **Display**: Results are shown in both human-readable and JSON formats with trust status
+4. **OCSP Check**: If the SDK cannot reach the OCSP responder from the browser (see [OCSP Revocation Checking](#ocsp-revocation-checking) below), a server-side fallback check is triggered automatically
+5. **Report Generation**: C2PA manifest data is extracted, validated, and formatted
+6. **Display**: Results are shown in both human-readable and JSON formats with trust status
 
 ## Trust Verification & Conformance
 
@@ -159,10 +166,54 @@ This tool uses the **official C2PA Conformance Trust List** to validate digital 
 
 Learn more: [C2PA Conformance Program](https://c2pa.org/conformance)
 
+## OCSP Revocation Checking
+
+C2PA signing certificates often list an OCSP (Online Certificate Status Protocol) responder URL in their Authority Information Access extension. The C2PA SDK checks this responder during validation to confirm the signing certificate has not been revoked.
+
+### Why the browser sometimes can't check OCSP
+
+When the tool is served over HTTPS (as it is in production), many OCSP responders are unreachable because their URLs use plain HTTP. Browsers block such mixed-content requests, and most OCSP endpoints also reject browser-originated requests due to [CORS](https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS) policy. When this happens, the SDK reports `signingCredential.ocsp.inaccessible` and cannot determine revocation status.
+
+### Server-side fallback
+
+When the SDK reports OCSP as inaccessible, the tool automatically performs a server-side check:
+
+1. **Client-side extraction** (`src/lib/ocspExtract.ts`): The signing certificate chain is extracted directly from the file's embedded JUMBF/COSE signature bytes — no file content is sent anywhere. Specifically:
+   - For JPEG files: APP11 segments are reassembled into the JUMBF stream
+   - For all other formats: JUMBF boxes are scanned from the raw file bytes
+   - The `c2pa.signature` box is located, its COSE_Sign1 envelope is CBOR-decoded, and the `x5chain` (key 33) from the protected header yields the DER-encoded certificate chain
+   - The leaf cert's AIA extension provides the OCSP responder URL
+
+2. **Server proxy** (`netlify/functions/ocsp-proxy.ts`): A Netlify Function receives `{ responderUrl, certDerB64, issuerDerB64 }`, builds a proper OCSP request (SHA-1 CertID per RFC 6960), and forwards it to the OCSP responder. The result is cached in-process to avoid redundant upstream queries.
+
+3. **Reactive update**: The initial report is displayed immediately. When the server check completes, the UI reactively updates the OCSP status in the Signature Info section.
+
+### Cache TTL
+
+The function cache is ephemeral (resets on cold start) and controlled by the `OCSP_CACHE_TTL_SECONDS` environment variable in `netlify.toml`:
+
+| Context | Default TTL |
+|---|---|
+| Production | 3600 s (1 hour) |
+| Deploy preview | 300 s (5 minutes) |
+
+To override, set `OCSP_CACHE_TTL_SECONDS` in the Netlify environment variables for the relevant deploy context.
+
+### Local development
+
+The Netlify Function is not available when running `npm run dev` (Vite only). To test the full OCSP flow locally, use:
+
+```bash
+npm install -g netlify-cli
+netlify dev
+```
+
+`netlify dev` runs both the Vite dev server and the Netlify Functions runtime, making the proxy available at `/.netlify/functions/ocsp-proxy`.
+
 ## Privacy & Security
 
-- **Client-Side Only**: All file processing happens in your browser
-- **No Server Upload**: Files never leave your machine
+- **File Processing**: All C2PA manifest parsing happens in your browser via WebAssembly — files never leave your machine
+- **OCSP Checking**: When a server-side OCSP check is triggered, only the signing certificate's DER bytes and the OCSP responder URL are sent to the Netlify Function proxy. No file content, metadata, or user information is transmitted
 - **No Data Collection**: No tracking or analytics
 - **Trust List Updates**: Trust lists are fetched directly from the official C2PA repository when processing files
 
@@ -195,7 +246,8 @@ Clear your browser cache and reload the page. The WASM module is loaded from the
 - **Vite** - Build tool and dev server
 - **@contentauth/c2pa-web** - Official C2PA JavaScript/WASM SDK from Content Authenticity Initiative
 - **highlight.js** - Syntax highlighting for raw JSON in reports
-- **@peculiar/x509** - Certificate parsing (e.g. in CertificateManager)
+- **@peculiar/x509** - Certificate parsing (CertificateManager, OCSP AIA extension extraction)
+- **cborg** - CBOR decoding for COSE_Sign1 protected headers during OCSP cert extraction
 
 ## License
 

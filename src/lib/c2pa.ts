@@ -291,7 +291,15 @@ const MIME_TYPE_MAP: Record<string, string> = {
 // `.c2pa` is the standalone manifest-store sidecar format (RFC-style, no embedded asset).
 // Browsers universally leave its type empty or fall back to application/octet-stream, so
 // we resolve by extension.
+//
+// HEIC/HEIF are included here because Windows Chrome cannot identify them without the
+// optional HEIF Image Extensions codec pack installed in Windows; file.type arrives as ''
+// on most Windows machines, causing the SDK to receive an empty format and throw.
 const EXTENSION_MIME_MAP: Record<string, string> = {
+  'heic': 'image/heic',
+  'heif': 'image/heif',
+  'avci': 'image/avci',
+  'avcs': 'image/avcs',
   'dng': 'image/x-adobe-dng',
   'arw': 'image/x-sony-arw',
   'cr2': 'image/x-canon-cr2',

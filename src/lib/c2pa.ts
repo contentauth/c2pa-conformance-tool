@@ -749,12 +749,23 @@ export async function checkOcspForReport(file: File, report: ConformanceReport):
     ...(activeVr?.informational ?? []),
   ].some(s => s.code === VALIDATION_STATUS.SIGNING_CREDENTIAL_OCSP_INACCESSIBLE)
 
-  if (!isInaccessible) return null
+  if (!isInaccessible) {
+    console.log('[OCSP] Server-side check not needed — signingCredential.ocsp.inaccessible not present in report')
+    return null
+  }
+
+  console.log('[OCSP] Server-side check needed — signingCredential.ocsp.inaccessible detected; extracting cert chain from file...')
 
   const params = await extractOcspParams(file)
-  if (!params) return null
+  if (!params) {
+    console.warn('[OCSP] Could not extract cert chain or OCSP responder URL from file — skipping server-side check')
+    return null
+  }
+
+  console.log('[OCSP] Cert chain extracted. Responder URL:', params.responderUrl)
 
   const endpoint = '/.netlify/functions/ocsp-proxy'
+  console.log('[OCSP] Sending request to proxy:', endpoint)
 
   try {
     const res = await fetch(endpoint, {
@@ -763,9 +774,19 @@ export async function checkOcspForReport(file: File, report: ConformanceReport):
       body: JSON.stringify(params),
       signal: AbortSignal.timeout(15_000),
     })
-    if (!res.ok) return null
-    return (await res.json()) as OcspServerResult
-  } catch {
+    if (!res.ok) {
+      console.warn('[OCSP] Proxy returned HTTP', res.status, '— skipping')
+      return null
+    }
+    const result = (await res.json()) as OcspServerResult
+    if (result.status === 'error') {
+      console.warn('[OCSP] Result: error —', result.error)
+    } else {
+      console.log('[OCSP] Result:', result.status, result.nextUpdate ? `(next update: ${result.nextUpdate})` : '')
+    }
+    return result
+  } catch (e) {
+    console.warn('[OCSP] Request failed:', e)
     return null
   }
 }

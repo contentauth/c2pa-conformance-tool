@@ -19,9 +19,19 @@
         "report_text": "All ingredient assertions have valid relationship values"
       },
       {
+        "trait": "ingredient_v3_mandatory_validation_results",
+        "reportText": "Ingredient v3 assertions with activeManifest correctly include validationResults",
+        "report_text": "Ingredient v3 assertions with activeManifest correctly include validationResults"
+      },
+      {
         "trait": "ingredient_v3_no_active_manifest",
         "reportText": "Ingredient v3 assertions without activeManifest correctly omit validationResults",
         "report_text": "Ingredient v3 assertions without activeManifest correctly omit validationResults"
+      },
+      {
+        "trait": "mandatory_dst_for_created_action",
+        "reportText": "All c2pa.created actions have a digitalSourceType",
+        "report_text": "All c2pa.created actions have a digitalSourceType"
       },
       {
         "trait": "no_deprecated_actions",
@@ -39,9 +49,29 @@
         "report_text": "No c2pa.opened actions have a digitalSourceType"
       },
       {
+        "trait": "no_unrecognized_custom_action_parameters",
+        "reportText": "All custom action parameters conform to entity-specific namespacing (contain a dot '.')",
+        "report_text": "All custom action parameters conform to entity-specific namespacing (contain a dot '.')"
+      },
+      {
+        "trait": "no_unrecognized_custom_actions",
+        "reportText": "All custom actions conform to entity-specific namespacing (contain a dot '.')",
+        "report_text": "All custom actions conform to entity-specific namespacing (contain a dot '.')"
+      },
+      {
+        "trait": "no_unrecognized_custom_assertions",
+        "reportText": "All custom assertions conform to entity-specific namespacing (contain a dot '.')",
+        "report_text": "All custom assertions conform to entity-specific namespacing (contain a dot '.')"
+      },
+      {
+        "trait": "no_unsupported_actions",
+        "reportText": "All standard actions are supported for this spec version",
+        "report_text": "All standard actions are supported for this spec version"
+      },
+      {
         "trait": "no_unsupported_assertions",
-        "reportText": "All standard assertions are supported for Spec 2.2",
-        "report_text": "All standard assertions are supported for Spec 2.2"
+        "reportText": "All standard assertions are supported for this spec version",
+        "report_text": "All standard assertions are supported for this spec version"
       },
       {
         "trait": "review_ratings_datasource",
@@ -52,11 +82,6 @@
         "trait": "trusted_data_present",
         "reportText": "Validation results are present for trust analysis",
         "report_text": "Validation results are present for trust analysis"
-      },
-      {
-        "trait": "update_manifest_constraints",
-        "reportText": "Update manifest constraints are satisfied (or manifest is not an update manifest)",
-        "report_text": "Update manifest constraints are satisfied (or manifest is not an update manifest)"
       },
       {
         "trait": "valid_data_present",

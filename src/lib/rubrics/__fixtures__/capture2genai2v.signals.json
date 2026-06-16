@@ -16,7 +16,13 @@
           "multiple": false
         }
       ],
-      "localTransformations": [],
+      "localTransformations": [
+        {
+          "trait": "transformation:signal_ambiguousActions",
+          "reportText": "Contains ambiguous actions (e.g. unknown actions, actions in gathered assertions, or has `allActionsIncluded` set to false.",
+          "multiple": false
+        }
+      ],
       "allActionsIncluded": false,
       "additionalSignalsInGathered": false,
       "ingredients": [
@@ -42,7 +48,12 @@
       ],
       "localTransformations": [
         {
-          "trait": "transformation:signal_editorialAI",
+          "trait": "transformation:signal_ambiguousActions",
+          "reportText": "Contains ambiguous actions (e.g. unknown actions, actions in gathered assertions, or has `allActionsIncluded` set to false.",
+          "multiple": false
+        },
+        {
+          "trait": "transformation:signal_editorialGenAI",
           "reportText": "Contains Editorial GenAI Transformations",
           "multiple": false
         }
@@ -65,6 +76,11 @@
       "mimeType": "image/jpeg",
       "localInceptions": [],
       "localTransformations": [
+        {
+          "trait": "transformation:signal_ambiguousActions",
+          "reportText": "Contains ambiguous actions (e.g. unknown actions, actions in gathered assertions, or has `allActionsIncluded` set to false.",
+          "multiple": false
+        },
         {
           "trait": "transformation:signal_nonEditorial",
           "reportText": "Contains Non-editorial Transformations",
@@ -93,7 +109,13 @@
           "multiple": false
         }
       ],
-      "localTransformations": [],
+      "localTransformations": [
+        {
+          "trait": "transformation:signal_ambiguousActions",
+          "reportText": "Contains ambiguous actions (e.g. unknown actions, actions in gathered assertions, or has `allActionsIncluded` set to false.",
+          "multiple": false
+        }
+      ],
       "allActionsIncluded": false,
       "additionalSignalsInGathered": false,
       "ingredients": []

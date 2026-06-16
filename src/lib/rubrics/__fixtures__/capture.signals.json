@@ -15,7 +15,13 @@
           "multiple": false
         }
       ],
-      "localTransformations": [],
+      "localTransformations": [
+        {
+          "trait": "transformation:signal_ambiguousActions",
+          "reportText": "Contains ambiguous actions (e.g. unknown actions, actions in gathered assertions, or has `allActionsIncluded` set to false.",
+          "multiple": false
+        }
+      ],
       "allActionsIncluded": false,
       "additionalSignalsInGathered": false,
       "ingredients": []

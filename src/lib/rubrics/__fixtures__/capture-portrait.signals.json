@@ -17,6 +17,11 @@
       ],
       "localTransformations": [
         {
+          "trait": "transformation:signal_ambiguousActions",
+          "reportText": "Contains ambiguous actions (e.g. unknown actions, actions in gathered assertions, or has `allActionsIncluded` set to false.",
+          "multiple": false
+        },
+        {
           "trait": "transformation:signal_nonEditorial",
           "reportText": "Contains Non-editorial Transformations",
           "multiple": false

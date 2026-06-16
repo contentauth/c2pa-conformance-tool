@@ -40,20 +40,21 @@ variables:
   - http://cv.iptc.org/newscodes/digitalsourcetype/digitalArt
   - http://cv.iptc.org/newscodes/digitalsourcetype/composite
 expressions:
-  _manifest_hasActionsV2: |-
-    $arg0.assertions.'c2pa.actions.v2' != null && length($arg0.'claim.v2'.created_assertions[?contains(url, "c2pa.actions.v2")]) > 0
-  _manifest_signalActions: $arg0.assertions.'c2pa.actions.v2'.actions
+  _manifest_actionsV2Assertion: $args[0].assertions.'c2pa.actions.v2'
+  _manifest_claimV2: $args[0].'claim.v2'
+  _manifest_signalActions: $args[0].assertions.'c2pa.actions.v2'.actions
   _manifest_createdWithDst: |-
-    _manifest_hasActionsV2($arg0) && length(_manifest_signalActions($arg0)[? action == "c2pa.created" && digitalSourceType == $arg1]) > 0
-  _hasActionsV2: _manifest_hasActionsV2(@)
+    length(_manifest_signalActions($args[0])[? action == "c2pa.created" && digitalSourceType == $args[1]]) > 0
   _signalActions: _manifest_signalActions(@)
-  _createdWithDst: _manifest_createdWithDst(@, $arg0)
+  _actionsV2Assertion: _manifest_actionsV2Assertion(@)
+  _claimV2: _manifest_claimV2(@)
+  _createdWithDst: _manifest_createdWithDst($args[0], $args[1])
 
 ---
 
 - id: inception:signal_blankCanvas
   description: Check if the manifest contains a Blank Canvas inception signal
-  expression: '_createdWithDst("http://c2pa.org/digitalsourcetype/empty")
+  expression: '_createdWithDst(@, "http://c2pa.org/digitalsourcetype/empty")
 
     '
   reportText:
@@ -63,7 +64,9 @@ expressions:
       en: Does not contain Blank Canvas
 - id: inception:signal_capturedMedia
   description: Check if the manifest contains a Captured media inception signal
-  expression: "_createdWithDst(\"http://cv.iptc.org/newscodes/digitalsourcetype/digitalCapture\") || \n_createdWithDst(\"http://cv.iptc.org/newscodes/digitalsourcetype/computationalCapture\")\n"
+  expression: |
+    _createdWithDst(@, "http://cv.iptc.org/newscodes/digitalsourcetype/digitalCapture") ||
+    _createdWithDst(@, "http://cv.iptc.org/newscodes/digitalsourcetype/computationalCapture")
   reportText:
     'true':
       en: Contains Captured Media
@@ -72,7 +75,7 @@ expressions:
 - id: inception:signal_capturedMediaStitched
   description: Check if the manifest contains a Stitched Captured Media inception signal
   expression: |
-    _createdWithDst("http://cv.iptc.org/newscodes/digitalsourcetype/compositeCapture")
+    _createdWithDst(@, "http://cv.iptc.org/newscodes/digitalsourcetype/compositeCapture")
   reportText:
     'true':
       en: Contains Stitched Captured Media
@@ -81,7 +84,7 @@ expressions:
 - id: inception:signal_compositionMayContainGenAI
   description: |-
     Check if the manifest contains a Composition which may contain GenAI content inception signal
-  expression: '_createdWithDst("http://cv.iptc.org/newscodes/digitalsourcetype/composite")
+  expression: '_createdWithDst(@, "http://cv.iptc.org/newscodes/digitalsourcetype/composite")
 
     '
   reportText:
@@ -92,7 +95,7 @@ expressions:
 - id: inception:signal_fullyGenAIMedia
   description: Check if the manifest contains a Fully GenAI Media inception signal
   expression: |
-    _createdWithDst("http://cv.iptc.org/newscodes/digitalsourcetype/trainedAlgorithmicMedia")
+    _createdWithDst(@, "http://cv.iptc.org/newscodes/digitalsourcetype/trainedAlgorithmicMedia")
   reportText:
     'true':
       en: Contains Fully GenAI Media
@@ -111,7 +114,7 @@ expressions:
 - id: inception:signal_nonGenAIDigitalCreation
   description: Check if the manifest contains a Non-GenAI digital creation inception signal
   expression: |
-    _createdWithDst("http://cv.iptc.org/newscodes/digitalsourcetype/digitalCreation")
+    _createdWithDst(@, "http://cv.iptc.org/newscodes/digitalsourcetype/digitalCreation")
   reportText:
     'true':
       en: Contains Non-GenAI digital creation
@@ -120,7 +123,7 @@ expressions:
 - id: inception:signal_partlyGenAICreation
   description: Check if the manifest contains a Partly GenAI Creation inception signal
   expression: |
-    _createdWithDst("http://cv.iptc.org/newscodes/digitalsourcetype/compositeWithTrainedAlgorithmicMedia")
+    _createdWithDst(@, "http://cv.iptc.org/newscodes/digitalsourcetype/compositeWithTrainedAlgorithmicMedia")
   reportText:
     'true':
       en: Contains Partly GenAI Creation
@@ -129,18 +132,31 @@ expressions:
 - id: inception:signal_screenCaptureMayContainGenAI
   description: |-
     Check if the manifest contains a Screen Capture Which May Contain GenAI Content inception signal
-  expression: '_createdWithDst("http://cv.iptc.org/newscodes/digitalsourcetype/screenCapture")
-
-    '
+  expression: |
+    _createdWithDst(@, "http://cv.iptc.org/newscodes/digitalsourcetype/screenCapture")
   reportText:
     'true':
       en: Contains Screen Capture Which May Contain GenAI Content
     'false':
       en: Does not contain Screen Capture Which May Contain GenAI Content
-- id: transformation:signal_editorialAI
+- id: transformation:signal_ambiguousActions
+  description: Check if the manifest contains ambiguous, custom, or incomplete actions
+  expression: |
+    length(_signalActions()) == 0 ||
+
+    _actionsV2Assertion().allActionsIncluded != `true` ||
+    length(_signalActions()[? action != null && !startsWith(action, "c2pa.")]) > 0 ||
+    length(_signalActions()[? action == "c2pa.unknown"]) > 0 ||
+    length(_claimV2().gathered_assertions[? contains(url, "c2pa.actions")]) > 0
+  reportText:
+    'true':
+      en: |-
+        Contains ambiguous actions (e.g. unknown actions, actions in gathered assertions, or has `allActionsIncluded` set to false.
+    'false':
+      en: All transformations actions are standard, complete, and unambiguous
+- id: transformation:signal_editorialGenAI
   description: Check if the manifest contains an Editorial GenAI Transformations signal
   expression: |
-    _hasActionsV2() &&
     length(_signalActions()[? action != null &&
       !contains($non_editorial_actions, action) &&
       contains($genai_dst_types, digitalSourceType)]) > 0
@@ -149,10 +165,9 @@ expressions:
       en: Contains Editorial GenAI Transformations
     'false':
       en: Does not contain Editorial GenAI Transformations
-- id: transformation:signal_editorialNonAI
+- id: transformation:signal_editorialNonGenAI
   description: Check if the manifest contains an Editorial Non-GenAI Transformations signal
   expression: |
-    _hasActionsV2() &&
     length(_signalActions()[? action != null &&
       !contains($non_editorial_actions, action) &&
       digitalSourceType != null &&
@@ -166,7 +181,6 @@ expressions:
   description: |-
     Check if the manifest contains an Editorial Transformations Possibly Using GenAI signal
   expression: |
-    _hasActionsV2() &&
     length(_signalActions()[? action != null &&
       !contains($non_editorial_actions, action) &&
       contains($possibly_genai_dst_types, digitalSourceType)]) > 0
@@ -178,7 +192,6 @@ expressions:
 - id: transformation:signal_nonEditorial
   description: Check if the manifest contains a Non-Editorial Transformations signal
   expression: |
-    _hasActionsV2() &&
     length(_signalActions()[? action != null &&
       contains($non_editorial_transformation_actions, action)]) > 0
   reportText:

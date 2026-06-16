@@ -168,13 +168,24 @@ describe('signals rubric · parameterized golden parity (local)', () => {
       const input = JSON.parse(
         fs.readFileSync(path.join(FIXTURE_DIR, `${name}.json`), 'utf8'),
       ) as CrJson
-      const expected = JSON.parse(
+      let expected = JSON.parse(
         fs.readFileSync(path.join(FIXTURE_DIR, `${name}.signals.json`), 'utf8'),
       ) as SignalsFixture
 
       const result = evaluatePerManifest(signalsRubric, input, {
         rubricId: 'asset-signals-local',
       })
+
+      if (process.env.UPDATE_GOLDENS === 'true') {
+        const fixturePath = path.join(FIXTURE_DIR, `${name}.signals.json`)
+        const newFixture: SignalsFixture = {
+          rubricName: result.rubricName,
+          rubricVersion: result.rubricVersion ?? '1.0.0',
+          manifests: result.manifests,
+        }
+        fs.writeFileSync(fixturePath, JSON.stringify(newFixture, null, 2) + '\n', 'utf8')
+        expected = newFixture
+      }
 
       expect(result.rubricName).toBe(expected.rubricName)
       expect(result.rubricVersion).toBe(expected.rubricVersion)

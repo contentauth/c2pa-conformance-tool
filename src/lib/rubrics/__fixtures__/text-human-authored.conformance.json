@@ -1,0 +1,41 @@
+{
+  "rubricName": "C2PA Text Asset Conformance Rubric",
+  "rubricVersion": "0.1.0",
+  "true": {
+    "text": [
+      {
+        "trait": "exclusions_defined",
+        "reportText": "Hash exclusions define text manifest boundaries",
+        "report_text": "Hash exclusions define text manifest boundaries"
+      },
+      {
+        "trait": "hard_binding_present",
+        "reportText": "Hard binding assertion present for text content",
+        "report_text": "Hard binding assertion present for text content"
+      },
+      {
+        "trait": "inception_action_present",
+        "reportText": "Text asset has an inception action",
+        "report_text": "Text asset has an inception action"
+      },
+      {
+        "trait": "inception_has_dst",
+        "reportText": "Inception action declares a digitalSourceType",
+        "report_text": "Inception action declares a digitalSourceType"
+      },
+      {
+        "trait": "is_text_asset",
+        "reportText": "Asset declares a supported text MIME type",
+        "report_text": "Asset declares a supported text MIME type"
+      },
+      {
+        "trait": "no_html_text_errors",
+        "reportText": "HTML text manifest references are well-formed",
+        "report_text": "HTML text manifest references are well-formed"
+      }
+    ]
+  },
+  "false": {
+    "text": []
+  }
+}

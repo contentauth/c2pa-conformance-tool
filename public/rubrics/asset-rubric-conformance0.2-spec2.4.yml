@@ -90,6 +90,8 @@ variables:
   - c2pa.watermarked.bound
   - c2pa.watermarked.unbound
   - c2pa.redacted
+  $dst_exempt_editorial_actions:
+  - c2pa.placed
   $tiff_media_types:
   - image/tiff
   - image/x-adobe-dng
@@ -333,6 +335,7 @@ expressions:
       startsWith(action, "c2pa.") &&
       !contains($inception_actions, action) &&
       !contains($non_editorial_transformation_actions, action) &&
+      !contains($dst_exempt_editorial_actions, action) &&
       digitalSourceType == null
     ].action
   reportText:

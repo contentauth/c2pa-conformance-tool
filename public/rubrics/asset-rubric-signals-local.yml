@@ -150,8 +150,7 @@ expressions:
     length(_claimV2().gathered_assertions[? contains(url, "c2pa.actions")]) > 0
   reportText:
     'true':
-      en: |-
-        Contains ambiguous actions (e.g. unknown actions, actions in gathered assertions, or has `allActionsIncluded` set to false.
+      en: Contains ambiguous actions
     'false':
       en: All transformations actions are standard, complete, and unambiguous
 - id: transformation:signal_editorialGenAI

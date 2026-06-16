@@ -61,13 +61,6 @@ variables:
   - ingredient.claimSignature.mismatch
   - claimSignature.missing
   - MISSING_VALIDATION_RESULTS
-  $trust_error_codes:
-  - claimSignature.mismatch
-  - claimSignature.outsideValidity
-  - signingCredential.invalid
-  - signingCredential.ocsp.revoked
-  - signingCredential.untrusted
-  - MISSING_VALIDATION_RESULTS
   $valid_relationship_values:
   - parentOf
   - inputTo
@@ -366,27 +359,6 @@ expressions:
       en: No validation mismatches found
     'false':
       en: 'Found validation mismatches: {{matches}}'
-- id: validation:trusted_data_present
-  description: Check if validation results are present for trust analysis
-  expression: 'manifests[0].validationResults != null
-
-    '
-  reportText:
-    'true':
-      en: Validation results are present for trust analysis
-    'false':
-      en: Missing validation results in the manifest
-- id: validation:trusted_success
-  description: Check if the asset has any trust failures (from the trusted list)
-  failIfMatched: true
-  expression: '_validationResults().failure[?contains($trust_error_codes, code)].code
-
-    '
-  reportText:
-    'true':
-      en: Asset is trusted
-    'false':
-      en: 'Found trust failures: {{matches}}'
 - id: validation:active_manifest_urn
   description: Check if the active manifest URN uses 'urn:c2pa:' prefix (v2.2+ requirement)
   expression: 'startsWith(notNull(manifests[0].label, ""), "urn:c2pa:")

@@ -101,13 +101,53 @@ describe('conformance rubric · parameterized golden parity (0.1 spec 2.2)', () 
       const input = JSON.parse(
         fs.readFileSync(path.join(FIXTURE_DIR, `${name}.json`), 'utf8'),
       ) as CrJson
-      const expected = JSON.parse(
+      let expected = JSON.parse(
         fs.readFileSync(path.join(FIXTURE_DIR, `${name}.conformance.json`), 'utf8'),
       ) as ConformanceFixture
 
       const result = evaluateRubric(conformanceRubric, input, {
         rubricId: 'asset-conformance-0.1-spec2.2',
       })
+
+      if (process.env.UPDATE_GOLDENS === 'true') {
+        const fixture: ConformanceFixture = {
+          rubricName: result.rubricName,
+          rubricVersion: result.rubricVersion,
+          true: {},
+          false: {},
+        }
+        for (const s of result.statements) {
+          if (s.passed === undefined || s.passed === null) continue
+          const trait = s.id.includes(':') ? s.id.split(':').slice(1).join(':') : s.id
+          const bucket = s.passed ? fixture.true : fixture.false
+          if (!bucket[s.category]) {
+            bucket[s.category] = []
+          }
+          bucket[s.category].push({
+            trait,
+            reportText: s.message,
+            report_text: s.message,
+          })
+        }
+        // Sort keys and traits for deterministic output
+        const sortRecord = (r: Record<string, any[]>) => {
+          const sorted: Record<string, any[]> = {}
+          for (const k of Object.keys(r).sort()) {
+            sorted[k] = r[k].sort((a, b) => a.trait.localeCompare(b.trait))
+          }
+          return sorted
+        }
+        fixture.true = sortRecord(fixture.true)
+        fixture.false = sortRecord(fixture.false)
+
+        fs.writeFileSync(
+          path.join(FIXTURE_DIR, `${name}.conformance.json`),
+          JSON.stringify(fixture, null, 2) + '\n',
+          'utf8',
+        )
+        expected = fixture
+      }
+
       expect(result.rubricName).toBe(expected.rubricName)
       expect(result.rubricVersion).toBe(expected.rubricVersion)
 

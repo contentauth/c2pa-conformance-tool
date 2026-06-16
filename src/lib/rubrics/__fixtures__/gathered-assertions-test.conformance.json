@@ -29,6 +29,11 @@
         "report_text": "All c2pa.created actions have a digitalSourceType"
       },
       {
+        "trait": "mandatory_dst_for_editorial_transformations",
+        "reportText": "Every predefined C2PA editorial transformation action has a digitalSourceType",
+        "report_text": "Every predefined C2PA editorial transformation action has a digitalSourceType"
+      },
+      {
         "trait": "no_deprecated_actions",
         "reportText": "No deprecated actions used",
         "report_text": "No deprecated actions used"
@@ -72,16 +77,6 @@
         "trait": "review_ratings_datasource",
         "reportText": "No invalid co-occurrence of reviewRatings and human entry dataSource",
         "report_text": "No invalid co-occurrence of reviewRatings and human entry dataSource"
-      },
-      {
-        "trait": "trusted_data_present",
-        "reportText": "Validation results are present for trust analysis",
-        "report_text": "Validation results are present for trust analysis"
-      },
-      {
-        "trait": "trusted_success",
-        "reportText": "Asset is trusted",
-        "report_text": "Asset is trusted"
       },
       {
         "trait": "valid_data_present",

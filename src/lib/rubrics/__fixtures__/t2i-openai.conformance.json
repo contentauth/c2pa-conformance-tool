@@ -34,6 +34,11 @@
         "report_text": "All c2pa.created actions have a digitalSourceType"
       },
       {
+        "trait": "mandatory_dst_for_editorial_transformations",
+        "reportText": "Every predefined C2PA editorial transformation action has a digitalSourceType",
+        "report_text": "Every predefined C2PA editorial transformation action has a digitalSourceType"
+      },
+      {
         "trait": "no_deprecated_actions",
         "reportText": "No deprecated actions used",
         "report_text": "No deprecated actions used"
@@ -79,11 +84,6 @@
         "report_text": "No invalid co-occurrence of reviewRatings and human entry dataSource"
       },
       {
-        "trait": "trusted_data_present",
-        "reportText": "Validation results are present for trust analysis",
-        "report_text": "Validation results are present for trust analysis"
-      },
-      {
         "trait": "valid_data_present",
         "reportText": "Validation results are present for integrity analysis",
         "report_text": "Validation results are present for integrity analysis"
@@ -105,13 +105,5 @@
       }
     ]
   },
-  "false": {
-    "validation": [
-      {
-        "trait": "trusted_success",
-        "reportText": "Found trust failures: signingCredential.untrusted",
-        "report_text": "Found trust failures: signingCredential.untrusted"
-      }
-    ]
-  }
+  "false": {}
 }

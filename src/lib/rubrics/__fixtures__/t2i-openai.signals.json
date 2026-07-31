@@ -10,7 +10,13 @@
       },
       "mimeType": "image/jpeg",
       "localInceptions": [],
-      "localTransformations": [],
+      "localTransformations": [
+        {
+          "trait": "transformation:signal_ambiguousActions",
+          "reportText": "Contains ambiguous actions",
+          "multiple": false
+        }
+      ],
       "allActionsIncluded": false,
       "additionalSignalsInGathered": false,
       "ingredients": [
@@ -35,6 +41,11 @@
         }
       ],
       "localTransformations": [
+        {
+          "trait": "transformation:signal_ambiguousActions",
+          "reportText": "Contains ambiguous actions",
+          "multiple": false
+        },
         {
           "trait": "transformation:signal_nonEditorial",
           "reportText": "Contains Non-editorial Transformations",

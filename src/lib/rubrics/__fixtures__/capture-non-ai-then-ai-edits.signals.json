@@ -12,8 +12,13 @@
       "localInceptions": [],
       "localTransformations": [
         {
-          "trait": "transformation:signal_editorialAI",
-          "reportText": "Contains Editorial GenAI Transformations",
+          "trait": "transformation:signal_ambiguousActions",
+          "reportText": "Contains ambiguous actions",
+          "multiple": false
+        },
+        {
+          "trait": "transformation:signal_perceptibleGenAI",
+          "reportText": "Contains Perceptible GenAI Transformations",
           "multiple": false
         }
       ],
@@ -36,8 +41,13 @@
       "localInceptions": [],
       "localTransformations": [
         {
-          "trait": "transformation:signal_editorialNonAI",
-          "reportText": "Contains Editorial Non-GenAI Transformations",
+          "trait": "transformation:signal_ambiguousActions",
+          "reportText": "Contains ambiguous actions",
+          "multiple": false
+        },
+        {
+          "trait": "transformation:signal_perceptibleNonGenAI",
+          "reportText": "Contains Perceptible Non-GenAI Transformations",
           "multiple": false
         }
       ],
@@ -63,7 +73,13 @@
           "multiple": false
         }
       ],
-      "localTransformations": [],
+      "localTransformations": [
+        {
+          "trait": "transformation:signal_ambiguousActions",
+          "reportText": "Contains ambiguous actions",
+          "multiple": false
+        }
+      ],
       "allActionsIncluded": false,
       "additionalSignalsInGathered": false,
       "ingredients": []

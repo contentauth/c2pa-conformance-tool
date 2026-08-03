@@ -1,9 +1,9 @@
 <script lang="ts">
   import { createEventDispatcher, onDestroy } from 'svelte'
-  import hljs from 'highlight.js'
   import ManifestSummary from './ManifestSummary.svelte'
   import RubricsPanel from './RubricsPanel.svelte'
   import OverviewPanel from './OverviewPanel.svelte'
+  import JsonViewer from './JsonViewer.svelte'
   import type { ConformanceReport, ValidationStatusItem, AssertionSummaryItem, CrJsonManifestEntry, ManifestValidationGroup } from './types'
   import type { ManifestSignalsResult } from './rubrics/types'
   import {
@@ -17,17 +17,6 @@
   } from './crjson'
   import { evaluateReportSignals } from './summarySignals'
   import { VALIDATION_STATUS, VALIDATION_FAILURE_DESCRIPTIONS } from './constants'
-
-  $: rawJsonHighlighted = (() => {
-    try {
-      return hljs.highlight(JSON.stringify(report, null, 2), { language: 'json' }).value
-    } catch {
-      return ''
-    }
-  })()
-  $: if (rawJsonCodeEl && rawJsonHighlighted) {
-    rawJsonCodeEl.innerHTML = rawJsonHighlighted
-  }
 
   export let report: ConformanceReport
   export let usedTestCertificates = false
@@ -47,7 +36,6 @@
     rubrics:  { title: 'Asset Rubrics',      subtitle: 'Check crJSON against rubrics' },
   }
   $: heading = tabHeadings[activeTab]
-  let rawJsonCodeEl: HTMLElement | null = null
   let copied = false
   let copyTimeout: ReturnType<typeof setTimeout> | null = null
   let mediaUrl: string | null = null
@@ -725,7 +713,7 @@
         </div>
         <h3 class="text-xl font-semibold text-gray-900 dark:text-white">crJSON Report</h3>
       </div>
-      <pre class="hljs bg-gray-900 dark:bg-black border-2 border-gray-700 dark:border-gray-600 rounded-xl p-6 overflow-x-auto text-sm leading-relaxed shadow-inner"><code class="language-json" bind:this={rawJsonCodeEl}></code></pre>
+      <pre class="hljs bg-gray-900 dark:bg-black border-2 border-gray-700 dark:border-gray-600 rounded-xl p-6 overflow-x-auto text-sm leading-relaxed shadow-inner"><code class="language-json"><JsonViewer value={report} /></code></pre>
     </div>
   {:else if activeTab === 'rubrics'}
     <div class="w-full">

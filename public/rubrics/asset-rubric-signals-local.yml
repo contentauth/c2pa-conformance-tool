@@ -30,15 +30,15 @@ variables:
   - http://cv.iptc.org/newscodes/digitalsourcetype/digitalArt
   - http://cv.iptc.org/newscodes/digitalsourcetype/composite
 expressions:
-  _manifest_actionsV2Assertion: $arg0.assertions.'c2pa.actions.v2'
-  _manifest_claimV2: $arg0.'claim.v2'
-  _manifest_signalActions: $arg0.assertions.'c2pa.actions.v2'.actions
+  _manifest_actionsV2Assertion: $args[0].assertions.'c2pa.actions.v2'
+  _manifest_claimV2: $args[0].'claim.v2'
+  _manifest_signalActions: $args[0].assertions.'c2pa.actions.v2'.actions
   _manifest_createdWithDst: |-
-    length(_manifest_signalActions($arg0)[? (action == "c2pa.created" || action == "c2pa.opened") && digitalSourceType == $arg1]) > 0
+    length(_manifest_signalActions($args[0])[? (action == "c2pa.created" || action == "c2pa.opened") && digitalSourceType == $args[1]]) > 0
   _signalActions: _manifest_signalActions(@)
   _actionsV2Assertion: _manifest_actionsV2Assertion(@)
   _claimV2: _manifest_claimV2(@)
-  _createdWithDst: _manifest_createdWithDst($arg0, $arg1)
+  _createdWithDst: _manifest_createdWithDst($args[0], $args[1])
 
 ---
 

@@ -4,7 +4,7 @@
  * Most engine behavior is exercised end-to-end by the goldens (and by
  * `evaluate.test.ts` / `perManifest.test.ts`). This file pins down the
  * pieces that aren't easy to demonstrate via real rubrics — specifically
- * the bare-keyword normalizer and named-expression invocation with $argN.
+ * the bare-keyword normalizer and named-expression invocation with $args[N].
  */
 import { describe, expect, it } from 'vitest'
 import { createEngine, normalizeExpression } from './engine'
@@ -71,11 +71,11 @@ describe('createEngine', () => {
     expect(engine.search('_firstFailure()', data)).toBe('boom')
   })
 
-  it('passes positional args to parameterised _expressions via $argN injection', () => {
+  it('passes positional args to parameterised _expressions via $args array', () => {
     const engine = createEngine({
       name: 'test',
       expressions: {
-        _hasCode: 'manifests[0].validationResults.failure[?code == $arg0].code',
+        _hasCode: 'manifests[0].validationResults.failure[?code == $args[0]].code',
       },
     })
     const data = {
@@ -85,14 +85,14 @@ describe('createEngine', () => {
     expect(engine.search('_hasCode("nope")', data)).toEqual([])
   })
 
-  it('isolates $argN injection across nested calls (save/restore)', () => {
-    // Two named expressions: outer calls inner; both reference $arg0. The
-    // engine must restore outer's $arg0 after inner returns.
+  it('isolates $args array across nested calls (save/restore)', () => {
+    // Two named expressions: outer calls inner; both reference $args[0]. The
+    // engine must restore outer's $args after inner returns.
     const engine = createEngine({
       name: 'test',
       expressions: {
-        _inner: '$arg0',
-        _outer: '[$arg0, _inner("inner-val"), $arg0]',
+        _inner: '$args[0]',
+        _outer: '[$args[0], _inner("inner-val"), $args[0]]',
       },
     })
     expect(engine.search('_outer("outer-val")', {})).toEqual([

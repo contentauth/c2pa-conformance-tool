@@ -70,7 +70,7 @@ variables:
   - MISSING_VALIDATION_RESULTS
 expressions:
   _manifest_validationResults: |-
-    ($arg0.validationResults || { failure: [{code: "MISSING_VALIDATION_RESULTS"}] })
+    ($args[0].validationResults || { failure: [{code: "MISSING_VALIDATION_RESULTS"}] })
   _activeManifest: manifests[0]
   _validationResults: _manifest_validationResults(_activeManifest())
 

@@ -185,15 +185,15 @@ variables:
   - optical-size
 expressions:
   _manifest_validationResults: |-
-    ($arg0.validationResults || { failure: [{code: "MISSING_VALIDATION_RESULTS"}] })
-  _manifest_assertionKeys: keys($arg0.assertions || `{}`)
-  _manifest_assertionValues: values($arg0.assertions || `{}`)
-  _manifest_actionsV2: values($arg0.assertions || `{}`)[?actions != null][].actions[] || `[]`
-  _manifest_actionsV2Assertion: $arg0.assertions.'c2pa.actions.v2'
-  _manifest_claimV2: $arg0.'claim.v2'
-  _manifest_createdAssertions: $arg0.'claim.v2'.created_assertions || `[]`
-  _manifest_ingredientAssertions: values($arg0.assertions || `{}`)[? relationship != null]
-  _baseAssertionLabel: split($arg0, "__")[0]
+    ($args[0].validationResults || { failure: [{code: "MISSING_VALIDATION_RESULTS"}] })
+  _manifest_assertionKeys: keys($args[0].assertions || `{}`)
+  _manifest_assertionValues: values($args[0].assertions || `{}`)
+  _manifest_actionsV2: values($args[0].assertions || `{}`)[?actions != null][].actions[] || `[]`
+  _manifest_actionsV2Assertion: $args[0].assertions.'c2pa.actions.v2'
+  _manifest_claimV2: $args[0].'claim.v2'
+  _manifest_createdAssertions: $args[0].'claim.v2'.created_assertions || `[]`
+  _manifest_ingredientAssertions: values($args[0].assertions || `{}`)[? relationship != null]
+  _baseAssertionLabel: split($args[0], "__")[0]
   _activeManifest: manifests[0]
   _validationResults: _manifest_validationResults(_activeManifest())
   _assertionKeys: _manifest_assertionKeys(_activeManifest())

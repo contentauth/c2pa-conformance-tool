@@ -740,22 +740,22 @@
           <div class="flex flex-col gap-6">
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div class="bg-gray-50 dark:bg-gray-900 rounded-xl p-4">
-                <div class="text-xs font-semibold text-gray-500 dark:text-gray-500 uppercase tracking-wide mb-1">Filename</div>
+                <div class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">Filename</div>
                 <p class="text-sm font-medium text-gray-900 dark:text-gray-100 truncate" title={file.name}>{file.name}</p>
               </div>
               <div class="bg-gray-50 dark:bg-gray-900 rounded-xl p-4">
-                <div class="text-xs font-semibold text-gray-500 dark:text-gray-500 uppercase tracking-wide mb-1">Type</div>
+                <div class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">Type</div>
                 <p class="text-sm font-medium text-gray-900 dark:text-gray-100">
                   {mediaType === 'sidecar' ? 'application/c2pa (sidecar)' : (file.type || 'Unknown')}
                 </p>
               </div>
               <div class="bg-gray-50 dark:bg-gray-900 rounded-xl p-4">
-                <div class="text-xs font-semibold text-gray-500 dark:text-gray-500 uppercase tracking-wide mb-1">Size</div>
+                <div class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">Size</div>
                 <p class="text-sm font-medium text-gray-900 dark:text-gray-100">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
               </div>
             </div>
 
-            <div class="bg-gray-50 dark:bg-gray-900 rounded-2xl p-6 flex items-center justify-center min-h-[350px] border-2 border-gray-200 dark:border-gray-700">
+            <div class="bg-gray-50 dark:bg-gray-900 rounded-2xl p-6 flex items-center justify-center min-h-[350px] border-2 border-gray-200 dark:border-gray-600">
               {#if mediaType === 'image'}
                 <img src={mediaUrl} alt="Preview" class="max-w-full max-h-[600px] object-contain rounded-xl shadow-lg" />
               {:else if mediaType === 'video'}
@@ -765,7 +765,7 @@
                 </video>
               {:else if mediaType === 'audio'}
                 <div class="w-full max-w-md">
-                  <div class="w-20 h-20 mx-auto bg-gradient-to-br from-purple-500 to-pink-500 rounded-2xl flex items-center justify-center text-white text-4xl mb-6 shadow-lg">
+                  <div class="w-20 h-20 mx-auto bg-gradient-to-br from-purple-500 to-pink-500 dark:from-purple-700 dark:to-pink-700 rounded-2xl flex items-center justify-center text-white text-4xl mb-6 shadow-lg">
                     🎵
                   </div>
                   <audio src={mediaUrl} controls class="w-full">
@@ -774,7 +774,7 @@
                 </div>
               {:else if mediaType === 'document'}
                 <div class="text-center">
-                  <div class="w-20 h-20 mx-auto bg-gradient-to-br from-red-500 to-orange-500 rounded-2xl flex items-center justify-center text-white text-4xl mb-6 shadow-lg">
+                  <div class="w-20 h-20 mx-auto bg-gradient-to-br from-red-500 to-orange-500 dark:from-red-700 dark:to-orange-600 rounded-2xl flex items-center justify-center text-white text-4xl mb-6 shadow-lg">
                     📄
                   </div>
                   <p class="text-gray-600 dark:text-gray-400 mb-4 text-lg font-medium">PDF Document</p>
@@ -1079,7 +1079,7 @@
                                 <!-- Special display for actions -->
                                 <div class="space-y-2">
                                   <div>
-                                    <div class="text-xs font-semibold text-gray-500 dark:text-gray-500 uppercase tracking-wide mb-1">
+                                    <div class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">
                                       {item.key}
                                     </div>
                                     <div class="text-sm font-medium text-gray-900 dark:text-gray-100">
@@ -1089,7 +1089,7 @@
 
                                   {#if item.digitalSourceType}
                                     <div>
-                                      <div class="text-xs font-semibold text-gray-500 dark:text-gray-500 uppercase tracking-wide mb-1">
+                                      <div class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">
                                         Digital Source Type
                                       </div>
                                       <a
@@ -1105,7 +1105,7 @@
 
                                   {#if item.description}
                                     <div>
-                                      <div class="text-xs font-semibold text-gray-500 dark:text-gray-500 uppercase tracking-wide mb-1">
+                                      <div class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">
                                         Description
                                       </div>
                                       <div class="text-sm font-medium text-gray-900 dark:text-gray-100 break-words">
@@ -1116,7 +1116,7 @@
                                 </div>
                               {:else}
                                 <!-- Standard display for other fields -->
-                                <div class="text-xs font-semibold text-gray-500 dark:text-gray-500 uppercase tracking-wide mb-1">
+                                <div class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">
                                   {item.key}
                                 </div>
                                 <div class="text-sm font-medium text-gray-900 dark:text-gray-100 break-words">

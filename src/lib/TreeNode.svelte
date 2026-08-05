@@ -62,17 +62,17 @@
       <!-- Placeholder -->
       <div class="absolute inset-0 {node.isStub ? 'bg-gray-50 dark:bg-gray-900' : 'bg-gray-100 dark:bg-gray-800'} flex items-center justify-center">
         {#if node.mimeType?.startsWith('video/')}
-          <svg class="w-10 h-10 text-gray-300 dark:text-gray-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <svg class="w-10 h-10 text-gray-300 dark:text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
             <path d="M4 4m0 2a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/><path d="M8 4l0 16"/><path d="M16 4l0 16"/><path d="M4 8l4 0"/><path d="M4 12l16 0"/><path d="M4 16l4 0"/><path d="M16 8l4 0"/><path d="M16 16l4 0"/>
           </svg>
         {:else if node.mimeType?.startsWith('audio/')}
-          <svg class="w-10 h-10 text-gray-300 dark:text-gray-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <svg class="w-10 h-10 text-gray-300 dark:text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
             <path d="M3 17a3 3 0 1 0 6 0a3 3 0 0 0-6 0"/><path d="M6 17v-13l12-2v13"/><path d="M15 15a3 3 0 1 0 6 0a3 3 0 0 0-6 0"/>
           </svg>
         {:else}
-          <svg class="w-10 h-10 text-gray-300 dark:text-gray-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <svg class="w-10 h-10 text-gray-300 dark:text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
             <path d="M15 8h.01"/><path d="M3 6a3 3 0 0 1 3-3h12a3 3 0 0 1 3 3v12a3 3 0 0 1-3 3H6a3 3 0 0 1-3-3V6z"/><path d="M3 16l5-5c.928-.893 2.072-.893 3 0l5 5"/><path d="M14 14l1-1c.928-.893 2.072-.893 3 0l3 3"/>
           </svg>
@@ -97,13 +97,13 @@
   <div class="mt-2 text-center w-[300px] px-2">
     <!-- Relationship (non-root only) -->
     {#if !isRoot && node.relationship}
-      <p class="text-[10px] font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-0.5">
+      <p class="text-[10px] font-medium text-gray-400 dark:text-gray-400 uppercase tracking-wide mb-0.5">
         {formatRelationship(node.relationship)}
       </p>
     {/if}
 
     <!-- Tool / filename -->
-    <p class="text-xs font-semibold {node.isStub ? 'text-gray-400 dark:text-gray-500' : 'text-gray-800 dark:text-gray-200'} truncate">
+    <p class="text-xs font-semibold {node.isStub ? 'text-gray-400 dark:text-gray-400' : 'text-gray-800 dark:text-gray-200'} truncate">
       {#if node.isStub}
         {node.signer ?? 'Unknown file'}
       {:else}
@@ -113,7 +113,7 @@
 
     <!-- No credentials label for stubs -->
     {#if node.isStub}
-      <p class="text-[11px] text-gray-400 dark:text-gray-500 mt-0.5 italic">No Content Credentials</p>
+      <p class="text-[11px] text-gray-400 dark:text-gray-400 mt-0.5 italic">No Content Credentials</p>
     {:else}
       <!-- Date -->
       {#if node.date}
@@ -140,7 +140,7 @@
     <svg
       width={connW || 1}
       height={CONN_H}
-      class="mt-2 flex-shrink-0 overflow-visible text-gray-300 dark:text-gray-600"
+      class="mt-2 flex-shrink-0 overflow-visible text-gray-300 dark:text-gray-500"
       aria-hidden="true"
     >
       {#each connPaths as d, i}

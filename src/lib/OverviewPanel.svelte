@@ -458,7 +458,7 @@
     on:dragstart|preventDefault={() => {}}
   >
     <!-- Canvas background -->
-    <div class="absolute inset-0 bg-gray-50 dark:bg-gray-900/60 pointer-events-none rounded-2xl"></div>
+    <div class="absolute inset-0 bg-gray-50 dark:bg-gray-950 pointer-events-none rounded-2xl"></div>
 
     <!-- Tree content (panned and scaled) -->
     <div

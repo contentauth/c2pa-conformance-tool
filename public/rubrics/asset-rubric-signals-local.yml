@@ -34,7 +34,7 @@ expressions:
   _manifest_claimV2: $arg0.'claim.v2'
   _manifest_signalActions: $arg0.assertions.'c2pa.actions.v2'.actions
   _manifest_createdWithDst: |-
-    length(_manifest_signalActions($arg0)[? action == "c2pa.created" && digitalSourceType == $arg1]) > 0
+    length(_manifest_signalActions($arg0)[? (action == "c2pa.created" || action == "c2pa.opened") && digitalSourceType == $arg1]) > 0
   _signalActions: _manifest_signalActions(@)
   _actionsV2Assertion: _manifest_actionsV2Assertion(@)
   _claimV2: _manifest_claimV2(@)

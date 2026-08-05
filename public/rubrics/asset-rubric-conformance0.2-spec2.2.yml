@@ -2,7 +2,7 @@ rubric_metadata:
   name: C2PA Asset Conformance 0.2 Spec 2.2 Rubric
   issuer: C2PA Conformance Task Force
   date: '2026-03-31T05:00:00Z'
-  version: 0.2.0
+  version: 0.1.1
   language: en
 variables:
   $inception_actions:
@@ -404,8 +404,8 @@ expressions:
   specSection: Spec 2.2 §18.14.4.1, §18.14.12
   warnIfMatched: true
   expression: |
-    _actionsV2()[?parameters != null] |
-      [?parameters.description != null || parameters.ingredient != null].action
+    _actionsV2()[?action != null && parameters != null] |
+      [?parameters.description != null || parameters.ingredient != null].notNull(action, "unknown")
   reportText:
     'true':
       en: |-

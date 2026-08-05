@@ -7,7 +7,32 @@
   export let fileSrc: string | undefined = undefined
   export let fileMimeType: string | undefined = undefined
 
-  $: previewSrc = fileSrc ?? node.thumbnailSrc
+  const BROWSER_PREVIEWABLE_IMAGES = new Set([
+    'image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp',
+    'image/avif', 'image/svg+xml', 'image/bmp', 'image/ico', 'image/x-icon',
+  ])
+
+  // Prefer the C2PA manifest's declared format (authoritative, read from file content)
+  // over the browser-reported MIME type, which can be empty or generic.
+  $: effectiveMimeType = node.mimeType || fileMimeType || null
+
+  // Determines what to render in the card media area.
+  // 'video-live'  — root video file, show <video controls>
+  // 'audio-live'  — root audio file, show icon placeholder + <audio controls> below card
+  // 'image'       — previewable image or thumbnail, show <img>
+  // 'placeholder' — nothing renderable, show type icon
+  $: cardMedia = (() => {
+    if (fileSrc) {
+      if (effectiveMimeType?.startsWith('video/')) return 'video-live'
+      if (effectiveMimeType?.startsWith('audio/')) return 'audio-live'
+      if (effectiveMimeType?.startsWith('image/') && BROWSER_PREVIEWABLE_IMAGES.has(effectiveMimeType ?? '')) return 'image'
+      return 'placeholder'
+    }
+    if (node.thumbnailSrc) return 'image'
+    return 'placeholder'
+  })()
+
+  $: imageSrc = cardMedia === 'image' ? (fileSrc ?? node.thumbnailSrc) : undefined
 
   // One width per child column — populated via bind:clientWidth.
   let colWidths: number[] = []
@@ -52,27 +77,39 @@
     on:click={() => onZoom && !isRoot && !node.isStub && onZoom(node.manifestIdx)}
   >
     <!-- Media fill -->
-    {#if previewSrc}
-      {#if (fileSrc && fileMimeType?.startsWith('video/')) || (!fileSrc && node.mimeType?.startsWith('video/'))}
-        <video src={previewSrc} class="absolute inset-0 w-full h-full object-cover" muted playsinline></video>
-      {:else}
-        <img src={previewSrc} alt="" draggable="false" class="absolute inset-0 w-full h-full object-cover" />
-      {/if}
+    {#if cardMedia === 'video-live'}
+      <video src={fileSrc} controls playsinline class="absolute inset-0 w-full h-full object-cover">
+        <track kind="captions" />
+      </video>
+    {:else if cardMedia === 'audio-live'}
+      <div class="absolute inset-0 bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+        <svg class="w-10 h-10 text-gray-300 dark:text-gray-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+          <path d="M3 17a3 3 0 1 0 6 0a3 3 0 0 0-6 0"/><path d="M6 17v-13l12-2v13"/><path d="M15 15a3 3 0 1 0 6 0a3 3 0 0 0-6 0"/>
+        </svg>
+      </div>
+    {:else if cardMedia === 'image'}
+      <img src={imageSrc} alt="" draggable="false" class="absolute inset-0 w-full h-full object-cover" />
     {:else}
-      <!-- Placeholder -->
+      <!-- Placeholder icon: pick by content type -->
       <div class="absolute inset-0 {node.isStub ? 'bg-gray-50 dark:bg-gray-900' : 'bg-gray-100 dark:bg-gray-800'} flex items-center justify-center">
-        {#if node.mimeType?.startsWith('video/')}
-          <svg class="w-10 h-10 text-gray-300 dark:text-gray-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        {#if effectiveMimeType?.startsWith('video/')}
+          <svg class="w-10 h-10 text-gray-300 dark:text-gray-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
             <path d="M4 4m0 2a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/><path d="M8 4l0 16"/><path d="M16 4l0 16"/><path d="M4 8l4 0"/><path d="M4 12l16 0"/><path d="M4 16l4 0"/><path d="M16 8l4 0"/><path d="M16 16l4 0"/>
           </svg>
-        {:else if node.mimeType?.startsWith('audio/')}
-          <svg class="w-10 h-10 text-gray-300 dark:text-gray-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        {:else if effectiveMimeType?.startsWith('audio/')}
+          <svg class="w-10 h-10 text-gray-300 dark:text-gray-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
             <path d="M3 17a3 3 0 1 0 6 0a3 3 0 0 0-6 0"/><path d="M6 17v-13l12-2v13"/><path d="M15 15a3 3 0 1 0 6 0a3 3 0 0 0-6 0"/>
           </svg>
+        {:else if effectiveMimeType?.startsWith('application/')}
+          <svg class="w-10 h-10 text-gray-300 dark:text-gray-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+            <path d="M14 3v4a1 1 0 0 0 1 1h4"/><path d="M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2z"/><path d="M9 17h6"/><path d="M9 13h6"/>
+          </svg>
         {:else}
-          <svg class="w-10 h-10 text-gray-300 dark:text-gray-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <svg class="w-10 h-10 text-gray-300 dark:text-gray-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
             <path d="M15 8h.01"/><path d="M3 6a3 3 0 0 1 3-3h12a3 3 0 0 1 3 3v12a3 3 0 0 1-3 3H6a3 3 0 0 1-3-3V6z"/><path d="M3 16l5-5c.928-.893 2.072-.893 3 0l5 5"/><path d="M14 14l1-1c.928-.893 2.072-.893 3 0l3 3"/>
           </svg>
@@ -133,6 +170,13 @@
       {/if}
     {/if}
   </div>
+
+  <!-- Audio player — shown below the card for the root audio file -->
+  {#if cardMedia === 'audio-live' && fileSrc}
+    <audio src={fileSrc} controls class="w-[300px] mt-2 rounded-lg">
+      Your browser does not support audio playback.
+    </audio>
+  {/if}
 
   <!-- Subtree -->
   {#if node.children.length > 0}

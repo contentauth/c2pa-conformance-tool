@@ -765,8 +765,11 @@
                 </video>
               {:else if mediaType === 'audio'}
                 <div class="w-full max-w-md">
-                  <div class="w-20 h-20 mx-auto bg-gradient-to-br from-purple-500 to-pink-500 dark:from-purple-700 dark:to-pink-700 rounded-2xl flex items-center justify-center text-white text-4xl mb-6 shadow-lg">
-                    🎵
+                  <div class="w-20 h-20 mx-auto bg-gradient-to-br from-purple-500 to-pink-500 dark:from-purple-700 dark:to-pink-700 rounded-2xl flex items-center justify-center text-white mb-6 shadow-lg">
+                    <svg class="w-10 h-10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                      <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                      <path d="M3 17a3 3 0 1 0 6 0a3 3 0 0 0-6 0"/><path d="M6 17v-13l12-2v13"/><path d="M15 15a3 3 0 1 0 6 0a3 3 0 0 0-6 0"/>
+                    </svg>
                   </div>
                   <audio src={mediaUrl} controls class="w-full">
                     Your browser does not support audio playback.
@@ -774,8 +777,11 @@
                 </div>
               {:else if mediaType === 'document'}
                 <div class="text-center">
-                  <div class="w-20 h-20 mx-auto bg-gradient-to-br from-red-500 to-orange-500 dark:from-red-700 dark:to-orange-600 rounded-2xl flex items-center justify-center text-white text-4xl mb-6 shadow-lg">
-                    📄
+                  <div class="w-20 h-20 mx-auto bg-gradient-to-br from-red-500 to-orange-500 dark:from-red-700 dark:to-orange-600 rounded-2xl flex items-center justify-center text-white mb-6 shadow-lg">
+                    <svg class="w-10 h-10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                      <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                      <path d="M14 3v4a1 1 0 0 0 1 1h4"/><path d="M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2z"/><path d="M9 17h6"/><path d="M9 13h6"/>
+                    </svg>
                   </div>
                   <p class="text-gray-600 dark:text-gray-400 mb-4 text-lg font-medium">PDF Document</p>
                   <a href={mediaUrl} download={file.name} class="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-lg transition-colors shadow-sm">
@@ -805,6 +811,19 @@
                 </div>
               {:else}
                 <div class="text-center">
+                  <div class="w-20 h-20 mx-auto bg-gradient-to-br from-gray-400 to-gray-500 dark:from-gray-600 dark:to-gray-700 rounded-2xl flex items-center justify-center text-white mb-6 shadow-lg">
+                    {#if file.type.startsWith('image/') || /\.(heic|heif|tiff?|avci|avcs)$/i.test(file.name)}
+                      <svg class="w-10 h-10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                        <path d="M15 8h.01"/><path d="M3 6a3 3 0 0 1 3-3h12a3 3 0 0 1 3 3v12a3 3 0 0 1-3 3H6a3 3 0 0 1-3-3V6z"/><path d="M3 16l5-5c.928-.893 2.072-.893 3 0l5 5"/><path d="M14 14l1-1c.928-.893 2.072-.893 3 0l3 3"/>
+                      </svg>
+                    {:else}
+                      <svg class="w-10 h-10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                        <path d="M14 3v4a1 1 0 0 0 1 1h4"/><path d="M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2z"/>
+                      </svg>
+                    {/if}
+                  </div>
                   <p class="text-gray-700 dark:text-gray-200 text-lg font-semibold mb-2">Preview not available</p>
                   <p class="text-gray-500 dark:text-gray-400 text-sm">
                     {file.type || file.name.split('.').pop()?.toUpperCase() + ' file' || 'This file type'} cannot be displayed in the browser.

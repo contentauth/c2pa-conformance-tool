@@ -6,7 +6,7 @@ import { fileURLToPath } from 'node:url'
 const scriptDir = dirname(fileURLToPath(import.meta.url))
 const repoRoot = resolve(scriptDir, '..')
 const wasmDir = resolve(repoRoot, 'wasm')
-const c2paRsDir = resolve(repoRoot, '../c2pa-rs')
+const c2paRsDir = resolve(repoRoot, 'c2pa-rs')
 const outDir = resolve(repoRoot, 'public/local-c2pa')
 const cargoHome = resolve(repoRoot, '.cargo-home')
 
@@ -47,8 +47,7 @@ if (result.status !== 0) {
   process.exit(result.status ?? 1)
 }
 
-// wasm-pack generates a .gitignore that ignores everything — remove it so the
-// output files can be committed and deployed.
+// Remove the wasm-pack generated .gitignore (we use the repo-level .gitignore instead).
 const wasmPackGitignore = resolve(outDir, '.gitignore')
 if (existsSync(wasmPackGitignore)) {
   unlinkSync(wasmPackGitignore)

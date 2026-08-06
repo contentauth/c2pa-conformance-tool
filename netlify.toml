@@ -1,6 +1,11 @@
 [build]
-  command = "npm run build"
+  command = "bash scripts/netlify-build.sh"
   publish = "dist"
 
 [build.environment]
   NODE_VERSION = "20"
+  # Tells Netlify to clone git submodules (c2pa-rs).
+  GIT_SUBMODULE_STRATEGY = "recursive"
+  # Cache Rust toolchain and compiled crates between Netlify builds.
+  RUSTUP_HOME = "/opt/build/cache/rustup"
+  CARGO_HOME = "/opt/build/cache/cargo"

@@ -7,7 +7,7 @@ edition = "2021"
 crate-type = ["cdylib"]
 
 [dependencies]
-c2pa = { path = "../../c2pa-rs/sdk", default-features = false, features = ["fetch_remote_manifests", "http_reqwest", "pdf", "rust_native_crypto"] }
+c2pa = { path = "../c2pa-rs/sdk", default-features = false, features = ["fetch_remote_manifests", "http_reqwest", "pdf", "rust_native_crypto"] }
 wasm-bindgen = "0.2.112"
 wasm-bindgen-futures = "0.4.31"
 console_error_panic_hook = "0.1"

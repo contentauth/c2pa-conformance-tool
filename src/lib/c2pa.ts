@@ -1,9 +1,10 @@
 import { createC2pa } from '@contentauth/c2pa-web'
 import type { Settings } from '@contentauth/c2pa-web'
 import { VERSION_INFO } from './version'
-import type { ConformanceReport } from './types'
+import type { ConformanceReport, OcspServerResult } from './types'
 import { VALIDATION_STATUS } from './constants'
 import { isCrJson, legacyToCrJson, getActiveManifestValidationStatus, type CrJson } from './crjson'
+import { extractOcspParams } from './ocspExtract'
 
 type ReaderHandle = {
   manifestStore: () => Promise<CrJson>
@@ -290,7 +291,15 @@ const MIME_TYPE_MAP: Record<string, string> = {
 // `.c2pa` is the standalone manifest-store sidecar format (RFC-style, no embedded asset).
 // Browsers universally leave its type empty or fall back to application/octet-stream, so
 // we resolve by extension.
+//
+// HEIC/HEIF are included here because Windows Chrome cannot identify them without the
+// optional HEIF Image Extensions codec pack installed in Windows; file.type arrives as ''
+// on most Windows machines, causing the SDK to receive an empty format and throw.
 const EXTENSION_MIME_MAP: Record<string, string> = {
+  'heic': 'image/heic',
+  'heif': 'image/heif',
+  'avci': 'image/avci',
+  'avcs': 'image/avcs',
   'dng': 'image/x-adobe-dng',
   'arw': 'image/x-sony-arw',
   'cr2': 'image/x-canon-cr2',
@@ -723,4 +732,61 @@ export async function getVersion(): Promise<string> {
   const c2pa = await initC2pa()
   const version = await c2pa.getVersion?.()
   return version ?? '@contentauth/c2pa-web v0.6.1'
+}
+
+/**
+ * Perform a server-side OCSP check for the file's signing certificate.
+ * Called when the initial report shows `signingCredential.ocsp.inaccessible`.
+ *
+ * Returns null if extraction fails, the function endpoint is unreachable,
+ * or the file type doesn't support cert extraction.
+ */
+export async function checkOcspForReport(file: File, report: ConformanceReport): Promise<OcspServerResult | null> {
+  // Only run when OCSP was inaccessible from the browser
+  const activeVr = getActiveManifestValidationStatus(report)
+  const isInaccessible = [
+    ...(activeVr?.failure ?? []),
+    ...(activeVr?.informational ?? []),
+  ].some(s => s.code === VALIDATION_STATUS.SIGNING_CREDENTIAL_OCSP_INACCESSIBLE)
+
+  if (!isInaccessible) {
+    console.log('[OCSP] Server-side check not needed — signingCredential.ocsp.inaccessible not present in report')
+    return null
+  }
+
+  console.log('[OCSP] Server-side check needed — signingCredential.ocsp.inaccessible detected; extracting cert chain from file...')
+
+  const params = await extractOcspParams(file)
+  if (!params) {
+    console.warn('[OCSP] Could not extract cert chain or OCSP responder URL from file — skipping server-side check')
+    return null
+  }
+
+  console.log('[OCSP] Cert chain extracted. Responder URL:', params.responderUrl)
+
+  const endpoint = '/.netlify/functions/ocsp-proxy'
+  console.log('[OCSP] Sending request to proxy:', endpoint)
+
+  try {
+    const res = await fetch(endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(params),
+      signal: AbortSignal.timeout(15_000),
+    })
+    if (!res.ok) {
+      console.warn('[OCSP] Proxy returned HTTP', res.status, '— skipping')
+      return null
+    }
+    const result = (await res.json()) as OcspServerResult
+    if (result.status === 'error') {
+      console.warn('[OCSP] Result: error —', result.error)
+    } else {
+      console.log('[OCSP] Result:', result.status, result.nextUpdate ? `(next update: ${result.nextUpdate})` : '')
+    }
+    return result
+  } catch (e) {
+    console.warn('[OCSP] Request failed:', e)
+    return null
+  }
 }

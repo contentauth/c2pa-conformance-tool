@@ -40,6 +40,7 @@
     "@adobe/json-formula": "^2.0.0",
     "@contentauth/c2pa-web": "^0.6.1",
     "@peculiar/x509": "^1.14.3",
+    "cborg": "^5.1.1",
     "highlight.js": "^11.11.1",
     "yaml": "^2.8.3"
   }

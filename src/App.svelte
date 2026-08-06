@@ -9,7 +9,7 @@
   import FileUpload from './lib/FileUpload.svelte'
   import ReportViewer from './lib/ReportViewer.svelte'
   import CertificateManager from './lib/CertificateManager.svelte'
-  import { processFile, processSidecarWithAsset, isSidecarFile } from './lib/c2pa'
+  import { processFile, processSidecarWithAsset, isSidecarFile, checkOcspForReport } from './lib/c2pa'
   import { testTrustListFetch } from './lib/trustListTest'
   import type { ConformanceReport } from './lib/types'
 
@@ -155,6 +155,16 @@
     await handleFileSelect({ detail: file } as CustomEvent<File>)
   }
 
+  // After the initial report is ready, check OCSP server-side in the background
+  // and reactively patch the report if a result comes back.
+  function triggerOcspCheck(file: File, snapshot: ConformanceReport) {
+    checkOcspForReport(file, snapshot).then(ocspResult => {
+      if (ocspResult && report === snapshot) {
+        report = { ...snapshot, ocspServerResult: ocspResult }
+      }
+    }).catch(() => { /* silent — OCSP is best-effort */ })
+  }
+
   async function handleFileSelect(event: CustomEvent<File>) {
     const file = event.detail
     console.log('📄 File selected:', file.name, file.type, file.size, 'bytes')
@@ -187,6 +197,7 @@
       }
 
       report = await processFile(file, testCertificates)
+      triggerOcspCheck(file, report)
 
       processingStatus = 'Building report...'
       await new Promise(resolve => setTimeout(resolve, 100))
@@ -229,6 +240,7 @@
 
       processingStatus = 'Validating manifest against asset...'
       report = await processSidecarWithAsset(sidecar, asset, testCertificates)
+      triggerOcspCheck(asset, report)
 
       processingStatus = 'Building report...'
       await new Promise(resolve => setTimeout(resolve, 100))
@@ -266,8 +278,10 @@
       await new Promise(resolve => setTimeout(resolve, 0))
       if (sidecarFile) {
         report = await processSidecarWithAsset(sidecarFile, selectedFile, testCertificates)
+        triggerOcspCheck(selectedFile, report)
       } else {
         report = await processFile(selectedFile, testCertificates)
+        triggerOcspCheck(selectedFile, report)
       }
       console.log('✅ File reprocessed successfully')
     } catch (err) {

@@ -4,3 +4,12 @@
 
 [build.environment]
   NODE_VERSION = "20"
+
+[functions]
+  directory = "netlify/functions"
+
+[context.production.environment]
+  OCSP_CACHE_TTL_SECONDS = "3600"
+
+[context.deploy-preview.environment]
+  OCSP_CACHE_TTL_SECONDS = "300"

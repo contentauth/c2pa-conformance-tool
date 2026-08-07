@@ -441,7 +441,9 @@
 </script>
 
 {#if tree}
-  <!-- Pan/zoom canvas -->
+  <!-- Pan/zoom canvas — role="application" is the correct ARIA landmark for a custom widget;
+       Svelte doesn't recognise it as interactive so we suppress the lint warning. -->
+  <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
   <div
     bind:this={canvasEl}
     bind:clientWidth={containerWidth}

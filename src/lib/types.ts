@@ -28,9 +28,6 @@ export interface ConformanceReport extends CrJson {
   }
 }
 
-/** Re-export for components that still reference ValidationStatus from SDK */
-export type { ValidationStatus } from '@contentauth/c2pa-web'
-
 /** One validation status row in the report UI */
 export interface ValidationStatusItem {
   code: string

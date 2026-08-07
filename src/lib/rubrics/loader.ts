@@ -99,6 +99,14 @@ export function parseRubricYaml(yamlText: string, filenameForError = '<inline>')
     throw new Error(`Rubric ${filenameForError} contains no statements`)
   }
 
+  // Mirror the Python evaluator: inject $expected_spec_version from the filename
+  // (e.g. "asset-rubric-conformance0.2-spec2.4.yml" → "2.4") so rubric expressions
+  // that reference $expected_spec_version work correctly.
+  const specMatch = filenameForError.match(/spec(\d+\.\d+)/)
+  if (specMatch) {
+    metadata.variables = { '$expected_spec_version': specMatch[1], ...(metadata.variables ?? {}) }
+  }
+
   return { metadata, statements }
 }
 

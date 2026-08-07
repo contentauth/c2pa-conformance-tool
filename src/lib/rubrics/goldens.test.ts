@@ -68,11 +68,18 @@ const FIXTURE_NAMES = discoverFixtureNames()
 
 // ── Conformance fixture parity ────────────────────────────────────────
 
+interface ConformanceFixtureTrait {
+  trait: string
+  reportText: string
+  report_text?: string
+}
+
 interface ConformanceFixture {
   rubricName: string
   rubricVersion: string
-  true: Record<string, Array<{ trait: string; reportText: string }>>
-  false: Record<string, Array<{ trait: string; reportText: string }>>
+  true: Record<string, ConformanceFixtureTrait[]>
+  false: Record<string, ConformanceFixtureTrait[]>
+  warning?: Record<string, ConformanceFixtureTrait[]>
 }
 
 /** trait → { outcome, reportText } lookup, flattened across all categories. */
@@ -101,13 +108,47 @@ describe('conformance rubric · parameterized golden parity (0.1 spec 2.2)', () 
       const input = JSON.parse(
         fs.readFileSync(path.join(FIXTURE_DIR, `${name}.json`), 'utf8'),
       ) as CrJson
-      const expected = JSON.parse(
+      let expected = JSON.parse(
         fs.readFileSync(path.join(FIXTURE_DIR, `${name}.conformance.json`), 'utf8'),
       ) as ConformanceFixture
 
       const result = evaluateRubric(conformanceRubric, input, {
         rubricId: 'asset-conformance-0.1-spec2.2',
       })
+
+      if (process.env.UPDATE_GOLDENS === 'true') {
+        const fixture: ConformanceFixture = {
+          rubricName: result.rubricName,
+          rubricVersion: result.rubricVersion ?? '',
+          true: {},
+          false: {},
+          warning: {},
+        }
+        for (const s of result.statements) {
+          if (s.passed === undefined || s.passed === null) continue
+          const trait = s.id.includes(':') ? s.id.split(':').slice(1).join(':') : s.id
+          const bucket = s.warned ? fixture.warning : s.passed ? fixture.true : fixture.false
+          if (!bucket[s.category]) bucket[s.category] = []
+          bucket[s.category].push({ trait, reportText: s.message, report_text: s.message })
+        }
+        const sortRecord = (r: Record<string, ConformanceFixtureTrait[]>) => {
+          const sorted: typeof r = {}
+          for (const k of Object.keys(r).sort()) {
+            sorted[k] = r[k].sort((a, b) => a.trait.localeCompare(b.trait))
+          }
+          return sorted
+        }
+        fixture.true = sortRecord(fixture.true)
+        fixture.false = sortRecord(fixture.false)
+        fixture.warning = sortRecord(fixture.warning)
+        fs.writeFileSync(
+          path.join(FIXTURE_DIR, `${name}.conformance.json`),
+          JSON.stringify(fixture, null, 2) + '\n',
+          'utf8',
+        )
+        expected = fixture
+      }
+
       expect(result.rubricName).toBe(expected.rubricName)
       expect(result.rubricVersion).toBe(expected.rubricVersion)
 
@@ -140,6 +181,7 @@ describe('conformance rubric · parameterized golden parity (0.1 spec 2.2)', () 
       }
       check('true', expected.true)
       check('false', expected.false)
+      check('false', expected.warning ?? {})
 
       expect(mismatches, `parity diffs for ${name}:\n${mismatches.join('\n')}`).toEqual([])
     })
@@ -159,6 +201,7 @@ interface SignalsFixture {
     allActionsIncluded: boolean
     additionalSignalsInGathered: boolean
     ingredients: Array<{ index: number; relationship?: string }>
+    pseudo?: boolean
   }>
 }
 
@@ -168,13 +211,27 @@ describe('signals rubric · parameterized golden parity (local)', () => {
       const input = JSON.parse(
         fs.readFileSync(path.join(FIXTURE_DIR, `${name}.json`), 'utf8'),
       ) as CrJson
-      const expected = JSON.parse(
+      let expected = JSON.parse(
         fs.readFileSync(path.join(FIXTURE_DIR, `${name}.signals.json`), 'utf8'),
       ) as SignalsFixture
 
       const result = evaluatePerManifest(signalsRubric, input, {
         rubricId: 'asset-signals-local',
       })
+
+      if (process.env.UPDATE_GOLDENS === 'true') {
+        const newFixture: SignalsFixture = {
+          rubricName: result.rubricName,
+          rubricVersion: result.rubricVersion ?? '1.0.0',
+          manifests: result.manifests,
+        }
+        fs.writeFileSync(
+          path.join(FIXTURE_DIR, `${name}.signals.json`),
+          JSON.stringify(newFixture, null, 2) + '\n',
+          'utf8',
+        )
+        expected = newFixture
+      }
 
       expect(result.rubricName).toBe(expected.rubricName)
       expect(result.rubricVersion).toBe(expected.rubricVersion)
@@ -200,6 +257,9 @@ describe('signals rubric · parameterized golden parity (local)', () => {
           `${name} manifest[${i}] localTransformations`,
         ).toEqual(want.localTransformations)
         expect(got.ingredients, `${name} manifest[${i}] ingredients`).toEqual(want.ingredients)
+        if (want.pseudo !== undefined) {
+          expect(got.pseudo, `${name} manifest[${i}] pseudo`).toEqual(want.pseudo)
+        }
       }
     })
   }

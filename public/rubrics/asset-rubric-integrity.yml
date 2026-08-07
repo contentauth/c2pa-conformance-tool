@@ -1,8 +1,8 @@
 rubric_metadata:
   name: C2PA Asset Integrity Rubric
   issuer: C2PA Conformance Task Force
-  date: '2026-03-31T05:00:00Z'
-  version: 1.1.0
+  date: '2026-08-06T00:00:00Z'
+  version: '1.0'
   language: en
 variables:
   $well_formed_error_codes:
@@ -12,8 +12,11 @@ variables:
   - assertion.collectionHash.malformed
   - assertion.dataHash.malformed
   - assertion.external-reference.malformed
+  - assertion.external-reference.labelMismatch
+  - assertion.external-reference.created
   - assertion.ingredient.malformed
   - assertion.alternativeContentRepresentation.malformed
+  - assertion.alternativeContentRepresentation.missing
   - assertion.multiAssetHash.malformed
   - assertion.cbor.invalid
   - assertion.json.invalid
@@ -51,6 +54,7 @@ variables:
   - assertion.alternativeContentRepresentation.hashMismatch
   - assertion.multiAssetHash.mismatch
   - assertion.hashedURI.mismatch
+  - assertion.hardBinding.redacted
   - hashedURI.mismatch
   - ingredient.manifest.mismatch
   - ingredient.claimSignature.missing
@@ -65,7 +69,8 @@ variables:
   - signingCredential.untrusted
   - MISSING_VALIDATION_RESULTS
 expressions:
-  _manifest_validationResults: '($arg0.validationResults || { failure: [{code: "MISSING_VALIDATION_RESULTS"}] })'
+  _manifest_validationResults: |-
+    ($args[0].validationResults || { failure: [{code: "MISSING_VALIDATION_RESULTS"}] })
   _activeManifest: manifests[0]
   _validationResults: _manifest_validationResults(_activeManifest())
 

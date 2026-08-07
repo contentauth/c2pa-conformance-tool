@@ -25,6 +25,12 @@ export interface RubricStatement {
    */
   failIfMatched?: boolean
   /**
+   * When true, a truthy/non-empty match means the check WARNED (not failed).
+   * The "warn" outcome picks "false" reportText if no "warn" key exists.
+   * Mirrors the Python reference's `warnIfMatched` field.
+   */
+  warnIfMatched?: boolean
+  /**
    * Outcome → locale → text. Common keys: "true", "false", "default".
    * Example:
    *   reportText:
@@ -132,6 +138,8 @@ export interface ManifestSignalsResult {
   /** True iff any gathered_assertions entry in the active claim has a c2pa.actions URL. */
   additionalSignalsInGathered: boolean
   ingredients: IngredientEdge[]
+  /** True for synthetic manifests created from flat ingredients with a digitalSourceType. */
+  pseudo?: boolean
 }
 
 /** Aggregate signals rubric result across all manifests. */
@@ -167,6 +175,8 @@ export interface StatementResult {
   rawValue: unknown
   /** Error message if evaluation threw. */
   error?: string
+  /** True when the statement used warnIfMatched and the expression matched. */
+  warned?: boolean
 }
 
 /** Result of evaluating an entire rubric. */

@@ -1,6 +1,6 @@
 {
   "rubricName": "C2PA Asset Signals Rubric (Local)",
-  "rubricVersion": "1.0.0",
+  "rubricVersion": "1.0",
   "manifests": [
     {
       "assertedBy": {
@@ -16,7 +16,13 @@
           "multiple": false
         }
       ],
-      "localTransformations": [],
+      "localTransformations": [
+        {
+          "trait": "transformation:signal_ambiguousActions",
+          "reportText": "Contains ambiguous actions",
+          "multiple": false
+        }
+      ],
       "allActionsIncluded": false,
       "additionalSignalsInGathered": false,
       "ingredients": [
@@ -42,8 +48,13 @@
       ],
       "localTransformations": [
         {
-          "trait": "transformation:signal_editorialAI",
-          "reportText": "Contains Editorial GenAI Transformations",
+          "trait": "transformation:signal_ambiguousActions",
+          "reportText": "Contains ambiguous actions",
+          "multiple": false
+        },
+        {
+          "trait": "transformation:signal_perceptibleGenAI",
+          "reportText": "Contains Perceptible GenAI Transformations",
           "multiple": false
         }
       ],
@@ -65,6 +76,11 @@
       "mimeType": "image/jpeg",
       "localInceptions": [],
       "localTransformations": [
+        {
+          "trait": "transformation:signal_ambiguousActions",
+          "reportText": "Contains ambiguous actions",
+          "multiple": false
+        },
         {
           "trait": "transformation:signal_nonEditorial",
           "reportText": "Contains Non-editorial Transformations",
@@ -93,7 +109,13 @@
           "multiple": false
         }
       ],
-      "localTransformations": [],
+      "localTransformations": [
+        {
+          "trait": "transformation:signal_ambiguousActions",
+          "reportText": "Contains ambiguous actions",
+          "multiple": false
+        }
+      ],
       "allActionsIncluded": false,
       "additionalSignalsInGathered": false,
       "ingredients": []

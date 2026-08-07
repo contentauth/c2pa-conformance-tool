@@ -1,9 +1,9 @@
 <script lang="ts">
   import { createEventDispatcher, onDestroy } from 'svelte'
-  import hljs from 'highlight.js'
   import ManifestSummary from './ManifestSummary.svelte'
   import RubricsPanel from './RubricsPanel.svelte'
   import OverviewPanel from './OverviewPanel.svelte'
+  import JsonViewer from './JsonViewer.svelte'
   import type { ConformanceReport, ValidationStatusItem, AssertionSummaryItem, CrJsonManifestEntry, ManifestValidationGroup } from './types'
   import type { ManifestSignalsResult } from './rubrics/types'
   import {
@@ -17,17 +17,6 @@
   } from './crjson'
   import { evaluateReportSignals } from './summarySignals'
   import { VALIDATION_STATUS, VALIDATION_FAILURE_DESCRIPTIONS } from './constants'
-
-  $: rawJsonHighlighted = (() => {
-    try {
-      return hljs.highlight(JSON.stringify(report, null, 2), { language: 'json' }).value
-    } catch {
-      return ''
-    }
-  })()
-  $: if (rawJsonCodeEl && rawJsonHighlighted) {
-    rawJsonCodeEl.innerHTML = rawJsonHighlighted
-  }
 
   export let report: ConformanceReport
   export let usedTestCertificates = false
@@ -47,7 +36,6 @@
     rubrics:  { title: 'Asset Rubrics',      subtitle: 'Check crJSON against rubrics' },
   }
   $: heading = tabHeadings[activeTab]
-  let rawJsonCodeEl: HTMLElement | null = null
   let copied = false
   let copyTimeout: ReturnType<typeof setTimeout> | null = null
   let mediaUrl: string | null = null
@@ -725,7 +713,7 @@
         </div>
         <h3 class="text-xl font-semibold text-gray-900 dark:text-white">crJSON Report</h3>
       </div>
-      <pre class="hljs bg-gray-900 dark:bg-black border-2 border-gray-700 dark:border-gray-600 rounded-xl p-6 overflow-x-auto text-sm leading-relaxed shadow-inner"><code class="language-json" bind:this={rawJsonCodeEl}></code></pre>
+      <pre class="hljs bg-gray-900 dark:bg-black border-2 border-gray-700 dark:border-gray-600 rounded-xl p-6 overflow-x-auto text-sm leading-relaxed shadow-inner"><code class="language-json"><JsonViewer value={report} /></code></pre>
     </div>
   {:else if activeTab === 'rubrics'}
     <div class="w-full">
@@ -752,22 +740,22 @@
           <div class="flex flex-col gap-6">
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div class="bg-gray-50 dark:bg-gray-900 rounded-xl p-4">
-                <div class="text-xs font-semibold text-gray-500 dark:text-gray-500 uppercase tracking-wide mb-1">Filename</div>
+                <div class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">Filename</div>
                 <p class="text-sm font-medium text-gray-900 dark:text-gray-100 truncate" title={file.name}>{file.name}</p>
               </div>
               <div class="bg-gray-50 dark:bg-gray-900 rounded-xl p-4">
-                <div class="text-xs font-semibold text-gray-500 dark:text-gray-500 uppercase tracking-wide mb-1">Type</div>
+                <div class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">Type</div>
                 <p class="text-sm font-medium text-gray-900 dark:text-gray-100">
                   {mediaType === 'sidecar' ? 'application/c2pa (sidecar)' : (file.type || 'Unknown')}
                 </p>
               </div>
               <div class="bg-gray-50 dark:bg-gray-900 rounded-xl p-4">
-                <div class="text-xs font-semibold text-gray-500 dark:text-gray-500 uppercase tracking-wide mb-1">Size</div>
+                <div class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">Size</div>
                 <p class="text-sm font-medium text-gray-900 dark:text-gray-100">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
               </div>
             </div>
 
-            <div class="bg-gray-50 dark:bg-gray-900 rounded-2xl p-6 flex items-center justify-center min-h-[350px] border-2 border-gray-200 dark:border-gray-700">
+            <div class="bg-gray-50 dark:bg-gray-900 rounded-2xl p-6 flex items-center justify-center min-h-[350px] border-2 border-gray-200 dark:border-gray-600">
               {#if mediaType === 'image'}
                 <img src={mediaUrl} alt="Preview" class="max-w-full max-h-[600px] object-contain rounded-xl shadow-lg" />
               {:else if mediaType === 'video'}
@@ -777,7 +765,7 @@
                 </video>
               {:else if mediaType === 'audio'}
                 <div class="w-full max-w-md">
-                  <div class="w-20 h-20 mx-auto bg-gradient-to-br from-purple-500 to-pink-500 rounded-2xl flex items-center justify-center text-white mb-6 shadow-lg">
+                  <div class="w-20 h-20 mx-auto bg-gradient-to-br from-purple-500 to-pink-500 dark:from-purple-700 dark:to-pink-700 rounded-2xl flex items-center justify-center text-white mb-6 shadow-lg">
                     <svg class="w-10 h-10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                       <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
                       <path d="M3 17a3 3 0 1 0 6 0a3 3 0 0 0-6 0"/><path d="M6 17v-13l12-2v13"/><path d="M15 15a3 3 0 1 0 6 0a3 3 0 0 0-6 0"/>
@@ -789,7 +777,7 @@
                 </div>
               {:else if mediaType === 'document'}
                 <div class="text-center">
-                  <div class="w-20 h-20 mx-auto bg-gradient-to-br from-red-500 to-orange-500 rounded-2xl flex items-center justify-center text-white mb-6 shadow-lg">
+                  <div class="w-20 h-20 mx-auto bg-gradient-to-br from-red-500 to-orange-500 dark:from-red-700 dark:to-orange-600 rounded-2xl flex items-center justify-center text-white mb-6 shadow-lg">
                     <svg class="w-10 h-10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                       <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
                       <path d="M14 3v4a1 1 0 0 0 1 1h4"/><path d="M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2z"/><path d="M9 17h6"/><path d="M9 13h6"/>
@@ -1110,7 +1098,7 @@
                                 <!-- Special display for actions -->
                                 <div class="space-y-2">
                                   <div>
-                                    <div class="text-xs font-semibold text-gray-500 dark:text-gray-500 uppercase tracking-wide mb-1">
+                                    <div class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">
                                       {item.key}
                                     </div>
                                     <div class="text-sm font-medium text-gray-900 dark:text-gray-100">
@@ -1120,7 +1108,7 @@
 
                                   {#if item.digitalSourceType}
                                     <div>
-                                      <div class="text-xs font-semibold text-gray-500 dark:text-gray-500 uppercase tracking-wide mb-1">
+                                      <div class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">
                                         Digital Source Type
                                       </div>
                                       <a
@@ -1136,7 +1124,7 @@
 
                                   {#if item.description}
                                     <div>
-                                      <div class="text-xs font-semibold text-gray-500 dark:text-gray-500 uppercase tracking-wide mb-1">
+                                      <div class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">
                                         Description
                                       </div>
                                       <div class="text-sm font-medium text-gray-900 dark:text-gray-100 break-words">
@@ -1147,7 +1135,7 @@
                                 </div>
                               {:else}
                                 <!-- Standard display for other fields -->
-                                <div class="text-xs font-semibold text-gray-500 dark:text-gray-500 uppercase tracking-wide mb-1">
+                                <div class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">
                                   {item.key}
                                 </div>
                                 <div class="text-sm font-medium text-gray-900 dark:text-gray-100 break-words">

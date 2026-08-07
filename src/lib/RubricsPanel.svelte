@@ -49,8 +49,6 @@
   onMount(async () => {
     try {
       index = await loadRubricIndex()
-      // Auto-select the first rubric to make the empty state less stark.
-      if (index.length > 0) selected = new Set([index[0].id])
     } catch (e) {
       indexError = e instanceof Error ? e.message : String(e)
     } finally {

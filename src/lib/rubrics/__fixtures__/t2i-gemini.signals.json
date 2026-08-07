@@ -1,6 +1,6 @@
 {
   "rubricName": "C2PA Asset Signals Rubric (Local)",
-  "rubricVersion": "1.0.0",
+  "rubricVersion": "1.0",
   "manifests": [
     {
       "assertedBy": {
@@ -12,23 +12,28 @@
       "localInceptions": [],
       "localTransformations": [
         {
-          "trait": "transformation:signal_editorialAI",
-          "reportText": "Contains Editorial GenAI Transformations",
-          "multiple": false
-        },
-        {
-          "trait": "transformation:signal_editorialNonAI",
-          "reportText": "Contains Editorial Non-GenAI Transformations",
-          "multiple": false
-        },
-        {
-          "trait": "transformation:signal_editorialPossiblyGenAI",
-          "reportText": "Contains Editorial Transformations Possibly Using GenAI",
+          "trait": "transformation:signal_ambiguousActions",
+          "reportText": "Contains ambiguous actions",
           "multiple": false
         },
         {
           "trait": "transformation:signal_nonEditorial",
           "reportText": "Contains Non-editorial Transformations",
+          "multiple": false
+        },
+        {
+          "trait": "transformation:signal_perceptibleGenAI",
+          "reportText": "Contains Perceptible GenAI Transformations",
+          "multiple": false
+        },
+        {
+          "trait": "transformation:signal_perceptibleNonGenAI",
+          "reportText": "Contains Perceptible Non-GenAI Transformations",
+          "multiple": false
+        },
+        {
+          "trait": "transformation:signal_perceptiblePossiblyGenAI",
+          "reportText": "Contains Perceptible Transformations Possibly Using GenAI",
           "multiple": false
         }
       ],
@@ -57,8 +62,13 @@
       ],
       "localTransformations": [
         {
-          "trait": "transformation:signal_editorialAI",
-          "reportText": "Contains Editorial GenAI Transformations",
+          "trait": "transformation:signal_ambiguousActions",
+          "reportText": "Contains ambiguous actions",
+          "multiple": false
+        },
+        {
+          "trait": "transformation:signal_perceptibleGenAI",
+          "reportText": "Contains Perceptible GenAI Transformations",
           "multiple": false
         }
       ],
@@ -87,8 +97,13 @@
       ],
       "localTransformations": [
         {
-          "trait": "transformation:signal_editorialAI",
-          "reportText": "Contains Editorial GenAI Transformations",
+          "trait": "transformation:signal_ambiguousActions",
+          "reportText": "Contains ambiguous actions",
+          "multiple": false
+        },
+        {
+          "trait": "transformation:signal_perceptibleGenAI",
+          "reportText": "Contains Perceptible GenAI Transformations",
           "multiple": false
         }
       ],

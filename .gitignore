@@ -34,6 +34,7 @@ public/wasm/*.ts
 public/wasm/package.json
 public/wasm/.gitignore
 public/c2pa.wasm
+public/local-c2pa/
 
 # Environment
 .env

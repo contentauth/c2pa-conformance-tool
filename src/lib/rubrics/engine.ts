@@ -11,9 +11,9 @@
  *     argument on every `search()` call.
  *
  *   - `expressions:` → `_name: "<expr>"` named expressions, registered as
- *     custom functions. They can reference `$argN` positional parameters,
- *     which we inject into the interpreter's `globals` at call time and
- *     restore afterwards so nested calls don't leak state.
+ *     custom functions. They can reference `$args[N]` (the same convention
+ *     as the Python reference) via a `$args` array global injected at call
+ *     time and restored afterwards so nested calls don't leak state.
  *
  * Keep this file free of evaluator-specific logic (pass/fail, coercion,
  * reportText). Those stay in `evaluate.ts` / `perManifest.ts`.
@@ -21,7 +21,6 @@
 import JsonFormula, {
   dataTypes,
   type CustomFunctionEntry,
-  type Interpreter,
   type JsonFormulaAst,
 } from '@adobe/json-formula'
 import type { RubricMetadata } from './types'
@@ -39,27 +38,27 @@ export function createEngine(metadata: RubricMetadata): RubricEngine {
   const variables: Record<string, unknown> = { ...(metadata.variables ?? {}) }
   const expressions: Record<string, string> = { ...(metadata.expressions ?? {}) }
 
-  // Determine the widest `$argN` fingerprint across all named expressions so
-  // the parser will accept those identifiers when compiling any of them.
-  const maxArity = Object.values(expressions).reduce(
-    (acc, expr) => Math.max(acc, argCount(expr)),
-    0,
+  // Infer arity of each named expression from call sites and body references
+  const exprArities = inferArities(expressions)
+
+  // If any expression body references $args, include it in allowed names for compilation
+  const usesArgs = Object.values(expressions).some(
+    (expr) => /\$args\b/.test(expr),
   )
-  const argNames = Array.from({ length: maxArity }, (_, i) => `$arg${i}`)
+  const allowedGlobals = [
+    ...Object.keys(variables),
+    ...Object.keys(expressions),
+    ...(usesArgs ? ['$args'] : []),
+  ]
 
   // Pre-compile each named expression once. Parsing happens now; execution
   // happens every time the expression is invoked (possibly many times per
   // statement via nested `_name()` calls).
   const compileHelper = new JsonFormula({}, null, [])
-  const allowedGlobals = [
-    ...Object.keys(variables),
-    ...Object.keys(expressions),
-    ...argNames,
-  ]
 
   const compiled = new Map<string, { ast: JsonFormulaAst | null; arity: number; error?: string }>()
   for (const [name, exprStr] of Object.entries(expressions)) {
-    const arity = argCount(exprStr)
+    const arity = exprArities[name]
     try {
       compiled.set(name, {
         ast: compileHelper.compile(normalizeExpression(exprStr), allowedGlobals),
@@ -180,16 +179,67 @@ export function normalizeExpression(expr: string): string {
   return out
 }
 
-/** Count the highest `$argN` index referenced in an expression, +1. Zero if none. */
-function argCount(expr: string | undefined): number {
-  if (!expr) return 0
-  const re = /\$arg(\d+)/g
-  let max = -1
-  for (const m of expr.matchAll(re)) {
-    const n = Number(m[1])
-    if (Number.isFinite(n) && n > max) max = n
+/**
+ * Infer the arity of each named expression from call sites and from $args body references.
+ *
+ * Mirrors the Python implementation's two-pass arity inference.
+ */
+function inferArities(expressions: Record<string, string>): Record<string, number> {
+  const arities: Record<string, number> = {}
+  for (const name of Object.keys(expressions)) {
+    arities[name] = 0
   }
-  return max + 1
+
+  // Pass 1: infer from call sites
+  for (const funcName of Object.keys(expressions)) {
+    const escaped = funcName.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')
+    const callPattern = new RegExp('\\b' + escaped + '\\s*\\(', 'g')
+
+    for (const exprVal of Object.values(expressions)) {
+      const exprStr = exprVal ?? ''
+      callPattern.lastIndex = 0
+      let match
+      while ((match = callPattern.exec(exprStr)) !== null) {
+        const startIndex = callPattern.lastIndex
+        const rest = exprStr.slice(startIndex)
+        let count = 0
+        if (!rest.startsWith(')')) {
+          let depth = 1
+          count = 1
+          for (let i = 0; i < rest.length; i++) {
+            const c = rest[i]
+            if (c === '(') {
+              depth += 1
+            } else if (c === ')') {
+              depth -= 1
+              if (depth === 0) break
+            } else if (c === ',' && depth === 1) {
+              count += 1
+            }
+          }
+        }
+        arities[funcName] = Math.max(arities[funcName], count)
+      }
+    }
+  }
+
+  // Pass 2: infer from $args[N] body references
+  for (const [name, exprVal] of Object.entries(expressions)) {
+    const exprStr = exprVal ?? ''
+    const matches = [...exprStr.matchAll(/\$args\[(\d+)\]/g)]
+    let maxIdx = -1
+    for (const m of matches) {
+      const idx = parseInt(m[1], 10)
+      if (idx > maxIdx) maxIdx = idx
+    }
+    if (maxIdx >= 0) {
+      arities[name] = Math.max(arities[name], maxIdx + 1)
+    } else if (/\$args\b/.test(exprStr)) {
+      arities[name] = Math.max(arities[name], 1)
+    }
+  }
+
+  return arities
 }
 
 /** Build an `_signature` list accepting exactly `arity` positional args (any type). */
@@ -201,9 +251,9 @@ function makeSignature(arity: number) {
 /**
  * Build the `_func` for a named expression. Zero-arity forms just re-evaluate
  * the compiled AST against the caller's data. Parameterised forms inject the
- * caller-provided values as `$arg0`, `$arg1`, ... into the interpreter's
- * `globals`, evaluate, then restore the prior values — matching the Python
- * reference's save/restore dance exactly.
+ * caller-provided values as a `$args` array into the interpreter's `globals`,
+ * evaluate, then restore the prior value — matching the Python reference's
+ * save/restore dance exactly.
  */
 function makeExpressionFn(
   name: string,
@@ -221,34 +271,16 @@ function makeExpressionFn(
     if (entry.ast == null) {
       throw new Error(`Expression '${name}' failed to compile: ${entry.error ?? 'unknown error'}`)
     }
-    return withInjectedGlobals(
-      interpreter,
-      Object.fromEntries(args.map((v, i) => [`$arg${i}`, v])),
-      () => interpreter.search(entry.ast as JsonFormulaAst, data),
-    )
-  }
-}
-
-/** Run `fn` with extra entries merged into `interpreter.globals`, restoring on exit. */
-function withInjectedGlobals<T>(
-  interpreter: Interpreter,
-  extra: Record<string, unknown>,
-  fn: () => T,
-): T {
-  const prior = new Map<string, { had: boolean; value: unknown }>()
-  for (const k of Object.keys(extra)) {
-    prior.set(k, {
-      had: Object.prototype.hasOwnProperty.call(interpreter.globals, k),
-      value: interpreter.globals[k],
-    })
-    interpreter.globals[k] = extra[k]
-  }
-  try {
-    return fn()
-  } finally {
-    for (const [k, snap] of prior) {
-      if (snap.had) interpreter.globals[k] = snap.value
-      else delete interpreter.globals[k]
+    const saved = interpreter.globals['$args']
+    interpreter.globals['$args'] = [...args]
+    try {
+      return interpreter.search(entry.ast, data)
+    } finally {
+      if (saved === undefined) {
+        delete interpreter.globals['$args']
+      } else {
+        interpreter.globals['$args'] = saved
+      }
     }
   }
 }

@@ -1,6 +1,6 @@
 {
   "rubricName": "C2PA Asset Signals Rubric (Local)",
-  "rubricVersion": "1.0.0",
+  "rubricVersion": "1.0",
   "manifests": [
     {
       "assertedBy": {
@@ -16,6 +16,11 @@
         }
       ],
       "localTransformations": [
+        {
+          "trait": "transformation:signal_ambiguousActions",
+          "reportText": "Contains ambiguous actions",
+          "multiple": false
+        },
         {
           "trait": "transformation:signal_nonEditorial",
           "reportText": "Contains Non-editorial Transformations",

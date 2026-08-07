@@ -89,11 +89,6 @@
         "report_text": "Validation results are present for integrity analysis"
       },
       {
-        "trait": "valid_success",
-        "reportText": "No validation mismatches found",
-        "report_text": "No validation mismatches found"
-      },
-      {
         "trait": "well_formed_data_present",
         "reportText": "Validation results are present for structural analysis",
         "report_text": "Validation results are present for structural analysis"
@@ -105,6 +100,14 @@
       }
     ]
   },
-  "false": {},
+  "false": {
+    "validation": [
+      {
+        "trait": "valid_success",
+        "reportText": "Found validation mismatches: assertion.action.ingredientMismatch",
+        "report_text": "Found validation mismatches: assertion.action.ingredientMismatch"
+      }
+    ]
+  },
   "warning": {}
 }

@@ -175,6 +175,7 @@ function normalizeStatement(item: unknown, filenameForError: string): RubricStat
     description: typeof obj.description === 'string' ? obj.description : undefined,
     expression,
     failIfMatched: obj.failIfMatched === true,
+    warnIfMatched: obj.warnIfMatched === true,
     reportText: (obj.reportText ?? undefined) as RubricStatement['reportText'],
   }
 }

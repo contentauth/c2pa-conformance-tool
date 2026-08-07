@@ -1,27 +1,12 @@
-import { createC2pa } from '@contentauth/c2pa-web'
-import type { Settings } from '@contentauth/c2pa-web'
 import { VERSION_INFO } from './version'
 import type { ConformanceReport } from './types'
 import { VALIDATION_STATUS } from './constants'
 import { isCrJson, legacyToCrJson, getActiveManifestValidationStatus, type CrJson } from './crjson'
 
-type ReaderHandle = {
-  manifestStore: () => Promise<CrJson>
-  free: () => Promise<void>
-  resourceToBytes?: (uri: string) => Promise<Uint8Array>
-}
-
-type C2paInstance = {
-  reader: {
-    fromBlob: (format: string, file: Blob, settings?: Settings) => Promise<ReaderHandle | null>
-    fromSidecarAndBlob?: (
-      sidecarBytes: Uint8Array,
-      assetFormat: string,
-      assetFile: Blob,
-      settings?: Settings,
-    ) => Promise<ReaderHandle | null>
-  }
-  getVersion?: () => Promise<string> | string
+// Trust/verify settings passed to the local WASM read functions.
+type Settings = {
+  verify?: { verifyAfterReading?: boolean; verifyTrust?: boolean }
+  trust?: { trustAnchors?: string; allowedList?: string }
 }
 
 type LocalC2paModule = {
@@ -34,6 +19,12 @@ type LocalC2paModule = {
     assetFormat: string,
     settingsJson?: string,
   ) => Promise<string>
+  get_resource_bytes?: (
+    fileBytes: Uint8Array,
+    format: string,
+    uri: string,
+    settingsJson?: string,
+  ) => Promise<Uint8Array>
 }
 
 type ExtractedCrJsonResult = {
@@ -47,9 +38,6 @@ const importModule = new Function('modulePath', 'return import(modulePath)') as 
 type ITL = { allowed: string; anchors: string }
 
 let c2paInstance: C2paInstance | null = null
-let packagedC2paInstance: C2paInstance | null = null
-// Cached raw packaged-SDK promise, shared between getPackagedC2pa() and enrichThumbnailsViaPackagedSdk().
-let packagedSdkPromise: ReturnType<typeof createC2pa> | null = null
 let mainTrustListPem: string | null = null
 let itl: ITL | null = null
 
@@ -82,10 +70,92 @@ function toLocalSettingsJson(settings?: Settings): string | undefined {
   return JSON.stringify(localSettings)
 }
 
+// ── Local WASM instance ───────────────────────────────────────────────────────
+
+type C2paInstance = {
+  module: LocalC2paModule
+  reader: {
+    fromBlob: (format: string, file: Blob, settings?: Settings) => Promise<ReaderHandle | null>
+    fromSidecarAndBlob?: (
+      sidecarBytes: Uint8Array,
+      assetFormat: string,
+      assetFile: Blob,
+      settings?: Settings,
+    ) => Promise<ReaderHandle | null>
+  }
+  getVersion: () => string
+}
+
+type ReaderHandle = {
+  manifestStore: () => Promise<CrJson>
+  free: () => Promise<void>
+}
+
+// Test-only escape hatch: set to bypass the probe+import path.
+let _overrideLocalModule: LocalC2paModule | null = null
+
+export function _setLocalModuleForTesting(mod: LocalC2paModule | null): void {
+  _overrideLocalModule = mod
+  c2paInstance = null
+}
+
+function buildC2paFromModule(localModule: LocalC2paModule): C2paInstance {
+  const parseCrJson = (raw: string): CrJson => {
+    const parsed = JSON.parse(raw) as CrJson
+    if (!isCrJson(parsed)) {
+      throw new Error('Local WASM returned non-crJSON format')
+    }
+    return parsed
+  }
+
+  return {
+    module: localModule,
+    reader: {
+      fromBlob: async (format: string, file: Blob, settings?: Settings) => ({
+        manifestStore: async () => {
+          const fileBytes = new Uint8Array(await file.arrayBuffer())
+          const json = await localModule.read_manifest_store(
+            fileBytes,
+            format,
+            toLocalSettingsJson(settings),
+          )
+          return parseCrJson(json)
+        },
+        free: async () => {},
+      }),
+      ...(typeof localModule.read_sidecar_manifest_store === 'function'
+        ? {
+            fromSidecarAndBlob: async (
+              sidecarBytes: Uint8Array,
+              assetFormat: string,
+              assetFile: Blob,
+              settings?: Settings,
+            ) => ({
+              manifestStore: async () => {
+                const assetBytes = new Uint8Array(await assetFile.arrayBuffer())
+                const json = await localModule.read_sidecar_manifest_store!(
+                  sidecarBytes,
+                  assetBytes,
+                  assetFormat,
+                  toLocalSettingsJson(settings),
+                )
+                return parseCrJson(json)
+              },
+              free: async () => {},
+            }),
+          }
+        : {}),
+    },
+    getVersion: () => localModule.get_version(),
+  }
+}
+
 async function createLocalC2pa(): Promise<C2paInstance | null> {
+  if (_overrideLocalModule) {
+    return buildC2paFromModule(_overrideLocalModule)
+  }
+
   try {
-    // Probe the file before importing — on SPA hosts (e.g. Netlify) missing paths
-    // return index.html with text/html, which the browser rejects as a module script.
     const moduleUrl = `${base}local-c2pa/c2pa_local.js`
     const probe = await fetch(moduleUrl, { method: 'HEAD' })
     const contentType = probe.headers.get('content-type') ?? ''
@@ -95,63 +165,29 @@ async function createLocalC2pa(): Promise<C2paInstance | null> {
 
     const localModule = await importModule(moduleUrl)
     await localModule.default()
-
-    const parseCrJson = (raw: string): CrJson => {
-      const parsed = JSON.parse(raw) as CrJson
-      if (!isCrJson(parsed)) {
-        throw new Error('Local WASM returned non-crJSON format')
-      }
-      return parsed
-    }
-
-    return {
-      reader: {
-        fromBlob: async (format: string, file: Blob, settings?: Settings) => ({
-          manifestStore: async () => {
-            const fileBytes = new Uint8Array(await file.arrayBuffer())
-            const manifestStoreJson = await localModule.read_manifest_store(
-              fileBytes,
-              format,
-              toLocalSettingsJson(settings)
-            )
-            return parseCrJson(manifestStoreJson)
-          },
-          free: async () => {},
-        }),
-        ...(typeof localModule.read_sidecar_manifest_store === 'function'
-          ? {
-              fromSidecarAndBlob: async (
-                sidecarBytes: Uint8Array,
-                assetFormat: string,
-                assetFile: Blob,
-                settings?: Settings,
-              ) => ({
-                manifestStore: async () => {
-                  const assetBytes = new Uint8Array(await assetFile.arrayBuffer())
-                  const json = await localModule.read_sidecar_manifest_store!(
-                    sidecarBytes,
-                    assetBytes,
-                    assetFormat,
-                    toLocalSettingsJson(settings),
-                  )
-                  return parseCrJson(json)
-                },
-                free: async () => {},
-              }),
-            }
-          : {}),
-      },
-      getVersion: () => localModule.get_version(),
-    }
+    return buildC2paFromModule(localModule)
   } catch (error) {
-    console.info('Local c2pa-rs wasm not available, using packaged SDK', error)
+    console.info('Local c2pa-rs WASM not available:', error)
     return null
   }
 }
 
-/**
- * Fetch the main C2PA trust lists (without ITL)
- */
+async function initC2pa(): Promise<C2paInstance> {
+  if (c2paInstance) {
+    return c2paInstance
+  }
+
+  const instance = await createLocalC2pa()
+  if (!instance) {
+    throw new Error('Local c2pa-rs WASM not available. Run `npm run build:local-wasm` to build it.')
+  }
+
+  c2paInstance = instance
+  return c2paInstance
+}
+
+// ── Trust list fetching ───────────────────────────────────────────────────────
+
 async function fetchMainTrustList(): Promise<string> {
   if (mainTrustListPem) {
     return mainTrustListPem
@@ -222,62 +258,8 @@ async function fetchITL(): Promise<ITL> {
   }
 }
 
-/** Wrap a @contentauth/c2pa-web SDK instance as a C2paInstance (legacy JSON → crJSON). */
-function wrapPackagedSdk(sdk: Awaited<ReturnType<typeof createC2pa>>): C2paInstance {
-  return {
-    reader: {
-      fromBlob: async (format: string, file: Blob, settings?: Settings) => {
-        const reader = await sdk.reader.fromBlob(format, file, settings)
-        if (!reader) return null
-        return {
-          manifestStore: async () => {
-            const legacy = await reader.manifestStore() as Record<string, unknown>
-            return legacyToCrJson(legacy)
-          },
-          free: async () => { await reader.free() },
-          ...(reader.resourceToBytes && { resourceToBytes: reader.resourceToBytes.bind(reader) }),
-        }
-      },
-    },
-    getVersion: () => '@contentauth/c2pa-web v0.6.1',
-  }
-}
+// ── MIME / file type helpers ──────────────────────────────────────────────────
 
-/**
- * Return the packaged SDK as a C2paInstance, lazily initialised and cached.
- * Used for sidecar files and thumbnail fallback — never replaced by the local WASM.
- */
-async function getPackagedC2pa(): Promise<C2paInstance> {
-  if (!packagedC2paInstance) {
-    if (!packagedSdkPromise) packagedSdkPromise = createC2pa({ wasmSrc: `${base}c2pa.wasm` })
-    packagedC2paInstance = wrapPackagedSdk(await packagedSdkPromise)
-  }
-  return packagedC2paInstance
-}
-
-/**
- * Initialize the C2PA SDK
- */
-async function initC2pa(): Promise<C2paInstance> {
-  if (c2paInstance) {
-    return c2paInstance
-  }
-
-  try {
-    c2paInstance = await createLocalC2pa() ?? await getPackagedC2pa()
-    return c2paInstance
-  } catch (error) {
-    console.error('Failed to initialize C2PA SDK:', error)
-    throw new Error('Failed to initialize C2PA SDK')
-  }
-}
-
-/**
- * Process a file and return a C2PA conformance report with ITL detection
- * @param file The file to process
- * @param testCertificates Optional array of test certificates (PEM format) to add to trust list
- */
-// Map browser MIME types to SDK-supported equivalents
 const MIME_TYPE_MAP: Record<string, string> = {
   'audio/x-m4a': 'audio/mp4',
   'audio/m4a': 'audio/mp4',
@@ -286,10 +268,6 @@ const MIME_TYPE_MAP: Record<string, string> = {
   'image/dng': 'image/x-adobe-dng',
 }
 
-// Fallback MIME types by file extension, for when the browser can't determine the type.
-// `.c2pa` is the standalone manifest-store sidecar format (RFC-style, no embedded asset).
-// Browsers universally leave its type empty or fall back to application/octet-stream, so
-// we resolve by extension.
 const EXTENSION_MIME_MAP: Record<string, string> = {
   'dng': 'image/x-adobe-dng',
   'arw': 'image/x-sony-arw',
@@ -301,18 +279,8 @@ const EXTENSION_MIME_MAP: Record<string, string> = {
   'c2pa': 'application/c2pa',
 }
 
-/**
- * The MIME type the C2PA SDK uses for standalone manifest-store sidecars.
- * Re-exported so UI code can detect this class of file consistently.
- */
 export const SIDECAR_MIME = 'application/c2pa'
 
-/**
- * True when the given File looks like a C2PA sidecar (standalone manifest store).
- * Matches either the MIME type (if the browser somehow set it) or the `.c2pa`
- * extension — which is how we'll detect it in ~100% of real drops, since no
- * browser recognises the type natively yet.
- */
 export function isSidecarFile(file: File): boolean {
   if (file.type === SIDECAR_MIME) return true
   const ext = file.name.split('.').pop()?.toLowerCase() ?? ''
@@ -323,17 +291,71 @@ export function resolveMimeType(file: File): string {
   const mapped = MIME_TYPE_MAP[file.type]
   if (mapped) return mapped
   if (file.type && file.type !== 'application/octet-stream') return file.type
-  // Fall back to extension-based detection
   const ext = file.name.split('.').pop()?.toLowerCase() ?? ''
   return EXTENSION_MIME_MAP[ext] ?? file.type
 }
 
+// ── Thumbnail enrichment ──────────────────────────────────────────────────────
+
 /**
- * Read the manifest store under a given set of trust settings. Returning
- * `null` means "the SDK could not construct a reader for these inputs" —
- * typically no manifest present, or (in the sidecar+asset case) the asset
- * bytes don't match the manifest's hash bindings.
+ * Resolve unresolved JUMBF `identifier` URIs in thumbnail assertions to inline
+ * base64 `data` fields. Uses the local WASM's `get_resource_bytes` when
+ * available; silently skips when not.
  */
+async function enrichThumbnailsViaWasm(
+  crJson: CrJson,
+  fileBytes: Uint8Array,
+  format: string,
+  localModule: LocalC2paModule,
+): Promise<void> {
+  if (typeof localModule.get_resource_bytes !== 'function') return
+
+  const resourceToBytes = async (uri: string): Promise<Uint8Array> => {
+    return localModule.get_resource_bytes!(fileBytes, format, uri, undefined)
+  }
+
+  await enrichThumbnails(crJson, resourceToBytes)
+}
+
+async function enrichThumbnails(
+  crJson: CrJson,
+  resourceToBytes: (uri: string) => Promise<Uint8Array>,
+): Promise<void> {
+  for (const manifest of (crJson.manifests ?? [])) {
+    const assertions = (manifest.assertions ?? {}) as Record<string, Record<string, unknown>>
+    for (const [key, assertion] of Object.entries(assertions)) {
+      if (!assertion || typeof assertion !== 'object') continue
+
+      const targets: Array<Record<string, unknown>> = []
+      if (key.startsWith('c2pa.thumbnail')) {
+        targets.push(assertion)
+      } else if (key.startsWith('c2pa.ingredient')) {
+        const thumb = assertion.thumbnail as Record<string, unknown> | undefined
+        if (thumb && typeof thumb === 'object') targets.push(thumb)
+      }
+
+      for (const target of targets) {
+        if (target.data) continue
+        const identifier = target.identifier
+        if (typeof identifier !== 'string') continue
+        try {
+          const bytes = await resourceToBytes(identifier)
+          const chunkSize = 8192
+          let binary = ''
+          for (let i = 0; i < bytes.length; i += chunkSize) {
+            binary += String.fromCharCode(...bytes.subarray(i, i + chunkSize))
+          }
+          target.data = `b64'${btoa(binary)}'`
+        } catch {
+          // Non-fatal: skip thumbnails we can't resolve
+        }
+      }
+    }
+  }
+}
+
+// ── Trust validation flow ─────────────────────────────────────────────────────
+
 type ReadManifestStore = (settings: Settings) => Promise<CrJson | null>
 
 /**
@@ -342,10 +364,6 @@ type ReadManifestStore = (settings: Settings) => Promise<CrJson | null>
  *   1. Official C2PA trust list.
  *   2. + Session-only test certificates, if they change the outcome.
  *   3. + ITL (Interim Trust List), as a last-resort fallback.
- *
- * The "how do I read the manifest store" piece is injected so this flow
- * works identically for embedded (`fromBlob`) and sidecar+asset
- * (`fromSidecarAndBlob`) validation.
  */
 async function runTrustValidationFlow(
   readManifestStore: ReadManifestStore,
@@ -434,8 +452,6 @@ async function runTrustValidationFlow(
   if (isUntrusted) {
     console.log('⚠️  Signature untrusted on main list, checking ITL...')
 
-    // allowed.pem = leaf/end-entity certs → allowedList
-    // anchors.pem = root CAs → appended to trustAnchors
     const itlSettings: Settings = {
       verify: { verifyTrust: true, verifyAfterReading: true },
       trust: {
@@ -486,85 +502,7 @@ async function runTrustValidationFlow(
   }
 }
 
-/**
- * When using the local WASM reader (which doesn't expose `resourceToBytes`),
- * fall back to a packaged-SDK reader from the same file solely for resource resolution.
- * The packaged SDK instance is cached so only one Web Worker is created.
- */
-async function enrichThumbnailsViaPackagedSdk(crJson: CrJson, file: Blob, mimeType: string): Promise<void> {
-  // Quick check: any unresolved thumbnail identifiers? (manifest-level or ingredient-embedded)
-  let hasUnresolved = false
-  outer: for (const manifest of (crJson.manifests ?? [])) {
-    const assertions = (manifest.assertions ?? {}) as Record<string, Record<string, unknown>>
-    for (const [key, assertion] of Object.entries(assertions)) {
-      if (key.startsWith('c2pa.thumbnail') && assertion && !assertion.data && typeof assertion.identifier === 'string') {
-        hasUnresolved = true
-        break outer
-      }
-      if (key.startsWith('c2pa.ingredient') && assertion) {
-        const thumb = assertion.thumbnail as Record<string, unknown> | undefined
-        if (thumb && !thumb.data && typeof thumb.identifier === 'string') {
-          hasUnresolved = true
-          break outer
-        }
-      }
-    }
-  }
-  if (!hasUnresolved) return
-
-  try {
-    const sdk = await getPackagedC2pa()
-    const reader = await sdk.reader.fromBlob(mimeType, file)
-    if (!reader || !reader.resourceToBytes) return
-    try {
-      await enrichThumbnails(crJson, reader.resourceToBytes.bind(reader))
-    } finally {
-      await reader.free()
-    }
-  } catch (e) {
-    console.warn('[thumbnails] Could not resolve thumbnails via packaged SDK:', e)
-  }
-}
-
-/**
- * Resolve JUMBF `identifier` URIs in thumbnail assertions to inline base64 `data` fields.
- * Handles both manifest-level (c2pa.thumbnail*) and ingredient-embedded (c2pa.ingredient*.thumbnail) thumbnails.
- * Only runs when the reader exposes `resourceToBytes`; silently skips failures.
- */
-async function enrichThumbnails(crJson: CrJson, resourceToBytes: (uri: string) => Promise<Uint8Array>): Promise<void> {
-  for (const manifest of (crJson.manifests ?? [])) {
-    const assertions = (manifest.assertions ?? {}) as Record<string, Record<string, unknown>>
-    for (const [key, assertion] of Object.entries(assertions)) {
-      if (!assertion || typeof assertion !== 'object') continue
-
-      const targets: Array<Record<string, unknown>> = []
-      if (key.startsWith('c2pa.thumbnail')) {
-        targets.push(assertion)
-      } else if (key.startsWith('c2pa.ingredient')) {
-        const thumb = assertion.thumbnail as Record<string, unknown> | undefined
-        if (thumb && typeof thumb === 'object') targets.push(thumb)
-      }
-
-      for (const target of targets) {
-        if (target.data) continue // already inlined
-        const identifier = target.identifier
-        if (typeof identifier !== 'string') continue
-        try {
-          const bytes = await resourceToBytes(identifier)
-          // Convert to base64 in chunks to avoid call-stack limits on large thumbnails
-          const chunkSize = 8192
-          let binary = ''
-          for (let i = 0; i < bytes.length; i += chunkSize) {
-            binary += String.fromCharCode(...bytes.subarray(i, i + chunkSize))
-          }
-          target.data = `b64'${btoa(binary)}'`
-        } catch {
-          // Non-fatal: skip thumbnails we can't resolve
-        }
-      }
-    }
-  }
-}
+// ── Public API ────────────────────────────────────────────────────────────────
 
 async function extractCrJsonWithMetadata(file: File, testCertificates: string[] = []): Promise<ExtractedCrJsonResult> {
   // JSON sidecars are crJSON reports — parse them directly without the SDK.
@@ -585,13 +523,8 @@ async function extractCrJsonWithMetadata(file: File, testCertificates: string[] 
   const mimeType = resolveMimeType(file)
   console.log('🔍 Starting file processing for:', file.name, 'Type:', file.type, mimeType !== file.type ? `(remapped to ${mimeType})` : '')
 
-  // Sidecar JUMBF files must go through the packaged SDK. The local WASM's
-  // read_manifest_store verifies data hash assertions against the sidecar bytes
-  // (not the actual asset), which always mismatches. The packaged SDK uses
-  // from_manifest_data internally, which reads the sidecar without an asset stream
-  // and correctly skips asset-hash assertion verification.
   console.log('Initializing C2PA SDK...')
-  const c2pa = mimeType === SIDECAR_MIME ? await getPackagedC2pa() : await initC2pa()
+  const c2pa = await initC2pa()
   console.log('✅ C2PA SDK initialized')
 
   const readManifestStore: ReadManifestStore = async (settings) => {
@@ -599,11 +532,8 @@ async function extractCrJsonWithMetadata(file: File, testCertificates: string[] 
     if (!reader) return null
     try {
       const crJson = await reader.manifestStore()
-      if (reader.resourceToBytes) {
-        await enrichThumbnails(crJson, reader.resourceToBytes.bind(reader))
-      } else {
-        await enrichThumbnailsViaPackagedSdk(crJson, file, mimeType)
-      }
+      const fileBytes = new Uint8Array(await file.arrayBuffer())
+      await enrichThumbnailsViaWasm(crJson, fileBytes, mimeType, c2pa.module)
       return crJson
     } finally {
       await reader.free()
@@ -677,11 +607,8 @@ async function extractSidecarWithAssetCrJsonWithMetadata(
     if (!reader) return null
     try {
       const crJson = await reader.manifestStore()
-      if (reader.resourceToBytes) {
-        await enrichThumbnails(crJson, reader.resourceToBytes.bind(reader))
-      } else {
-        await enrichThumbnailsViaPackagedSdk(crJson, asset, assetMimeType)
-      }
+      const assetBytes = new Uint8Array(await asset.arrayBuffer())
+      await enrichThumbnailsViaWasm(crJson, assetBytes, assetMimeType, c2pa.module)
       return crJson
     } finally {
       await reader.free()
@@ -716,11 +643,7 @@ export async function processSidecarWithAsset(
   )
 }
 
-/**
- * Get the C2PA library version
- */
 export async function getVersion(): Promise<string> {
   const c2pa = await initC2pa()
-  const version = await c2pa.getVersion?.()
-  return version ?? '@contentauth/c2pa-web v0.6.1'
+  return c2pa.getVersion()
 }

@@ -14,7 +14,7 @@
     "test:ui": "vitest --ui",
     "test:run": "vitest run",
     "test:coverage": "vitest run --coverage",
-    "postinstall": "mkdir -p public && cp node_modules/@contentauth/c2pa-web/dist/resources/c2pa_bg.wasm public/c2pa.wasm"
+    "postinstall": "echo 'No postinstall steps'"
   },
   "devDependencies": {
     "@sveltejs/vite-plugin-svelte": "^6.2.4",
@@ -38,7 +38,6 @@
   },
   "dependencies": {
     "@adobe/json-formula": "^2.0.0",
-    "@contentauth/c2pa-web": "^0.6.1",
     "@peculiar/x509": "^1.14.3",
     "highlight.js": "^11.11.1",
     "yaml": "^2.8.3"

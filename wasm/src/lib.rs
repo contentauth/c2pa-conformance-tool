@@ -69,6 +69,38 @@ pub async fn read_sidecar_manifest_store(
     Ok(reader.crjson())
 }
 
+/// Resolve a JUMBF resource URI (e.g. a thumbnail identifier) to its raw bytes.
+///
+/// Re-reads the manifest store from the provided file bytes so no persistent
+/// state is required between calls. Non-fatal: callers should treat errors as
+/// "resource unavailable" rather than a hard failure.
+///
+/// * `file_bytes`   - Raw bytes of the original asset file.
+/// * `format`       - MIME type of the asset (e.g. "image/jpeg").
+/// * `uri`          - JUMBF resource URI from a crJSON `identifier` field.
+/// * `settings_json`- Optional trust/verify settings (same shape as `read_manifest_store`).
+#[wasm_bindgen]
+pub async fn get_resource_bytes(
+    file_bytes: Vec<u8>,
+    format: String,
+    uri: String,
+    settings_json: Option<String>,
+) -> Result<Vec<u8>, JsValue> {
+    let context = build_context(settings_json)?;
+
+    let reader = Reader::from_context(context)
+        .with_stream_async(&format, Cursor::new(file_bytes))
+        .await
+        .map_err(|e| JsValue::from_str(&format!("Failed to read C2PA data: {e}")))?;
+
+    let mut out = Cursor::new(Vec::new());
+    reader
+        .resource_to_stream(&uri, &mut out)
+        .map_err(|e| JsValue::from_str(&format!("Resource not found: {e}")))?;
+
+    Ok(out.into_inner())
+}
+
 /// Get version information
 #[wasm_bindgen]
 pub fn get_version() -> String {

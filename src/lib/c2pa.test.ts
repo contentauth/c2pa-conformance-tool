@@ -1,141 +1,111 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { processFile, getVersion, isSidecarFile, resolveMimeType, SIDECAR_MIME } from './c2pa'
+import { processFile, getVersion, isSidecarFile, resolveMimeType, SIDECAR_MIME, _setLocalModuleForTesting } from './c2pa'
 import type { ConformanceReport } from './types'
 
-// Track which validation is being called
-let validationCallCount = 0
+// ── Shared crJSON factory ─────────────────────────────────────────────────────
 
-// Mock the @contentauth/c2pa-web module
-vi.mock('@contentauth/c2pa-web', () => ({
-  createC2pa: vi.fn(() => Promise.resolve({
-    reader: {
-      fromBlob: vi.fn((type: string, file: File, settings: { trust?: { trustAnchors?: string } }) => {
-        validationCallCount++
+function makeCrJson(opts: {
+  trusted?: boolean
+  untrusted?: boolean
+  itlTrusted?: boolean
+} = {}): string {
+  const success = []
+  const failure = []
+  if (opts.trusted) success.push({ code: 'signingCredential.trusted' })
+  if (opts.untrusted) failure.push({ code: 'signingCredential.untrusted', explanation: 'untrusted' })
+  if (opts.itlTrusted) success.push({ code: 'signingCredential.trusted' })
+  success.push({ code: 'timeStamp.validated' }, { code: 'claimSignature.validated' })
 
-        // Legacy shape returned by packaged SDK; c2pa.ts converts to crJSON via legacyToCrJson
-        const legacyManifest = {
-          title: 'Test Manifest',
-          format: 'image/jpeg',
-          instance_id: 'test-instance-id',
-          assertions: [],
-          claim_generator_info: [{ name: 'Test' }]
-        }
-
-        // First call (main trust list) - untrusted signature
-        if (validationCallCount === 1) {
-          return Promise.resolve({
-            manifestStore: vi.fn(() => Promise.resolve({
-              manifests: { 'urn:uuid:test': legacyManifest },
-              active_manifest: 'urn:uuid:test',
-              validation_results: {
-                activeManifest: {
-                  success: [
-                    { code: 'timeStamp.validated' },
-                    { code: 'claimSignature.validated' }
-                  ],
-                  failure: [
-                    { code: 'signingCredential.untrusted', explanation: 'signing certificate untrusted' }
-                  ]
-                }
-              }
-            })),
-            free: vi.fn()
-          })
-        }
-
-        // Second call (with ITL) - check if ITL is included in trust anchors
-        if (validationCallCount === 2) {
-          const hasITL = settings?.trust?.trustAnchors?.includes('ITL') || false
-
-          return Promise.resolve({
-            manifestStore: vi.fn(() => Promise.resolve({
-              manifests: { 'urn:uuid:test': legacyManifest },
-              active_manifest: 'urn:uuid:test',
-              validation_results: {
-                activeManifest: {
-                  success: hasITL ? [
-                    { code: 'timeStamp.validated' },
-                    { code: 'claimSignature.validated' },
-                    { code: 'signingCredential.trusted' }
-                  ] : [
-                    { code: 'timeStamp.validated' },
-                    { code: 'claimSignature.validated' }
-                  ],
-                  failure: hasITL ? [] : [
-                    { code: 'signingCredential.untrusted', explanation: 'signing certificate untrusted' }
-                  ]
-                }
-              }
-            })),
-            free: vi.fn()
-          })
-        }
-
-        // Default case - trusted signature
-        return Promise.resolve({
-          manifestStore: vi.fn(() => Promise.resolve({
-            manifests: { 'urn:uuid:test': legacyManifest },
-            active_manifest: 'urn:uuid:test',
-            validation_results: {
-              activeManifest: {
-                success: [
-                  { code: 'signingCredential.trusted' },
-                  { code: 'timeStamp.validated' },
-                  { code: 'claimSignature.validated' }
-                ],
-                failure: []
-              }
-            }
-          })),
-          free: vi.fn()
-        })
-      })
+  return JSON.stringify({
+    manifests: [{
+      label: 'urn:c2pa:test',
+      'claim.v2': { 'dc:format': 'image/jpeg' },
+      validationResults: { success, failure, informational: [] }
+    }],
+    activeManifest: 'urn:c2pa:test',
+    validationResults: {
+      activeManifest: { success, failure, informational: [] }
     }
-  }))
-}))
+  })
+}
+
+// ── Mock local WASM module ────────────────────────────────────────────────────
+
+let readCallCount = 0
+
+// Track trust settings per call so ITL tests can inspect them.
+const recordedTrustAnchors: string[] = []
+
+function makeLocalModule(opts: {
+  // Call index → overrides; unmatched calls use defaults.
+  calls?: Array<{ trusted?: boolean; untrusted?: boolean }>
+} = {}): Parameters<typeof _setLocalModuleForTesting>[0] {
+  return {
+    default: vi.fn(() => Promise.resolve()),
+    get_version: vi.fn(() => 'c2pa-local-wasm v0.1.0 using c2pa-rs 0.99.0'),
+    read_manifest_store: vi.fn((_bytes, _format, settingsJson) => {
+      const idx = readCallCount++
+      if (settingsJson) {
+        try {
+          const s = JSON.parse(settingsJson)
+          if (s?.trust?.trust_anchors) recordedTrustAnchors.push(s.trust.trust_anchors)
+        } catch { /* ignore */ }
+      }
+      const override = opts.calls?.[idx]
+      return Promise.resolve(
+        override
+          ? makeCrJson(override)
+          : makeCrJson({ trusted: true })
+      )
+    }),
+  }
+}
+
+// ── Test suite ────────────────────────────────────────────────────────────────
 
 describe('c2pa utilities', () => {
   beforeEach(() => {
-    // Reset call counter and mocks
-    validationCallCount = 0
+    readCallCount = 0
+    recordedTrustAnchors.length = 0
     vi.clearAllMocks()
 
-    // Mock successful trust list fetch
+    // Default: inject a mock local module that always returns a trusted result.
+    _setLocalModuleForTesting(makeLocalModule())
+
+    // Mock trust list + ITL fetches.
     global.fetch = vi.fn((input: RequestInfo | URL) => {
       const url = typeof input === 'string' ? input : input.toString()
       let content = '-----BEGIN CERTIFICATE-----\nMockCertificate\n-----END CERTIFICATE-----'
-
-      // Mock ITL files with marker content
       if (url.includes('allowed.pem')) {
         content = '-----BEGIN CERTIFICATE-----\nITLAllowedCert\n-----END CERTIFICATE-----'
       } else if (url.includes('anchors.pem')) {
         content = '-----BEGIN CERTIFICATE-----\nITLAnchorCert\n-----END CERTIFICATE-----'
       }
-
       return Promise.resolve({
-        ok: true,
-        status: 200,
-        statusText: 'OK',
-        text: () => Promise.resolve(content)
+        ok: true, status: 200, statusText: 'OK',
+        text: () => Promise.resolve(content),
+        headers: new Headers({ 'content-type': 'text/plain' }),
       } as Response)
-    }) as any
+    }) as ReturnType<typeof vi.fn>
   })
 
   afterEach(() => {
+    _setLocalModuleForTesting(null)
     vi.restoreAllMocks()
   })
 
+  // ── getVersion ──────────────────────────────────────────────────────────────
+
   describe('getVersion', () => {
-    it('should return the SDK version', async () => {
+    it('returns the local WASM version string', async () => {
       const version = await getVersion()
-      expect(version).toBe('@contentauth/c2pa-web v0.6.1')
+      expect(version).toMatch(/c2pa-local-wasm/)
     })
   })
 
+  // ── Sidecar detection ───────────────────────────────────────────────────────
+
   describe('sidecar detection', () => {
-    // Browsers almost never set a MIME for .c2pa files, so extension-based
-    // detection is doing the real work here. We cover both shapes just in
-    // case a future environment fills in `type`.
     it('detects a .c2pa file with no browser-reported MIME as a sidecar', () => {
       const f = new File([new Uint8Array([0])], 'my-manifest.c2pa', { type: '' })
       expect(isSidecarFile(f)).toBe(true)
@@ -161,99 +131,102 @@ describe('c2pa utilities', () => {
     })
   })
 
+  // ── processFile — basic ─────────────────────────────────────────────────────
+
   describe('processFile', () => {
-    it('should process a file and return manifest store with trusted signature', async () => {
-      // Reset to simulate trusted signature from the start
-      validationCallCount = 2 // Skip to third call which returns trusted
-
-      const mockFile = new File(['test content'], 'test.jpg', { type: 'image/jpeg' })
-      const result = await processFile(mockFile)
-
-      expect(result).toBeDefined()
-      expect(result.manifests).toBeDefined()
+    it('returns a manifest store with a trusted signature', async () => {
+      const result = await processFile(new File(['test'], 'test.jpg', { type: 'image/jpeg' }))
       expect(result.manifests?.length).toBeGreaterThan(0)
-      expect(result.manifests?.[0]?.label).toBe('urn:uuid:test')
+      expect(result.manifests?.[0]?.label).toBe('urn:c2pa:test')
       expect(result.usedITL).toBe(false)
     })
 
-    it('should include test certificates when provided', async () => {
-      validationCallCount = 2 // Skip to third call
+    it('attaches conformance tool version metadata', async () => {
+      const result = await processFile(new File(['test'], 'test.jpg', { type: 'image/jpeg' }))
+      expect(result._conformanceToolVersion).toBeDefined()
+    })
 
-      const mockFile = new File(['test content'], 'test.jpg', { type: 'image/jpeg' })
-      const testCert = '-----BEGIN CERTIFICATE-----\nTestCert\n-----END CERTIFICATE-----'
-
-      const result = await processFile(mockFile, [testCert])
-
-      expect(result).toBeDefined()
+    it('handles different image types', async () => {
+      const result = await processFile(new File(['test'], 'test.png', { type: 'image/png' }))
       expect(result.manifests?.length).toBeGreaterThan(0)
     })
 
-    it('should handle different file types', async () => {
-      validationCallCount = 2 // Skip to third call
-
-      const mockFile = new File(['test content'], 'test.png', { type: 'image/png' })
-      const result = await processFile(mockFile)
-
-      expect(result).toBeDefined()
+    it('accepts optional test certificates', async () => {
+      const testCert = '-----BEGIN CERTIFICATE-----\nTestCert\n-----END CERTIFICATE-----'
+      const result = await processFile(
+        new File(['test'], 'test.jpg', { type: 'image/jpeg' }),
+        [testCert],
+      )
       expect(result.manifests?.length).toBeGreaterThan(0)
     })
   })
+
+  // ── ITL validation flow ─────────────────────────────────────────────────────
 
   describe('ITL validation fallback', () => {
-    it('should detect untrusted signature on main trust list', async () => {
-      validationCallCount = 0
+    it('runs multiple passes when the main trust list reports untrusted', async () => {
+      _setLocalModuleForTesting(makeLocalModule({
+        calls: [
+          { untrusted: true },  // call 0 — main TL: untrusted
+          { trusted: true },    // call 1 — ITL: trusted
+        ],
+      }))
 
-      const mockFile = new File(['test content'], 'test.jpg', { type: 'image/jpeg' })
-      const result = await processFile(mockFile)
-
-      expect(result).toBeDefined()
-      // Should have attempted ITL validation
-      expect(validationCallCount).toBeGreaterThanOrEqual(2)
+      await processFile(new File(['test'], 'test.jpg', { type: 'image/jpeg' }))
+      expect(readCallCount).toBeGreaterThanOrEqual(2)
     })
 
-    it('should set usedITL flag when signature validates against ITL', async () => {
-      validationCallCount = 0
+    it('sets usedITL=true when the ITL makes the signature trusted', async () => {
+      _setLocalModuleForTesting(makeLocalModule({
+        calls: [
+          { untrusted: true },  // main TL: untrusted
+          { trusted: true },    // ITL: trusted
+        ],
+      }))
 
-      const mockFile = new File(['test content'], 'test.jpg', { type: 'image/jpeg' })
-      const result = await processFile(mockFile)
-
-      expect(result).toBeDefined()
-      // Check if ITL validation succeeded
-      const hasUntrusted = result.validationResults?.activeManifest?.failure?.some(
-        (f) => f.code === 'signingCredential.untrusted'
-      )
-      const hasTrusted = result.validationResults?.activeManifest?.success?.some(
-        (s) => s.code === 'signingCredential.trusted'
-      )
-
-      if (hasTrusted && !hasUntrusted) {
-        expect(result.usedITL).toBe(true)
-      }
+      const result = await processFile(new File(['test'], 'test.jpg', { type: 'image/jpeg' }))
+      expect(result.usedITL).toBe(true)
     })
 
-    it('should return ITL-validated manifest store when ITL validates', async () => {
-      validationCallCount = 0
-
-      const mockFile = new File(['test content'], 'test.jpg', { type: 'image/jpeg' })
-      const result = await processFile(mockFile)
-
-      expect(result).toBeDefined()
-      expect(result.validationResults).toBeDefined()
-    })
-
-    it('should not set usedITL flag when signature is trusted on main list', async () => {
-      validationCallCount = 2 // Start with trusted signature
-
-      const mockFile = new File(['test content'], 'test.jpg', { type: 'image/jpeg' })
-      const result = await processFile(mockFile)
-
+    it('leaves usedITL=false when the signature is trusted on the main list', async () => {
+      // Default module always returns trusted — no ITL pass needed.
+      const result = await processFile(new File(['test'], 'test.jpg', { type: 'image/jpeg' }))
       expect(result.usedITL).toBe(false)
+      expect(readCallCount).toBe(1)
+    })
+
+    it('includes ITL anchors in the trust settings during the ITL pass', async () => {
+      _setLocalModuleForTesting(makeLocalModule({
+        calls: [
+          { untrusted: true },
+          { trusted: true },
+        ],
+      }))
+
+      await processFile(new File(['test'], 'test.jpg', { type: 'image/jpeg' }))
+      const itlCall = recordedTrustAnchors.find((a) => a.includes('ITLAnchorCert'))
+      expect(itlCall).toBeDefined()
     })
   })
 
-  // Fetch error handling tests removed temporarily due to complex mock interactions
-  // The actual error handling code has been implemented and validated:
-  // - response.ok checks on all fetch calls
-  // - Detailed error messages with status codes
-  // These work correctly in the application
+  // ── Test certificate flow ───────────────────────────────────────────────────
+
+  describe('test certificate flow', () => {
+    it('sets usedTestCerts=true when test certs make the difference', async () => {
+      _setLocalModuleForTesting(makeLocalModule({
+        calls: [
+          { untrusted: true },  // call 0 — main TL: untrusted
+          { trusted: true },    // call 1 — with test certs: trusted
+          { trusted: true },    // call 2 — ITL (won't be reached)
+        ],
+      }))
+
+      const testCert = '-----BEGIN CERTIFICATE-----\nTestCert\n-----END CERTIFICATE-----'
+      const result = await processFile(
+        new File(['test'], 'test.jpg', { type: 'image/jpeg' }),
+        [testCert],
+      )
+      expect(result.usedTestCerts).toBe(true)
+    })
+  })
 })

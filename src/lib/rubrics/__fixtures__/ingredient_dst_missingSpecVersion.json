@@ -1,0 +1,171 @@
+{
+  "@context": [
+    "https://c2pa.org/crjson/crJSON.schema.json"
+  ],
+  "jsonGenerator": {
+    "name": "Google C2PA Toolkit",
+    "version": "0.0.1"
+  },
+  "manifests": [
+    {
+      "assertions": {
+        "c2pa.actions.v2": {
+          "actions": [
+            {
+              "action": "c2pa.opened",
+              "description": "Opened ingredient in C2PA 2.4 manifest",
+              "parameters": {
+                "ingredients": [
+                  {
+                    "hash": "b64'AOeDrxlW3P0cCbF92J15eVNyN+Rb/ntNyBkF5yphU1E='",
+                    "url": "self#jumbf=c2pa.assertions/c2pa.ingredient.v3"
+                  }
+                ],
+                "multipleInstances": false
+              }
+            }
+          ],
+          "allActionsIncluded": true
+        },
+        "c2pa.hash.data": {
+          "alg": "sha256",
+          "exclusions": [
+            {
+              "length": 6467,
+              "start": 6278
+            }
+          ],
+          "hash": "b64'USKQgJJCSa7rdyt0iADT1IEpkjJ63cxedWvLYbYQrOk='",
+          "pad": "b64'AAAAAAAAAAAAAAAA'"
+        },
+        "c2pa.ingredient.v3": {
+          "dc:format": "application/pdf",
+          "dc:title": "Pruned Input Ingredient PDF",
+          "digitalSourceType": "http://cv.iptc.org/newscodes/digitalsourcetype/trainedAlgorithmicMedia",
+          "relationship": "parentOf"
+        }
+      },
+      "claim.v2": {
+        "alg": "sha256",
+        "claim_generator_info": {
+          "name": "Google C2PA Core Generator Library",
+          "version": ":"
+        },
+        "created_assertions": [
+          {
+            "hash": "b64'AOeDrxlW3P0cCbF92J15eVNyN+Rb/ntNyBkF5yphU1E='",
+            "url": "self#jumbf=c2pa.assertions/c2pa.ingredient.v3"
+          },
+          {
+            "hash": "b64'2rVmM+fhuDFsnjOwWjIC8DlDcVAQ++f7E2NIc/pfKpE='",
+            "url": "self#jumbf=c2pa.assertions/c2pa.actions.v2"
+          },
+          {
+            "hash": "b64'41PCWx3VtysTajMGNuj6kuvP0kdBqxRTdc0P1EnZioQ='",
+            "url": "self#jumbf=c2pa.assertions/c2pa.hash.data"
+          }
+        ],
+        "gathered_assertions": [],
+        "instanceID": "urn:uuid:0a9bb8cf-859f-9ece-c79e-477d5622bb85",
+        "redacted_assertions": [],
+        "signature": "self#jumbf=c2pa.signature"
+      },
+      "isCompressedManifest": false,
+      "isUpdateManifest": false,
+      "label": "urn:c2pa:c7fda7e0-065e-bb36-a7ba-44aac23eabb5",
+      "signature": {
+        "algorithm": "ES256",
+        "certificateInfo": {
+          "issuer": {
+            "C": "US",
+            "CN": "Google C2PA Media Services 1P ICA for Test",
+            "O": "Google LLC"
+          },
+          "serialNumber": "ce5eecf0386f9cf9e65c839293e30ad8af8345",
+          "subject": {
+            "C": "US",
+            "CN": "TESTING Google Media Processing Services",
+            "O": "TESTING Google LLC",
+            "OU": "Google System 00000"
+          },
+          "validity": {
+            "notAfter": "2026-10-13T11:55:25+00:00",
+            "notBefore": "2026-04-16T11:55:26+00:00"
+          }
+        },
+        "timeStampInfo": {
+          "certificateInfo": {
+            "issuer": {
+              "C": "US",
+              "CN": "Google C2PA Core Time-Stamping ICA for Test",
+              "O": "Google LLC"
+            },
+            "serialNumber": "b1e051ca155c4a8456cb1edfdeed50c12b7a0b",
+            "subject": {
+              "C": "US",
+              "CN": "TESTING Google Core Time Stamping Authority T109",
+              "O": "TESTING Google LLC"
+            },
+            "validity": {
+              "notAfter": "2028-05-12T21:25:15+00:00",
+              "notBefore": "2025-08-28T12:43:37+00:00"
+            }
+          },
+          "timestamp": "2026-07-31T15:45:51+00:00"
+        }
+      },
+      "validationResults": {
+        "failure": [],
+        "informational": [
+          {
+            "code": "signingCredential.ocsp.skipped",
+            "url": "self#jumbf=/c2pa/urn:c2pa:c7fda7e0-065e-bb36-a7ba-44aac23eabb5/c2pa.signature"
+          },
+          {
+            "code": "ingredient.unknownProvenance",
+            "url": "self#jumbf=/c2pa/urn:c2pa:c7fda7e0-065e-bb36-a7ba-44aac23eabb5/c2pa.assertions/c2pa.ingredient.v3"
+          }
+        ],
+        "success": [
+          {
+            "code": "timeStamp.validated",
+            "url": "self#jumbf=/c2pa/urn:c2pa:c7fda7e0-065e-bb36-a7ba-44aac23eabb5/c2pa.signature"
+          },
+          {
+            "code": "timeStamp.trusted",
+            "url": "self#jumbf=/c2pa/urn:c2pa:c7fda7e0-065e-bb36-a7ba-44aac23eabb5/c2pa.signature"
+          },
+          {
+            "code": "signingCredential.trusted",
+            "url": "self#jumbf=/c2pa/urn:c2pa:c7fda7e0-065e-bb36-a7ba-44aac23eabb5/c2pa.signature"
+          },
+          {
+            "code": "claimSignature.insideValidity",
+            "url": "self#jumbf=/c2pa/urn:c2pa:c7fda7e0-065e-bb36-a7ba-44aac23eabb5/c2pa.signature"
+          },
+          {
+            "code": "claimSignature.validated",
+            "url": "self#jumbf=/c2pa/urn:c2pa:c7fda7e0-065e-bb36-a7ba-44aac23eabb5/c2pa.signature"
+          },
+          {
+            "code": "assertion.hashedURI.match",
+            "url": "self#jumbf=/c2pa/urn:c2pa:c7fda7e0-065e-bb36-a7ba-44aac23eabb5/c2pa.assertions/c2pa.ingredient.v3"
+          },
+          {
+            "code": "assertion.hashedURI.match",
+            "url": "self#jumbf=/c2pa/urn:c2pa:c7fda7e0-065e-bb36-a7ba-44aac23eabb5/c2pa.assertions/c2pa.actions.v2"
+          },
+          {
+            "code": "assertion.hashedURI.match",
+            "url": "self#jumbf=/c2pa/urn:c2pa:c7fda7e0-065e-bb36-a7ba-44aac23eabb5/c2pa.assertions/c2pa.hash.data"
+          },
+          {
+            "code": "assertion.dataHash.match",
+            "url": "self#jumbf=/c2pa/urn:c2pa:c7fda7e0-065e-bb36-a7ba-44aac23eabb5/c2pa.assertions/c2pa.hash.data"
+          }
+        ],
+        "validationTime": "2026-07-31T16:00:02.140651245+00:00"
+      }
+    }
+  ]
+}

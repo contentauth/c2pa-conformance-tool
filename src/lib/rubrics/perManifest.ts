@@ -54,6 +54,20 @@ export function evaluatePerManifest(
   // ingredient assertions (same pass as the Python DAG builder).
   const mimeTypes = resolveMimeTypes(manifests, indexMapping)
 
+  // Synthesize pseudo manifests for flat ingredients with a digitalSourceType
+  // (mirrors the Python reference's DAG builder pseudo-node logic).
+  const pseudoInfos = buildPseudoManifests(manifests)
+  const pseudoStartIdx = manifests.length
+
+  // Build a map from real manifest index → extra pseudo ingredient edges.
+  const parentToPseudoEdges = new Map<number, IngredientEdge[]>()
+  pseudoInfos.forEach((info, localIdx) => {
+    const pseudoIdx = pseudoStartIdx + localIdx
+    const existing = parentToPseudoEdges.get(info.parentManifestIdx) ?? []
+    existing.push({ index: pseudoIdx, relationship: info.relationship })
+    parentToPseudoEdges.set(info.parentManifestIdx, existing)
+  })
+
   const manifestResults: ManifestSignalsResult[] = manifests.map((manifest, idx) => {
     const signals = evaluateManifestSignals(manifest, rubric.statements, locale, engine)
 
@@ -64,6 +78,7 @@ export function evaluatePerManifest(
       else if (s.trait.startsWith('transformation:')) localTransformations.push(s)
     }
 
+    const pseudoEdges = parentToPseudoEdges.get(idx) ?? []
     return {
       assertedBy: extractAssertedBy(manifest),
       mimeType: mimeTypes[idx] ?? null,
@@ -71,7 +86,32 @@ export function evaluatePerManifest(
       localTransformations,
       allActionsIncluded: computeAllActionsIncluded(manifest),
       additionalSignalsInGathered: computeAdditionalSignalsInGathered(manifest),
-      ingredients: extractIngredients(manifest, indexMapping),
+      ingredients: [...extractIngredients(manifest, indexMapping), ...pseudoEdges],
+    }
+  })
+
+  const pseudoResults: ManifestSignalsResult[] = pseudoInfos.map((info) => {
+    const signals = evaluateManifestSignals(
+      info.syntheticManifest as CrJsonManifestEntry,
+      rubric.statements,
+      locale,
+      engine,
+    )
+    const localInceptions: SignalHit[] = []
+    const localTransformations: SignalHit[] = []
+    for (const s of signals) {
+      if (s.trait.startsWith('inception:')) localInceptions.push(s)
+      else if (s.trait.startsWith('transformation:')) localTransformations.push(s)
+    }
+    return {
+      assertedBy: info.assertedBy,
+      mimeType: info.mimeType,
+      localInceptions,
+      localTransformations,
+      allActionsIncluded: true,
+      additionalSignalsInGathered: false,
+      ingredients: [],
+      pseudo: true,
     }
   })
 
@@ -80,7 +120,7 @@ export function evaluatePerManifest(
     rubricName: rubric.metadata.name,
     rubricVersion: rubric.metadata.version,
     mode: 'per-manifest',
-    manifests: manifestResults,
+    manifests: [...manifestResults, ...pseudoResults],
     evaluatedAt: new Date(),
   }
 }
@@ -158,6 +198,94 @@ function extractAssertedBy(manifest: CrJsonManifestEntry): AssertedBy {
   const out: AssertedBy = { CN, O }
   if (OU) out.OU = OU
   return out
+}
+
+interface PseudoManifestInfo {
+  syntheticManifest: Record<string, unknown>
+  assertedBy: AssertedBy
+  mimeType: string | null
+  parentManifestIdx: number
+  relationship: string | undefined
+}
+
+/**
+ * Synthesize pseudo manifest entries for flat ingredients that carry a
+ * `digitalSourceType` but have no `activeManifest` URL — mirroring the Python
+ * reference's DAG builder pseudo-node logic.
+ *
+ * For each such ingredient the Python creates a synthetic manifest with a
+ * `c2pa.actions.v2` assertion so the signals rubric can detect inceptions
+ * (e.g. capturedMedia / fullyGenAIMedia) from the ingredient's DST.
+ *
+ * DST is sourced from:
+ *   1. `ingredient.digitalSourceType` directly, OR
+ *   2. A `c2pa.opened` action on the same manifest that has `digitalSourceType`.
+ */
+function buildPseudoManifests(manifests: CrJsonManifestEntry[]): PseudoManifestInfo[] {
+  const pseudos: PseudoManifestInfo[] = []
+  let pseudoCounter = manifests.length
+
+  for (let parentIdx = 0; parentIdx < manifests.length; parentIdx++) {
+    const manifest = manifests[parentIdx]
+    const assertions = (manifest.assertions ?? {}) as Record<string, unknown>
+
+    for (const [key, rawValue] of Object.entries(assertions)) {
+      if (!key.startsWith('c2pa.ingredient')) continue
+      if (!rawValue || typeof rawValue !== 'object') continue
+      const value = rawValue as Record<string, unknown>
+
+      // Only flat ingredients (no activeManifest url).
+      const manifestRef = (value.c2pa_manifest ?? value.activeManifest ?? {}) as Record<string, unknown>
+      if (typeof manifestRef.url === 'string') continue
+
+      const relationship = typeof value.relationship === 'string' ? value.relationship : undefined
+
+      // Get DST: first from the ingredient directly, then from a c2pa.opened action.
+      let dst = typeof value.digitalSourceType === 'string' ? value.digitalSourceType : undefined
+      if (!dst) {
+        outer: for (const [aKey, aVal] of Object.entries(assertions)) {
+          if (!aKey.startsWith('c2pa.actions')) continue
+          if (!aVal || typeof aVal !== 'object') continue
+          const actions = Array.isArray((aVal as Record<string, unknown>).actions)
+            ? ((aVal as Record<string, unknown>).actions as unknown[])
+            : []
+          for (const act of actions) {
+            if (!act || typeof act !== 'object') continue
+            const a = act as Record<string, unknown>
+            if (a.action === 'c2pa.opened' && typeof a.digitalSourceType === 'string') {
+              dst = a.digitalSourceType
+              break outer
+            }
+          }
+        }
+      }
+      if (!dst) continue
+
+      const title = typeof value['dc:title'] === 'string' ? value['dc:title'] : 'flat-ingredient'
+      const safeTitle = title.replace(/[^a-zA-Z0-9_\-.]/g, '_')
+      const parentLabel = typeof manifest.label === 'string' ? manifest.label : `manifest_${parentIdx}`
+      const pseudoLabel = `urn:c2pa:pseudo:${parentLabel}:${safeTitle}_${pseudoCounter}`
+
+      pseudos.push({
+        syntheticManifest: {
+          label: pseudoLabel,
+          assertions: {
+            'c2pa.actions.v2': {
+              allActionsIncluded: true,
+              actions: [{ action: 'c2pa.created', digitalSourceType: dst }],
+            },
+          },
+        },
+        assertedBy: extractAssertedBy(manifest),
+        mimeType: typeof value['dc:format'] === 'string' ? value['dc:format'] : null,
+        parentManifestIdx: parentIdx,
+        relationship,
+      })
+      pseudoCounter++
+    }
+  }
+
+  return pseudos
 }
 
 /**

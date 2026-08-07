@@ -1,6 +1,6 @@
 {
   "rubricName": "C2PA Asset Signals Rubric (Local)",
-  "rubricVersion": "1.0.0",
+  "rubricVersion": "1.0",
   "manifests": [
     {
       "assertedBy": {

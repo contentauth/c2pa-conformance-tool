@@ -85,8 +85,14 @@ export function evaluateStatement(
     }
   }
 
-  const { passed, matches } = coerce(rawValue, stmt.failIfMatched === true)
-  const message = pickReportText(stmt, passed, locale, matches)
+  const { passed, matches, warned } = coerce(
+    rawValue,
+    stmt.failIfMatched === true,
+    stmt.warnIfMatched === true,
+  )
+  // When warned, Python falls back from "warn" to "false" reportText (since rubrics
+  // don't define a "warn" key). Pass false so pickReportText selects the "false" text.
+  const message = pickReportText(stmt, warned ? false : passed, locale, matches)
 
   return {
     id: stmt.id,
@@ -95,18 +101,30 @@ export function evaluateStatement(
     passed,
     rawValue,
     message,
+    ...(warned ? { warned: true } : {}),
   }
 }
 
 /**
- * Coerce a raw JMESPath result to a boolean outcome, following the Python
+ * Coerce a raw json-formula result to a boolean outcome, following the Python
  * reference rules. Also returns `matches` when the raw value is a list that
  * carries match information (used for `{{matches}}` substitution).
  */
-function coerce(val: unknown, failIfMatched: boolean): { passed: boolean; matches?: unknown[] } {
+function coerce(
+  val: unknown,
+  failIfMatched: boolean,
+  warnIfMatched: boolean,
+): { passed: boolean; matches?: unknown[]; warned?: boolean } {
   if (failIfMatched) {
     if (Array.isArray(val) && val.length > 0) {
       return { passed: false, matches: val }
+    }
+    return { passed: true }
+  }
+
+  if (warnIfMatched) {
+    if (Array.isArray(val) && val.length > 0) {
+      return { passed: false, matches: val, warned: true }
     }
     return { passed: true }
   }

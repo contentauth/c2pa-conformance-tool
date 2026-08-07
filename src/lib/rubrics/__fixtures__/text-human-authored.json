@@ -1,0 +1,53 @@
+{
+  "@context": {
+    "@vocab": "https://contentcredentials.org/crjson",
+    "extras": "https://contentcredentials.org/crjson/extras"
+  },
+  "manifests": [
+    {
+      "label": "urn:c2pa:text-human-authored-001",
+      "assertions": {
+        "c2pa.actions.v2": {
+          "actions": [
+            {
+              "action": "c2pa.created",
+              "when": "2026-05-04T10:00:00Z",
+              "softwareAgent": "TextEditor/v1.0",
+              "digitalSourceType": "http://cv.iptc.org/newscodes/digitalsourcetype/digitalCreation",
+              "parameters": {
+                "dc:format": "text/plain"
+              }
+            }
+          ]
+        },
+        "c2pa.hash.data": {
+          "hash": "b64'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=",
+          "alg": "sha256",
+          "exclusions": [
+            { "start": 1024, "length": 256 }
+          ]
+        }
+      },
+      "claim.v2": {
+        "dc_format": "text/plain",
+        "claim_generator_info": {
+          "name": "TextEditor",
+          "version": "1.0",
+          "specVersion": "2.4"
+        },
+        "created_assertions": [
+          { "url": "self#jumbf=c2pa.assertions/c2pa.actions.v2", "alg": "sha256", "hash": "b64'AAA=" },
+          { "url": "self#jumbf=c2pa.assertions/c2pa.hash.data", "alg": "sha256", "hash": "b64'AAA=" }
+        ]
+      },
+      "validationResults": {
+        "success": [
+          { "code": "claimSignature.validated", "url": "self#jumbf=c2pa.signature" },
+          { "code": "assertion.dataHash.match", "url": "self#jumbf=c2pa.assertions/c2pa.hash.data" }
+        ],
+        "informational": [],
+        "failure": []
+      }
+    }
+  ]
+}

@@ -4,19 +4,9 @@
   "true": {
     "validation": [
       {
-        "trait": "active_manifest_urn",
-        "reportText": "Active manifest URN uses standard 'urn:c2pa:' prefix (Spec 2.2 §8.1, §10.2.1)",
-        "report_text": "Active manifest URN uses standard 'urn:c2pa:' prefix (Spec 2.2 §8.1, §10.2.1)"
-      },
-      {
         "trait": "discouraged_legacy_action_parameters",
         "reportText": "No discouraged legacy action parameters found in parameters block (Spec 2.2 §18.14.4.1, §18.14.12)",
         "report_text": "No discouraged legacy action parameters found in parameters block (Spec 2.2 §18.14.4.1, §18.14.12)"
-      },
-      {
-        "trait": "inception_action_position",
-        "reportText": "Inception action is correctly positioned as the first item in the first created actions assertion (Spec 2.2 §18.14.2)",
-        "report_text": "Inception action is correctly positioned as the first item in the first created actions assertion (Spec 2.2 §18.14.2)"
       },
       {
         "trait": "ingredient_relationship_values",
@@ -82,29 +72,42 @@
         "trait": "review_ratings_datasource",
         "reportText": "No invalid co-occurrence of reviewRatings and human entry dataSource (Spec 2.2 §18.3.3)",
         "report_text": "No invalid co-occurrence of reviewRatings and human entry dataSource (Spec 2.2 §18.3.3)"
-      },
-      {
-        "trait": "valid_data_present",
-        "reportText": "Validation results are present for integrity analysis",
-        "report_text": "Validation results are present for integrity analysis"
-      },
-      {
-        "trait": "valid_success",
-        "reportText": "No validation mismatches found",
-        "report_text": "No validation mismatches found"
-      },
-      {
-        "trait": "well_formed_data_present",
-        "reportText": "Validation results are present for structural analysis",
-        "report_text": "Validation results are present for structural analysis"
-      },
-      {
-        "trait": "well_formed_success",
-        "reportText": "No structural failures found",
-        "report_text": "No structural failures found"
       }
     ]
   },
-  "false": {},
+  "false": {
+    "validation": [
+      {
+        "trait": "active_manifest_urn",
+        "reportText": "Active manifest URN uses old 'urn:uuid' prefix (pre-v2.2) (Spec 2.2 §8.1, §10.2.1)",
+        "report_text": "Active manifest URN uses old 'urn:uuid' prefix (pre-v2.2) (Spec 2.2 §8.1, §10.2.1)"
+      },
+      {
+        "trait": "inception_action_position",
+        "reportText": "Inception action is not in the first actions assertion of created_assertions (or first item is not an actions assertion) (Spec 2.2 §18.14.2)",
+        "report_text": "Inception action is not in the first actions assertion of created_assertions (or first item is not an actions assertion) (Spec 2.2 §18.14.2)"
+      },
+      {
+        "trait": "valid_data_present",
+        "reportText": "Missing validation results in the manifest",
+        "report_text": "Missing validation results in the manifest"
+      },
+      {
+        "trait": "valid_success",
+        "reportText": "Found validation mismatches: MISSING_VALIDATION_RESULTS",
+        "report_text": "Found validation mismatches: MISSING_VALIDATION_RESULTS"
+      },
+      {
+        "trait": "well_formed_data_present",
+        "reportText": "Missing validation results in the manifest",
+        "report_text": "Missing validation results in the manifest"
+      },
+      {
+        "trait": "well_formed_success",
+        "reportText": "Found structural failures: MISSING_VALIDATION_RESULTS",
+        "report_text": "Found structural failures: MISSING_VALIDATION_RESULTS"
+      }
+    ]
+  },
   "warning": {}
 }

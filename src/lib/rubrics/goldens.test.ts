@@ -79,6 +79,7 @@ interface ConformanceFixture {
   rubricVersion: string
   true: Record<string, ConformanceFixtureTrait[]>
   false: Record<string, ConformanceFixtureTrait[]>
+  warning?: Record<string, ConformanceFixtureTrait[]>
 }
 
 /** trait → { outcome, reportText } lookup, flattened across all categories. */
@@ -121,11 +122,12 @@ describe('conformance rubric · parameterized golden parity (0.1 spec 2.2)', () 
           rubricVersion: result.rubricVersion ?? '',
           true: {},
           false: {},
+          warning: {},
         }
         for (const s of result.statements) {
           if (s.passed === undefined || s.passed === null) continue
           const trait = s.id.includes(':') ? s.id.split(':').slice(1).join(':') : s.id
-          const bucket = s.passed ? fixture.true : fixture.false
+          const bucket = s.warned ? fixture.warning : s.passed ? fixture.true : fixture.false
           if (!bucket[s.category]) bucket[s.category] = []
           bucket[s.category].push({ trait, reportText: s.message, report_text: s.message })
         }
@@ -138,6 +140,7 @@ describe('conformance rubric · parameterized golden parity (0.1 spec 2.2)', () 
         }
         fixture.true = sortRecord(fixture.true)
         fixture.false = sortRecord(fixture.false)
+        fixture.warning = sortRecord(fixture.warning)
         fs.writeFileSync(
           path.join(FIXTURE_DIR, `${name}.conformance.json`),
           JSON.stringify(fixture, null, 2) + '\n',
@@ -178,6 +181,7 @@ describe('conformance rubric · parameterized golden parity (0.1 spec 2.2)', () 
       }
       check('true', expected.true)
       check('false', expected.false)
+      check('false', expected.warning ?? {})
 
       expect(mismatches, `parity diffs for ${name}:\n${mismatches.join('\n')}`).toEqual([])
     })
@@ -197,6 +201,7 @@ interface SignalsFixture {
     allActionsIncluded: boolean
     additionalSignalsInGathered: boolean
     ingredients: Array<{ index: number; relationship?: string }>
+    pseudo?: boolean
   }>
 }
 
@@ -252,6 +257,9 @@ describe('signals rubric · parameterized golden parity (local)', () => {
           `${name} manifest[${i}] localTransformations`,
         ).toEqual(want.localTransformations)
         expect(got.ingredients, `${name} manifest[${i}] ingredients`).toEqual(want.ingredients)
+        if (want.pseudo !== undefined) {
+          expect(got.pseudo, `${name} manifest[${i}] pseudo`).toEqual(want.pseudo)
+        }
       }
     })
   }

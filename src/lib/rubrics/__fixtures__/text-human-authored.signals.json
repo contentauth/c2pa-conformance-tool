@@ -4,14 +4,14 @@
   "manifests": [
     {
       "assertedBy": {
-        "CN": "Pixel Camera",
-        "O": "Google LLC"
+        "CN": "Unknown CN",
+        "O": "Unknown O"
       },
       "mimeType": null,
       "localInceptions": [
         {
-          "trait": "inception:signal_capturedMediaStitched",
-          "reportText": "Contains Stitched Captured Media",
+          "trait": "inception:signal_nonGenAIDigitalCreation",
+          "reportText": "Contains Non-GenAI digital creation",
           "multiple": false
         }
       ],

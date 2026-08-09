@@ -572,7 +572,7 @@
                     <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M11.46 20.846a12 12 0 0 1 -7.96 -14.846a12 12 0 0 0 8.5 -3a12 12 0 0 0 8.5 3a12 12 0 0 1 -.09 7.06" /><path d="M15 19l2 2l4 -4" /></svg>
                   </div>
                   <h4 class="font-semibold text-[#444] dark:text-white mb-1">Validate signatures & trust</h4>
-                  <p class="text-sm text-gray-600 dark:text-gray-400">Check signing chains against the official C2PA Trust List, Interim Trust List, and custom test certs</p>
+                  <p class="text-sm text-gray-600 dark:text-gray-400">Check signing chains against the official C2PA Trust List, Interim Trust List, and custom test certificates</p>
                 </div>
               </div>
             </div>

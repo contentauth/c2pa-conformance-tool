@@ -1,52 +1,38 @@
 # Build Scripts
 
-## copy-profile-evaluator.mjs
-
-Copies the profile-evaluator WASM pkg from a sibling `../profile-evaluator-rs` repo into `public/profile-evaluator/` so the app loads it locally (no runtime path to the sibling repo).
-
-### What it does:
-- Copies the contents of `../profile-evaluator-rs/ui/pkg/` (wasm-pack output) into `public/profile-evaluator/`
-- The app loads `profile_evaluator_rs.js` from the base URL at runtime, same pattern as local C2PA WASM
-
-### When it runs:
-- Manually via `npm run copy:profile-evaluator` whenever you want to update the profile evaluator (e.g. after changes in profile-evaluator-rs).
-
-### Deployment:
-- `public/profile-evaluator/` is **committed** to the repo (not gitignored). That way GitHub Pages, Netlify, etc. include the WASM and the Asset Profiles page works in production. After running the copy script, commit the updated files so deployments have the latest evaluator.
-- If the directory is missing (e.g. fresh clone before first copy), the Asset Profiles page still loads; evaluation returns a message to run the copy script.
-
-### Prerequisites:
-- A sibling checkout at `../profile-evaluator-rs` with the UI crate built (`wasm-pack build` in `profile-evaluator-rs/ui/`)
-
-### Runtime behavior:
-- If `public/profile-evaluator/profile_evaluator_rs.js` exists (e.g. after copy and deploy), the Asset Profiles page uses it for profile evaluation. If it does not exist, evaluation returns a clear message.
-
----
-
 ## build-local-wasm.mjs
 
-Builds a browser-targeted wasm reader from the local `../c2pa-rs` checkout and writes the generated loader plus `.wasm` binary to `public/local-c2pa/`.
+Builds a browser-targeted WASM reader from the `c2pa-rs` git submodule and writes the generated loader plus `.wasm` binary to `public/local-c2pa/`.
 
 ### What it does:
 - Uses `wasm-pack` to build the wrapper crate in the project's `wasm/` directory
-- Links that wrapper crate against the local `../c2pa-rs/sdk` source tree
+- Links that wrapper crate against the `c2pa-rs/` submodule source
 - Generates `public/local-c2pa/c2pa_local.js` and `public/local-c2pa/c2pa_local_bg.wasm`
 
 ### When it runs:
-- Manually via `npm run build:local-wasm`
-
-### Runtime behavior:
-- If `public/local-c2pa/c2pa_local.js` exists, the app prefers that locally built wasm at runtime
-- If it does not exist, the app falls back to the packaged `@contentauth/c2pa-web` wasm
+- Automatically via `scripts/netlify-build.sh` on every Netlify build
+- Manually via `npm run build:local-wasm` for local development
 
 ### Prerequisites:
-- A local checkout at `../c2pa-rs`
 - `wasm-pack`
 - Rust target `wasm32-unknown-unknown`
+- The `c2pa-rs` submodule must be initialized (`git submodule update --init --recursive`)
+
+---
+
+## netlify-build.sh
+
+Full CI build script used by Netlify. Builds the WASM module then runs the npm build.
+
+### What it does:
+1. Runs `build-local-wasm.mjs` to compile the WASM from the `c2pa-rs` submodule
+2. Runs `npm run build` to produce the final `dist/`
+
+---
 
 ## generate-version.js
 
-This script automatically generates `src/lib/version.ts` with git version information at build time.
+Generates `src/lib/version.ts` with git version information at build time.
 
 ### What it does:
 - Captures the current git commit SHA (full and short)

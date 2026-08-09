@@ -4,10 +4,11 @@ This project is deployed automatically to Netlify on every merge to `main`.
 
 ## How it works
 
-Netlify is connected to this repository. When a pull request is merged to `main`, Netlify automatically:
+Netlify is connected to this repository. When a pull request is merged to `main`, Netlify automatically runs `scripts/netlify-build.sh`, which:
 
-1. Runs `npm run build`
-2. Publishes the contents of `dist/` to the production URL
+1. Compiles the Rust WASM crate in `wasm/` against the bundled `c2pa-rs` git submodule
+2. Writes the output to `public/local-c2pa/`
+3. Runs `npm run build` to produce the final `dist/`
 
 No manual steps are required. The build configuration is in [`netlify.toml`](./netlify.toml).
 
@@ -21,21 +22,31 @@ Netlify also builds a preview for every pull request, giving you a live URL to r
 |---|---|
 | `index.html` | Main page |
 | `assets/` | JS and CSS bundles |
-| `c2pa.wasm` | C2PA WebAssembly module (copied from `@contentauth/c2pa-web` at build time) |
+| `local-c2pa/` | C2PA WebAssembly module (built from `c2pa-rs` submodule at build time) |
+| `rubrics/` | YAML conformance rubrics + `index.json` |
 | `trust/` | Bundled Interim Trust List PEM files |
-| `profile-evaluator/` | Profile evaluator WASM (committed; update via `npm run copy:profile-evaluator`) |
 
 ## Local development
 
 ```bash
+git clone --recurse-submodules <repo-url>
+cd conformance-tool
 npm install
-npm run dev       # Start dev server at http://localhost:5173/
-npm run build     # Production build → dist/
-npm run preview   # Preview the production build locally
+npm run build:local-wasm   # Build the WASM module from the c2pa-rs submodule
+npm run dev                # Start dev server at http://localhost:5173/
+npm run build              # Production build → dist/
+npm run preview            # Preview the production build locally
 ```
 
 ## Build requirements
 
 - Node.js 20+
-- All other dependencies are installed via `npm install`
-- The `postinstall` script automatically copies the C2PA WASM binary to `public/`
+- Rust + wasm-pack (required to build the WASM module)
+
+```bash
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+cargo install wasm-pack
+rustup target add wasm32-unknown-unknown
+```
+
+The `c2pa-rs` source is included as a git submodule at `c2pa-rs/` — no separate checkout is needed.

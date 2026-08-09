@@ -1,223 +1,160 @@
-# C2PA Conformance Testing Tool
+# C2PA Conformance Tool
 
-A web application for validating C2PA (Coalition for Content Provenance and Authenticity) manifests in media files. This tool provides an easy-to-use interface for drag-and-drop file testing with detailed conformance reports.
-
-**Built with the official [@contentauth/c2pa-web](https://github.com/contentauth/c2pa-js) SDK** - ensuring complete file format support and validation compatibility.
+A client-side web application for validating C2PA (Coalition for Content Provenance and Authenticity) manifests in media files. All processing happens in the browser via WebAssembly — no server, no uploads.
 
 ## Features
 
-- **Drag & Drop Interface**: Easy file upload via drag-and-drop or file selection
-- **Client-Side Processing**: Uses the official C2PA SDK compiled to WebAssembly for fast, private processing
+- **Drag & Drop Interface**: Upload files via drag-and-drop or file picker
+- **Client-Side Processing**: Files are processed entirely in your browser using a locally-built c2pa-rs WASM module — nothing leaves your machine
 - **Official C2PA Trust List**: Validates signatures against the official [C2PA Conformance Trust List](https://c2pa.org/conformance)
-- **Interim Trust List (ITL)**: Automatically detects and validates signatures against the ITL with distinct visual indicators
-- **Test Certificate Mode**: Enable test mode to load the C2PA Conformance Test Root, download the test signing cert (ZIP), and add custom test certificates (session-only, clearly marked)
+- **Interim Trust List (ITL)**: Automatically falls back to ITL validation with distinct visual indicators
+- **Test Certificate Mode**: Load the C2PA Conformance Test Root, download the test signing cert (ZIP), and add custom PEM certificates (session-only, clearly marked)
+- **Conformance Rubrics**: Evaluate assets against YAML-authored C2PA conformance rubrics (Conformance 0.1/0.2, Spec 2.2/2.4, Integrity, Signals)
 - **Version Tracking**: Every report includes git commit SHA and date for reproducibility ([details](VERSION_TRACKING.md))
-- **Modern Tailwind CSS UI**: Clean, responsive design matching verify.contentauthenticity.org
-- **Comprehensive Reports**: View detailed C2PA manifest information including:
-  - Manifest summary (claim generator, trust status)
+- **Comprehensive Reports**:
+  - Manifest summary (claim generator, trust status, provenance tree)
   - Signature information with trust validation
-  - Active manifest details
   - Assertions and claims
-  - Ingredient information
+  - Ingredient details
   - Validation status with clear test/production indicators
-- **crJSON Reports**: Reports use the Content Credentials JSON (crJSON) format from the C2PA SDK, with syntax-highlighted raw JSON
-- **Multiple Output Options**:
-  - Human-readable formatted view
-  - Raw JSON display (syntax highlighted)
-  - Downloadable JSON reports (with version metadata)
-  - Copy to clipboard functionality
+- **crJSON Output**: Reports use the crJSON format from c2pa-rs, with syntax-highlighted raw JSON and one-click download
 
 ## Prerequisites
 
-- **Node.js** (v18 or higher)
+- **Node.js** 20+
+- **Rust** + **wasm-pack** (required to build the C2PA WASM module for local development)
 
-### Installing Prerequisites
+### Installing Rust and wasm-pack
 
-#### Install Node.js
-Download and install from [nodejs.org](https://nodejs.org/)
+```bash
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+cargo install wasm-pack
+rustup target add wasm32-unknown-unknown
+```
 
 ## Setup
 
-1. **Install dependencies**:
 ```bash
+git clone --recurse-submodules <repo-url>
+cd conformance-tool
 npm install
+npm run build:local-wasm   # Build the C2PA WASM module from the c2pa-rs submodule
+npm run dev                # Start dev server at http://localhost:5173
 ```
 
-This will install all necessary dependencies, including the official `@contentauth/c2pa-web` package. The postinstall script automatically copies the WASM binary to the `public/` directory.
+`npm run build:local-wasm` compiles the Rust crate in `wasm/` against the `c2pa-rs` git submodule and writes the output to `public/local-c2pa/`. This step is required before the first `npm run dev` and whenever `c2pa-rs` is updated.
 
 ## Development
 
-Start the development server:
-
 ```bash
-npm run dev
-```
-
-This will start Vite's development server, typically at `http://localhost:5173`.
-
-## Building for Production
-
-1. **Build the web application**:
-```bash
-npm run build
-```
-
-The production-ready files will be in the `dist/` directory.
-
-2. **Preview the production build**:
-```bash
-npm run preview
+npm run dev          # Start Vite dev server with hot reload
+npm run check        # Svelte type checking
+npm run test:run     # Run tests once
+npm run test         # Run tests in watch mode
+npm run build        # Production build → dist/
+npm run preview      # Preview production build locally
 ```
 
 ## Deployment
 
-Merging a pull request to `main` automatically triggers a Netlify build and deploys to production. No manual steps required.
+Merging a pull request to `main` automatically triggers a Netlify build and deploys to production. The Netlify build compiles the WASM from the `c2pa-rs` submodule — no pre-built binaries are committed.
 
-See [DEPLOYMENT.md](./DEPLOYMENT.md) for details on the build process and preview deployments.
+See [DEPLOYMENT.md](./DEPLOYMENT.md) for details.
 
 ## Project Structure
 
 ```
 conformance-tool/
+├── c2pa-rs/                        # git submodule — c2pa-rs source
+├── wasm/                           # Rust crate that wraps c2pa-rs for WASM
+│   └── src/lib.rs                  # WASM exports (read_manifest_store, get_resource_bytes, …)
+├── public/
+│   ├── rubrics/                    # YAML conformance rubrics + index.json
+│   └── trust/                      # Bundled Interim Trust List PEM files
 ├── src/
 │   ├── lib/
-│   │   ├── FileUpload.svelte       # Drag-and-drop file upload component
-│   │   ├── ReportViewer.svelte     # C2PA report display (crJSON, highlight.js)
-│   │   ├── ManifestSummary.svelte  # Summary (claim generator, trust status)
-│   │   ├── CertificateManager.svelte  # Test mode and custom certificate upload
-│   │   ├── c2pa.ts                 # TypeScript interface to @contentauth/c2pa-web
-│   │   ├── crjson.ts               # crJSON types and helpers
-│   │   ├── generateSummary.ts      # Report summary generation
-│   │   ├── trustListTest.ts        # Trust list (C2PA vs ITL) detection
-│   │   └── types.ts                # Shared types
-│   ├── App.svelte                  # Main application component
-│   ├── main.ts                     # Application entry point
-│   └── app.css                     # Global styles
+│   │   ├── c2pa.ts                 # WASM loader, trust validation flow, thumbnail enrichment
+│   │   ├── crjson.ts               # crJSON type guards and helpers
+│   │   ├── types.ts                # Shared types (ConformanceReport, etc.)
+│   │   ├── rubrics/                # Rubric evaluator (loader, engine, evaluate, perManifest)
+│   │   ├── FileUpload.svelte       # Drag-and-drop upload
+│   │   ├── ReportViewer.svelte     # Report display
+│   │   ├── ManifestSummary.svelte  # Human-readable manifest summary
+│   │   ├── RubricsPanel.svelte     # Conformance rubric evaluation UI
+│   │   ├── OverviewPanel.svelte    # Provenance tree visualization
+│   │   └── CertificateManager.svelte  # Test certificate management
+│   ├── App.svelte                  # Root component and routing
+│   └── main.ts                     # Entry point
 ├── scripts/
-│   ├── generate-version.js        # Build-time git version (see VERSION_TRACKING.md)
-│   └── build-local-wasm.mjs       # Optional local WASM build (see scripts/README.md)
-├── index.html
-├── package.json
-└── vite.config.ts
+│   ├── generate-version.js         # Injects git metadata into version.ts at build time
+│   ├── build-local-wasm.mjs        # Builds WASM from the c2pa-rs submodule
+│   └── netlify-build.sh            # Full Netlify CI build (WASM + npm build)
+├── netlify.toml
+├── vite.config.ts
+└── vitest.config.ts
 ```
 
 ## Usage
 
 ### Basic Validation
 
-1. Open the application in your browser
-2. Drag and drop a media file anywhere, or click "Browse Files"
-3. The tool will process the file and display:
-   - Signature information with trust validation
-   - Active C2PA manifest information
-   - Assertions and claims
-   - Ingredient details
-   - Validation status
-4. Use the buttons to:
-   - Toggle between formatted and raw JSON views
-   - Download the report as a JSON file
-   - Copy the JSON to clipboard
-   - Upload another file
+1. Open the app and drag-and-drop a C2PA-signed media file (or click "Browse Files")
+2. The tool validates the file and displays trust status, manifest details, and validation results
+3. Use the tabs to switch between the formatted summary, raw crJSON, and rubric evaluation views
+4. Download the report as JSON or copy it to clipboard
 
-### Conformance Testing with Test Certificates
+### Sidecar Files (`.c2pa`)
 
-1. In the **Test Certificates** section, click **"Enable Test Mode"** to load the C2PA Conformance Test Root
-2. Optionally click **"Download Signing Cert (ZIP)"** to get the test signing certificate bundle
-3. Optionally click **"Add Custom Certificate"** to upload additional test certificates (.pem, .crt, .cer)
-4. Upload a C2PA file — it will validate against the official trust list plus any test certificates
-5. Reports show a clear **⚠️ Test Certificate Mode Active** warning when test certs are used
-6. Test certificates are **session-only** (cleared on refresh). See [TEST_CERTIFICATES.md](TEST_CERTIFICATES.md) for details
+Drag a `.c2pa` sidecar file on its own to validate the manifest store without an asset. To validate hash bindings, drop the sidecar and its matching asset file together.
+
+### Conformance Rubrics
+
+1. After uploading a file, open the **Rubrics** tab
+2. Select which rubrics to evaluate (Integrity, Conformance 0.1/0.2 for Spec 2.2 or 2.4, Signals)
+3. Click **Evaluate selected** to run the checks
+4. Results show per-statement pass/fail with report text; the overall pass/fail is shown in the header
+
+### Test Certificate Mode
+
+1. Go to **Test Certificates** and click **Enable Test Mode** to load the C2PA Conformance Test Root
+2. Optionally upload additional `.pem`/`.crt` certificates
+3. Upload a C2PA file — it will be validated against the official trust list plus your test certs
+4. Reports clearly indicate when test certificates were used. Certs are session-only and cleared on refresh.
 
 ## Supported File Types
 
-The tool supports any file format that can contain C2PA manifests:
-- Images (JPEG, PNG, WebP, etc.)
-- Videos (MP4, MOV, etc.)
-- Audio files
-- PDF documents
+Any format supported by c2pa-rs: JPEG, PNG, WebP, AVIF, HEIC, MP4, MOV, MP3, WAV, AIFF, PDF, and more.
 
 ## How It Works
 
-1. **File Upload**: User uploads a file via drag-and-drop or file picker
-2. **WASM Processing**: The file is processed entirely in the browser using the official `@contentauth/c2pa-web` library
-3. **Trust Validation**: Signatures are validated against the official C2PA trust lists:
-   - **C2PA-TRUST-LIST.pem** - Approved signing certificates for conformant products
-   - **C2PA-TSA-TRUST-LIST.pem** - Trusted Time Stamp Authorities
-4. **Report Generation**: C2PA manifest data is extracted, validated, and formatted
-5. **Display**: Results are shown in both human-readable and JSON formats with trust status
-
-## Trust Verification & Conformance
-
-This tool uses the **official C2PA Conformance Trust List** to validate digital signatures:
-
-- ✅ Only signatures from [C2PA conformant products](https://c2pa.org/conformance) are marked as trusted
-- ✅ Certificates are validated against official trust anchors maintained by C2PA
-- ✅ Time stamps are verified against approved Time Stamp Authorities
-- ✅ Trust lists are fetched directly from the [official C2PA repository](https://github.com/c2pa-org/conformance-public/tree/main/trust-list)
-
-**Important**: As of January 2026, the Interim Trust List (ITL) has been frozen. This tool uses the current official trust list, ensuring compatibility with conformant implementations.
-
-Learn more: [C2PA Conformance Program](https://c2pa.org/conformance)
+1. The file is read in the browser and passed to a locally-built c2pa-rs WASM module
+2. Signatures are validated in a multi-step trust flow:
+   - **Step 1** — Official C2PA Trust List (`C2PA-TRUST-LIST.pem` + `C2PA-TSA-TRUST-LIST.pem`)
+   - **Step 2** — If test certificates are present, re-validates with those added
+   - **Step 3** — If still untrusted, re-validates against the Interim Trust List (ITL)
+3. crJSON is extracted from the WASM result and displayed in the UI
+4. Thumbnail URIs are resolved back through the WASM to inline base64 images
 
 ## Privacy & Security
 
-- **Client-Side Only**: All file processing happens in your browser
-- **No Server Upload**: Files never leave your machine
-- **No Data Collection**: No tracking or analytics
-- **Trust List Updates**: Trust lists are fetched directly from the official C2PA repository when processing files
-
-## Troubleshooting
-
-### Module not found errors
-If you see module import errors, try reinstalling dependencies:
-```bash
-rm -rf node_modules package-lock.json
-npm install
-```
-
-### WASM initialization errors
-Clear your browser cache and reload the page. The WASM module is loaded from the `@contentauth/c2pa-web` package automatically.
-
-## Development Scripts
-
-- `npm run dev` - Start development server
-- `npm run build` - Build for production
-- `npm run preview` - Preview production build
-- `npm run check` - Run Svelte type checking
-- `npm run build:local-wasm` - Build C2PA WASM from a local `../c2pa-rs` checkout into `public/local-c2pa/` (see [scripts/README.md](scripts/README.md))
-- `npm run copy:profile-evaluator` - Copy profile-evaluator WASM from a sibling `../profile-evaluator-rs/ui/pkg` into `public/profile-evaluator/` so Asset Profiles evaluation works locally
+- **Client-side only** — all processing happens in your browser
+- **No server upload** — files never leave your machine
+- **No tracking or analytics**
+- Trust lists are fetched directly from the official C2PA repository at validation time
 
 ## Dependencies
 
-### Frontend
-- **Svelte** (v5) - Reactive UI framework
-- **TypeScript** - Type-safe JavaScript
-- **Vite** - Build tool and dev server
-- **@contentauth/c2pa-web** - Official C2PA JavaScript/WASM SDK from Content Authenticity Initiative
-- **highlight.js** - Syntax highlighting for raw JSON in reports
-- **@peculiar/x509** - Certificate parsing (e.g. in CertificateManager)
+- **Svelte 5** — UI framework
+- **TypeScript** — type safety
+- **Vite** — build tool
+- **c2pa-rs** (via WASM submodule) — C2PA validation engine
+- **@adobe/json-formula** — expression engine for conformance rubric evaluation
+- **highlight.js** — syntax highlighting for raw crJSON
+- **@peculiar/x509** — certificate parsing
+- **yaml** — rubric YAML parsing
 
 ## License
 
 Copyright 2026 Content Authenticity Initiative
 
 Licensed under the Apache License, Version 2.0. See [LICENSE](./LICENSE) for the full text.
-
-This project uses the [@contentauth/c2pa-web](https://github.com/contentauth/c2pa-js) library, also from the Content Authenticity Initiative and also licensed under Apache 2.0.
-
-## Contributing
-
-Contributions are welcome! Please ensure that:
-1. The WASM module builds successfully
-2. The TypeScript code type-checks
-3. The UI works across modern browsers
-
-## Future Enhancements
-
-Potential features to add:
-- Batch file processing
-- Export reports as PDF or HTML
-- Detailed validation error explanations
-- Visual manifest relationship graphs
-- Support for manifest signing and editing
-- Progressive Web App (PWA) support for offline use

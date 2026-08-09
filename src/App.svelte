@@ -397,13 +397,17 @@
           {#if report || processing || currentPage !== 'main'}
             <button
               on:click={resetToHome}
-              class="text-xl font-bold text-gray-900 dark:text-white hover:text-blue-600 dark:hover:text-gray-300 transition-colors duration-200 cursor-pointer"
+              class="flex items-center gap-2 text-xl font-bold text-gray-900 dark:text-white hover:text-blue-600 dark:hover:text-gray-300 transition-colors duration-200 cursor-pointer"
               aria-label="Return to home"
             >
               C2PA Verify
+              <span class="text-xs font-semibold tracking-wide uppercase px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700 dark:bg-indigo-900/60 dark:text-indigo-300">Beta</span>
             </button>
           {:else}
-            <h1 class="text-xl font-bold text-gray-900 dark:text-white">C2PA Verify</h1>
+            <h1 class="flex items-center gap-2 text-xl font-bold text-gray-900 dark:text-white">
+              C2PA Verify
+              <span class="text-xs font-semibold tracking-wide uppercase px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700 dark:bg-indigo-900/60 dark:text-indigo-300">Beta</span>
+            </h1>
           {/if}
         </div>
 

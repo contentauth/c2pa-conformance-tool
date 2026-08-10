@@ -2,7 +2,7 @@
 
 > A browser-based tool for inspecting C2PA Content Credentials in media files and running structured conformance rubric checks.
 
-C2PA Verify is built by the Content Authenticity Initiative. It processes files entirely in the browser using a WebAssembly build of c2pa-rs — no files are uploaded to any server.
+C2PA Verify is built by the C2PA COnformance  Force community. It processes files entirely in the browser using a WebAssembly build of c2pa-rs — no files are uploaded to any server.
 
 ## Who it's for
 
@@ -20,14 +20,13 @@ C2PA Verify is built by the Content Authenticity Initiative. It processes files 
 
 ## Technical notes
 
-- All processing happens via WebAssembly (c2pa-rs compiled to wasm32); no server receives file content
+- All processing happens via WebAssembly (c2pa-rs compiled to wasm32); no server receives media content
 - Trust lists are fetched at validation time from the official C2PA repository
 - Reports include a git commit SHA and timestamp for reproducibility
 
 ## Links
 
-- App: https://c2pa-conformulator.netlify.app/
+- App: https://verify.contentauthenticity.org/
 - Source code: https://github.com/contentauth/c2pa-conformance-tool
 - C2PA Conformance Program: https://c2pa.org/conformance
-- Content Authenticity Initiative: https://contentauthenticity.org
 - C2PA specification: https://c2pa.org/specifications/specifications/

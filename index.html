@@ -2,10 +2,66 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="content_credentials_icon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="C2PA Verify - Content Credentials Validator and Conformance Testing Tool. Verify C2PA manifests against official trust lists." />
-    <title>C2PA Verify</title>
+
+    <title>C2PA Verify — Content Credentials Validator &amp; Conformance Tool</title>
+    <meta name="description" content="Inspect C2PA Content Credentials in any signed media file, and run structured conformance rubric checks to prepare for the C2PA Conformance Program. Runs entirely in your browser — no uploads." />
+    <link rel="canonical" href="https://c2pa-conformulator.netlify.app/" />
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="content_credentials_icon.svg" />
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="C2PA Verify" />
+    <meta property="og:title" content="C2PA Verify — Content Credentials Validator &amp; Conformance Tool" />
+    <meta property="og:description" content="Inspect C2PA Content Credentials in any signed media file, and run structured conformance rubric checks to prepare for the C2PA Conformance Program. Runs entirely in your browser — no uploads." />
+    <meta property="og:url" content="https://c2pa-conformulator.netlify.app/" />
+    <meta property="og:image" content="https://c2pa-conformulator.netlify.app/og-image.svg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="C2PA Verify — Inspect Content Credentials. Test for Conformance." />
+
+    <!-- Twitter / X card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="C2PA Verify — Content Credentials Validator &amp; Conformance Tool" />
+    <meta name="twitter:description" content="Inspect C2PA Content Credentials in any signed media file, and run conformance rubric checks — entirely in your browser." />
+    <meta name="twitter:image" content="https://c2pa-conformulator.netlify.app/og-image.svg" />
+
+    <!-- JSON-LD structured data -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "C2PA Verify",
+      "description": "Inspect C2PA Content Credentials in any signed media file and run structured conformance rubric checks to prepare for the C2PA Conformance Program. Runs entirely in the browser via WebAssembly — no files are uploaded.",
+      "url": "https://c2pa-conformulator.netlify.app/",
+      "applicationCategory": "DeveloperApplication",
+      "operatingSystem": "Any (browser-based)",
+      "browserRequirements": "Requires a modern browser with WebAssembly support",
+      "featureList": [
+        "Inspect C2PA manifests: assertions, actions, ingredients, and provenance history",
+        "Validate signatures against the official C2PA Trust List and Interim Trust List",
+        "Run conformance rubric checks aligned with the C2PA Conformance Program",
+        "Export crJSON reports",
+        "Support for sidecar .c2pa files",
+        "Test Certificate Mode for pre-production validation"
+      ],
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      },
+      "creator": {
+        "@type": "Organization",
+        "name": "Content Authenticity Initiative",
+        "url": "https://contentauthenticity.org"
+      },
+      "isAccessibleForFree": true
+    }
+    </script>
+
+    <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet" />

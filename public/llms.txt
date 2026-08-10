@@ -1,0 +1,33 @@
+# C2PA Verify
+
+> A browser-based tool for inspecting C2PA Content Credentials in media files and running structured conformance rubric checks.
+
+C2PA Verify is built by the Content Authenticity Initiative. It processes files entirely in the browser using a WebAssembly build of c2pa-rs — no files are uploaded to any server.
+
+## Who it's for
+
+- **End users** who want to inspect Content Credentials embedded in images, video, audio, PDF, or other documents — seeing what claims were made, by whom, and when
+- **Developers and implementers** building C2PA-compliant tools who want to validate their output and prepare for official conformance testing before submitting to the C2PA Conformance Program
+
+## Capabilities
+
+- Inspect C2PA manifests: assertions, actions, ingredients, claim generator info, and full provenance history
+- Validate signing certificates against the official C2PA Trust List, Interim Trust List (ITL), and custom test certificates (session-only)
+- Run conformance rubric checks (Conformance 0.1 / 0.2, Spec 2.2 / 2.4, Integrity, Signals) aligned with the C2PA Conformance Program
+- Export crJSON reports — the canonical C2PA report format from c2pa-rs
+- Support for sidecar `.c2pa` files (validate the manifest store without the original asset, or together for hash binding checks)
+- Test Certificate Mode: load the C2PA Conformance Test Root and custom PEM certificates for validating pre-production implementations
+
+## Technical notes
+
+- All processing happens via WebAssembly (c2pa-rs compiled to wasm32); no server receives file content
+- Trust lists are fetched at validation time from the official C2PA repository
+- Reports include a git commit SHA and timestamp for reproducibility
+
+## Links
+
+- App: https://c2pa-conformulator.netlify.app/
+- Source code: https://github.com/contentauth/c2pa-conformance-tool
+- C2PA Conformance Program: https://c2pa.org/conformance
+- Content Authenticity Initiative: https://contentauthenticity.org
+- C2PA specification: https://c2pa.org/specifications/specifications/

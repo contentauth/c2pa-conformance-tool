@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://c2pa-conformulator.netlify.app/sitemap.xml

@@ -38,6 +38,12 @@ npm run build              # Production build → dist/
 npm run preview            # Preview the production build locally
 ```
 
+If you cloned without `--recurse-submodules`, initialize the submodule manually:
+
+```bash
+git submodule update --init --recursive
+```
+
 ## Build requirements
 
 - Node.js 20+
@@ -50,3 +56,27 @@ rustup target add wasm32-unknown-unknown
 ```
 
 The `c2pa-rs` source is included as a git submodule at `c2pa-rs/` — no separate checkout is needed.
+
+## Updating the c2pa-rs submodule
+
+The submodule is pinned to a specific commit. To update it (e.g. to pull in a new c2pa-rs release or latest main):
+
+```bash
+# Move the submodule to the desired commit
+cd c2pa-rs
+git fetch origin
+
+# Option A: latest main
+git checkout origin/main
+
+# Option B: a specific tag or release
+git checkout v0.x.y
+
+cd ..
+
+# Stage the new pointer and commit
+git add c2pa-rs
+git commit -m "chore: update c2pa-rs submodule to <version or short SHA>"
+```
+
+After merging, Netlify will automatically compile the updated WASM on the next build. Local developers need to run `git submodule update --init` after pulling to sync their submodule to the new pointer, then re-run `npm run build:local-wasm`.

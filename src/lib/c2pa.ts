@@ -46,8 +46,8 @@ let softBindingAlgorithms: string[] | null = null
 // Official C2PA trust list URLs
 const TRUST_LIST_URL = 'https://raw.githubusercontent.com/c2pa-org/conformance-public/main/trust-list/C2PA-TRUST-LIST.pem'
 const TSA_TRUST_LIST_URL = 'https://raw.githubusercontent.com/c2pa-org/conformance-public/main/trust-list/C2PA-TSA-TRUST-LIST.pem'
-// C2PA soft binding algorithm registry
-const SOFT_BINDING_REGISTRY_URL = 'https://raw.githubusercontent.com/c2pa-org/softbinding-algorithm-list/main/softbinding-algorithm-list.json'
+// C2PA soft binding algorithm registry (canonical URL, redirects to latest JSON)
+const SOFT_BINDING_REGISTRY_URL = 'https://sbal.c2pa.org/'
 // ITL (Interim Trust List) - stored locally; use base URL for deployed (e.g. GitHub Pages)
 const base = typeof import.meta.env?.BASE_URL === 'string' ? import.meta.env.BASE_URL : '/'
 const ITL_ALLOWED_URL = `${base}trust/allowed.pem`   // leaf certificates

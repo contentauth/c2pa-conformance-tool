@@ -44,6 +44,32 @@ npm run dev                # Start dev server at http://localhost:5173
 
 `npm run build:local-wasm` compiles the Rust crate in `wasm/` against the `c2pa-rs` git submodule and writes the output to `public/local-c2pa/`. This step is required before the first `npm run dev` and whenever `c2pa-rs` is updated.
 
+## Updating c2pa-rs
+
+The `c2pa-rs` source is pinned to a specific commit via the git submodule pointer. To update it:
+
+```bash
+cd c2pa-rs
+git fetch origin
+
+# Option A: advance to latest main
+git checkout origin/main
+
+# Option B: pin to a specific tag or release
+git checkout v0.x.y
+
+cd ..
+git add c2pa-rs
+git commit -m "chore: update c2pa-rs submodule to <version>"
+```
+
+After the commit is merged, Netlify will automatically compile the updated WASM. Other developers need to run the following after pulling the change:
+
+```bash
+git submodule update --init
+npm run build:local-wasm
+```
+
 ## Development
 
 ```bash

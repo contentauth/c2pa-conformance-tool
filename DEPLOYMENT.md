@@ -38,6 +38,12 @@ npm run build              # Production build → dist/
 npm run preview            # Preview the production build locally
 ```
 
+If you cloned without `--recurse-submodules`, initialize the submodule manually:
+
+```bash
+git submodule update --init --recursive
+```
+
 ## Build requirements
 
 - Node.js 20+
@@ -50,3 +56,9 @@ rustup target add wasm32-unknown-unknown
 ```
 
 The `c2pa-rs` source is included as a git submodule at `c2pa-rs/` — no separate checkout is needed.
+
+## Updating the c2pa-rs submodule
+
+The `c2pa-rs` submodule pointer is pinned to a specific commit. When a new c2pa-rs version is needed, a developer updates the pointer and merges a PR — Netlify then compiles the updated WASM automatically on the next build.
+
+See [README.md — Updating c2pa-rs](./README.md#updating-c2pa-rs) for the full procedure.

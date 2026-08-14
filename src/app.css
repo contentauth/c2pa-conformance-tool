@@ -37,6 +37,9 @@
   .btn-success {
     @apply bg-green-700 text-white hover:bg-green-800;
   }
+  .btn-warning {
+    @apply bg-amber-700 text-white hover:bg-amber-800;
+  }
   .btn-danger {
     @apply bg-red-600 text-white hover:bg-red-700;
   }

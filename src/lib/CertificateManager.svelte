@@ -341,7 +341,7 @@ MCZvLxXCtwIgCxkR0Gbdwef8k0bf1tC3dz+4NDe0S8wdCx5ZgeRPkq4=
     </div>
 
     <!-- Test Mode Controls -->
-    <div class="mt-4 p-4 bg-blue-50 dark:bg-blue-900/30 border-2 border-blue-200 dark:border-blue-700 rounded-xl">
+    <div class="mt-4 p-4 bg-blue-100 dark:bg-blue-900/30 border-2 border-blue-200 dark:border-blue-700 rounded-xl">
       <div class="flex items-start gap-3 mb-3">
         <div class="flex-shrink-0 w-8 h-8 bg-blue-600 dark:bg-blue-700 rounded-lg flex items-center justify-center">
           <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -426,7 +426,7 @@ MCZvLxXCtwIgCxkR0Gbdwef8k0bf1tC3dz+4NDe0S8wdCx5ZgeRPkq4=
                     {extractSubjectFromPEM(cert)}
                   </span>
                   {#if isTestRoot}
-                    <span class="inline-block mt-0.5 px-2 py-0.5 bg-blue-200 dark:bg-blue-900/30 text-blue-900 dark:text-blue-300 text-xs font-semibold rounded">
+                    <span class="inline-block mt-0.5 px-2 py-0.5 bg-blue-100 dark:bg-blue-900/30 text-blue-900 dark:text-blue-300 text-xs font-semibold rounded">
                       Test Root
                     </span>
                   {/if}

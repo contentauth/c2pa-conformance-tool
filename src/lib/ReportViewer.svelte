@@ -901,7 +901,7 @@
                            <div class="flex-1 text-left">
                              <span class="font-bold text-xs font-mono block sm:inline mb-1 sm:mb-0 mr-2">{status.code}</span>
                              {#if status.isInterim}
-                               <span class="ml-2 px-2 py-0.5 bg-blue-200 dark:bg-gray-700 text-blue-900 dark:text-gray-100 text-xs font-semibold rounded">ITL</span>
+                               <span class="ml-2 px-2 py-0.5 bg-blue-100 dark:bg-gray-700 text-blue-900 dark:text-gray-100 text-xs font-semibold rounded">ITL</span>
                              {/if}
                              <p class="text-sm leading-relaxed mt-1 text-green-700 dark:text-green-400">{status.explanation}</p>
                            </div>
@@ -911,7 +911,7 @@
 
                     <!-- Informationals -->
                     {#each group.informational as status}
-                      <div class="rounded-xl p-4 border bg-blue-50/50 dark:bg-gray-900/30 border-blue-100 dark:border-blue-900/30 text-blue-800 dark:text-blue-300">
+                      <div class="rounded-xl p-4 border bg-blue-100 dark:bg-gray-900/30 border-blue-100 dark:border-blue-900/30 text-blue-800 dark:text-blue-300">
                          <div class="flex items-start gap-3">
                            <span class="flex-shrink-0 w-5 h-5 rounded-full bg-blue-600 dark:bg-blue-800 text-white flex items-center justify-center text-xs font-bold">i</span>
                            <div class="flex-1 text-left">

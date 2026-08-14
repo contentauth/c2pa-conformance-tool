@@ -385,15 +385,8 @@
   <nav class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 shadow-sm sticky top-0 z-40 backdrop-blur-sm bg-white/95 dark:bg-gray-800/95">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div class="flex items-center justify-between h-16 gap-4">
-        <!-- Left: Content Credentials Logo -->
-        <div class="flex items-center justify-start gap-3">
-          <a href="https://contentcredentials.org" target="_blank" rel="noopener noreferrer" aria-label="Visit Content Credentials website">
-            <img src="{import.meta.env.BASE_URL}content_credentials_icon.svg" alt="Content Credentials" class="h-8 w-auto transition-transform hover:scale-105 dark:brightness-0 dark:invert" />
-          </a>
-        </div>
-
-        <!-- Center: Title (clickable to return home) -->
-        <div class="flex items-center justify-center flex-1">
+        <!-- Left: Title (clickable to return home) -->
+        <div class="flex items-center justify-start flex-1">
           {#if report || processing || currentPage !== 'main'}
             <button
               on:click={resetToHome}
@@ -401,12 +394,12 @@
               aria-label="Return to home"
             >
               C2PA Verify
-              <span class="text-xs font-semibold tracking-wide uppercase px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700 dark:bg-indigo-900/60 dark:text-indigo-300">Beta</span>
+              <span class="text-[11px] leading-5 font-semibold tracking-wide px-2 py-0.5 rounded-full bg-neutral-200 text-neutral-700 dark:bg-indigo-900/60 dark:text-indigo-300">Beta</span>
             </button>
           {:else}
             <h1 class="flex items-center gap-2 text-xl font-bold text-gray-900 dark:text-white">
               C2PA Verify
-              <span class="text-xs font-semibold tracking-wide uppercase px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700 dark:bg-indigo-900/60 dark:text-indigo-300">Beta</span>
+              <span class="text-[11px] leading-5 font-semibold tracking-wide px-2 py-0.5 rounded-full bg-neutral-200 text-neutral-700 dark:bg-indigo-900/60 dark:text-indigo-300">Beta</span>
             </h1>
           {/if}
         </div>
@@ -518,7 +511,7 @@
   {:else}
     {#if !report && !processing}
       <!-- Hero Section -->
-      <div class="w-full max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center mb-12 mt-10">
+      <div class="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center mb-12 mt-10">
         <div class="mb-10">
           <h2 class="text-[34px] sm:text-[48px] font-bold text-[#444] dark:text-white mb-4 tracking-wide leading-tight">
              Content Credentials<br />
@@ -545,9 +538,9 @@
           </button>
 
           {#if infoSectionExpanded}
-            <div class="bg-blue-50 dark:bg-gray-900 border-2 border-blue-400 dark:border-gray-700 rounded-2xl p-8 mt-4 text-left shadow-sm">
+            <div class="bg-blue-100 dark:bg-gray-900 border-2 border-blue-400 dark:border-gray-700 rounded-2xl p-8 mt-4 text-left shadow-sm">
               <p class="text-gray-700 dark:text-gray-300 mb-4 leading-relaxed">
-                Content Credentials from The Coalition for Content Provenance and Authenticity (C2PA) is the technical standard for digital provenance. It provides verifiable assertions about the origin and history of digital content including images, video, audio, and documents.
+                <a href="https://contentcredentials.org/" target="_blank" rel="noopener noreferrer" class="underline">Content Credentials</a> from the <a href="https://c2pa.org" target="_blank" rel="noopener noreferrer" class="underline">Coalition for Content Provenance and Authenticity (C2PA)</a> is the technical standard for digital provenance. It provides verifiable assertions about the origin and history of digital content including images, video, audio, and documents.
               </p>
               <div class="grid sm:grid-cols-3 gap-4">
                 <div class="bg-white dark:bg-gray-800 rounded-xl p-4 backdrop-blur-sm">
@@ -621,7 +614,7 @@
 
         {#if pendingSidecar}
           <!-- Pending sidecar: waiting for the matching asset to be dropped -->
-          <div class="bg-blue-50 dark:bg-gray-900 border-2 border-blue-400 dark:border-gray-600 border-dashed rounded-2xl p-8 mb-6 text-left shadow-sm">
+          <div class="bg-blue-100 dark:bg-gray-900 border-2 border-blue-400 dark:border-gray-600 border-dashed rounded-2xl p-8 mb-6 text-left shadow-sm">
             <div class="flex items-start gap-4">
               <div class="flex-shrink-0 w-12 h-12 bg-blue-600 dark:bg-gray-600 rounded-full flex items-center justify-center text-white">
                 <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M15 13l-3.5 3.5a1.5 1.5 0 0 1 -2 0l-.5 -.5a1.5 1.5 0 0 1 0 -2l3.5 -3.5" /><path d="M9 11l-1.5 -1.5a1.5 1.5 0 0 1 0 -2l.5 -.5a1.5 1.5 0 0 1 2 0l1.5 1.5" /><path d="M13 11l1 1" /><path d="M11 13l1 1" /><path d="M14 4l-2 2" /><path d="M5 13l-1 1" /><path d="M4 14l-1 2l1 3l3 1l2 -1" /><path d="M14 20l2 1l3 -1l1 -3l-1 -2" /><path d="M20 10l1 -2l-1 -3l-3 -1l-2 1" /></svg>
@@ -705,11 +698,16 @@
 
   <!-- Footer (always shown) -->
   <footer class="border-t border-gray-200 dark:border-gray-700">
-    <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between">
       <span class="text-xs text-gray-400 dark:text-gray-500">Built with ❤️ by the C2PA Conformance community</span>
-      <a href="https://c2pa.org" target="_blank" rel="noopener noreferrer" aria-label="Visit C2PA website">
-        <img src="{import.meta.env.BASE_URL}c2pa_icon.svg" alt="C2PA" class="h-6 w-auto opacity-60 hover:opacity-100 transition-opacity dark:brightness-0 dark:invert" />
-      </a>
+      <div class="flex items-center gap-3">
+        <a href="https://contentcredentials.org" target="_blank" rel="noopener noreferrer" aria-label="Visit Content Credentials website">
+          <img src="{import.meta.env.BASE_URL}content_credentials_icon.svg" alt="Content Credentials" class="h-6 w-auto opacity-60 hover:opacity-100 transition-opacity dark:brightness-0 dark:invert" />
+        </a>
+        <a href="https://c2pa.org" target="_blank" rel="noopener noreferrer" aria-label="Visit C2PA website">
+          <img src="{import.meta.env.BASE_URL}c2pa_icon.svg" alt="C2PA" class="h-6 w-auto opacity-60 hover:opacity-100 transition-opacity dark:brightness-0 dark:invert" />
+        </a>
+      </div>
     </div>
   </footer>
 </main>

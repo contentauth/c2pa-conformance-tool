@@ -231,7 +231,7 @@
                   <label
                     title={rubric.description}
                     class="flex items-center gap-2.5 px-3 py-2 border rounded-lg cursor-pointer transition-colors {isChecked
-                      ? 'border-blue-400 bg-blue-50/50 dark:border-blue-700 dark:bg-blue-900/30'
+                      ? 'border-blue-400 bg-blue-100 dark:border-blue-700 dark:bg-blue-900/30'
                       : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'}"
                   >
                     <input
@@ -243,7 +243,7 @@
                     <div class="flex-1 min-w-0 flex items-center gap-2 flex-wrap">
                       <span class="font-semibold text-gray-900 dark:text-white text-sm">{rubric.name}</span>
                       {#if rubric.mode === 'per-manifest'}
-                        <span class="px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide bg-indigo-100 text-indigo-800 dark:bg-gray-700 dark:text-gray-200">
+                        <span class="px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide bg-blue-100 text-indigo-800 dark:bg-gray-700 dark:text-gray-200">
                           signals
                         </span>
                       {/if}
@@ -429,7 +429,7 @@
             </li>
           {:else if isSignalsResult(r)}
             <!-- Signals mode: one card per rubric, containing one block per manifest. -->
-            <li class="border-2 rounded-xl p-5 border-indigo-200 bg-indigo-50/30 dark:border-gray-700 dark:bg-gray-900/40">
+            <li class="border-2 rounded-xl p-5 border-indigo-200 bg-blue-100 dark:border-gray-700 dark:bg-gray-900/40">
               <div class="flex items-start gap-3 mb-4">
                 <div class="flex-shrink-0 w-8 h-8 bg-indigo-500 dark:bg-gray-600 rounded-full flex items-center justify-center text-white">
                   <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -445,7 +445,7 @@
                     {#if r.rubricVersion}
                       <span class="text-xs text-gray-400 dark:text-gray-500 font-mono">v{r.rubricVersion}</span>
                     {/if}
-                    <span class="px-2 py-0.5 rounded-full text-xs font-bold uppercase tracking-wide bg-indigo-100 text-indigo-800 dark:bg-gray-800 dark:text-gray-200">
+                    <span class="px-2 py-0.5 rounded-full text-xs font-bold uppercase tracking-wide bg-blue-100 text-indigo-800 dark:bg-gray-800 dark:text-gray-200">
                       Signals
                     </span>
                     <span class="text-xs text-gray-500 dark:text-gray-400">

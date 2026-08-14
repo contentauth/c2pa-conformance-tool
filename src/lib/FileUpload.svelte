@@ -84,7 +84,7 @@
     
     <!-- Content -->
     <div class="relative">
-      <div class={`text-8xl text-center mb-6 transition-transform duration-200 ${dragOver ? 'scale-110' : 'group-hover:scale-110'}`}>
+      <div class={`text-center mb-6 transition-transform duration-200 ${dragOver ? 'scale-110' : 'group-hover:scale-110'}`}>
         <div class="inline-flex items-center justify-center w-24 h-24 bg-gradient-to-br from-blue-100 to-blue-100 dark:from-gray-700/50 dark:to-gray-700/50 rounded-2xl shadow-inner text-blue-900 dark:text-gray-300">
           <svg xmlns="http://www.w3.org/2000/svg" width="50%" height="50%" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-cloud-upload"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M7 18a4.6 4.4 0 0 1 0 -9a5 4.5 0 0 1 11 2h1a3.5 3.5 0 0 1 0 7h-1" /><path d="M9 15l3 -3l3 3" /><path d="M12 12l0 9" /></svg>
         </div>

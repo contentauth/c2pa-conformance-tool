@@ -216,11 +216,11 @@
           <section>
             <!-- Category divider: small-caps label + hairline rule. -->
             <div class="flex items-center gap-3 mb-1.5">
-              <h4 class="text-[11px] font-bold uppercase tracking-[0.12em] text-gray-500 dark:text-gray-400">
+              <h4 class="text-xs font-bold uppercase tracking-[0.12em] text-gray-500 dark:text-gray-400">
                 {group.category}
               </h4>
               <div class="flex-1 h-px bg-gray-200 dark:bg-gray-700"></div>
-              <span class="text-[11px] text-gray-400 dark:text-gray-500">
+              <span class="text-xs text-gray-400 dark:text-gray-500">
                 {group.entries.length}
               </span>
             </div>
@@ -243,7 +243,7 @@
                     <div class="flex-1 min-w-0 flex items-center gap-2 flex-wrap">
                       <span class="font-semibold text-gray-900 dark:text-white text-sm">{rubric.name}</span>
                       {#if rubric.mode === 'per-manifest'}
-                        <span class="px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide bg-blue-100 text-indigo-800 dark:bg-gray-700 dark:text-gray-200">
+                        <span class="px-1.5 py-0.5 rounded text-xs font-bold uppercase tracking-wide bg-blue-100 text-indigo-800 dark:bg-gray-700 dark:text-gray-200">
                           signals
                         </span>
                       {/if}
@@ -463,7 +463,7 @@
                         <span class="font-mono text-xs text-gray-500 dark:text-gray-400">#{idx}</span>
                         <span class="text-sm font-semibold text-gray-900 dark:text-white">{formatAssertedBy(m.assertedBy)}</span>
                         {#if m.mimeType}
-                          <span class="px-1.5 py-0.5 rounded text-[10px] font-mono bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300">{m.mimeType}</span>
+                          <span class="px-1.5 py-0.5 rounded text-xs font-mono bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300">{m.mimeType}</span>
                         {/if}
                       </div>
                       <div class="flex items-center gap-1.5 text-xs">
@@ -492,7 +492,7 @@
                                 <p class="text-gray-700 dark:text-gray-300">
                                   {sig.reportText}
                                   {#if sig.multiple}
-                                    <span class="ml-1 text-[10px] uppercase font-semibold text-gray-400 dark:text-gray-500">×multiple</span>
+                                    <span class="ml-1 text-xs uppercase font-semibold text-gray-400 dark:text-gray-500">×multiple</span>
                                   {/if}
                                 </p>
                                 <p class="text-xs text-gray-400 dark:text-gray-500 font-mono mt-0.5">{sig.trait}</p>
@@ -519,7 +519,7 @@
                                 <p class="text-gray-700 dark:text-gray-300">
                                   {sig.reportText}
                                   {#if sig.multiple}
-                                    <span class="ml-1 text-[10px] uppercase font-semibold text-gray-400 dark:text-gray-500">×multiple</span>
+                                    <span class="ml-1 text-xs uppercase font-semibold text-gray-400 dark:text-gray-500">×multiple</span>
                                   {/if}
                                 </p>
                                 <p class="text-xs text-gray-400 dark:text-gray-500 font-mono mt-0.5">{sig.trait}</p>

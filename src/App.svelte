@@ -394,12 +394,12 @@
               aria-label="Return to home"
             >
               C2PA Verify
-              <span class="text-[11px] leading-5 font-semibold tracking-wide px-2 py-0.5 rounded-full bg-neutral-200 text-neutral-700 dark:bg-indigo-900/60 dark:text-indigo-300">Beta</span>
+              <span class="text-xs leading-5 font-semibold tracking-wide px-2 py-0.5 rounded-full bg-neutral-200 text-neutral-700 dark:bg-indigo-900/60 dark:text-indigo-300">Beta</span>
             </button>
           {:else}
             <h1 class="flex items-center gap-2 text-xl font-bold text-gray-900 dark:text-white">
               C2PA Verify
-              <span class="text-[11px] leading-5 font-semibold tracking-wide px-2 py-0.5 rounded-full bg-neutral-200 text-neutral-700 dark:bg-indigo-900/60 dark:text-indigo-300">Beta</span>
+              <span class="text-xs leading-5 font-semibold tracking-wide px-2 py-0.5 rounded-full bg-neutral-200 text-neutral-700 dark:bg-indigo-900/60 dark:text-indigo-300">Beta</span>
             </h1>
           {/if}
         </div>
@@ -513,7 +513,7 @@
       <!-- Hero Section -->
       <div class="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center mb-12 mt-10">
         <div class="mb-10">
-          <h2 class="text-[34px] sm:text-[48px] font-bold text-[#444] dark:text-white mb-4 tracking-wide leading-tight">
+          <h2 class="text-3xl sm:text-5xl font-bold text-[#444] dark:text-white mb-4 tracking-wide leading-tight">
              Content Credentials<br />
             <span class="text-[#444] dark:text-white">
               Validator & Testing Tool

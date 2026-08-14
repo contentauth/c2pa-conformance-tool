@@ -671,7 +671,7 @@
 
   <!-- Section Navigation — only relevant on the Formatted tab (anchors live there) -->
   {#if activeManifest && activeTab === 'report'}
-    <div class="mb-6 flex items-center gap-1 flex-wrap border-b border-gray-200 dark:border-gray-700 pb-4">
+    <div class="mb-6 flex items-center gap-1 flex-wrap">
       <span class="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wide mr-2">Jump to:</span>
       <a href="#media-preview" class="text-sm px-2 py-1 text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-200 transition-colors">Media</a>
       <span class="text-gray-300 dark:text-gray-600 select-none">·</span>
@@ -843,7 +843,7 @@
           />
         {:else}
           <div class="text-center py-12 text-gray-500 dark:text-gray-400">
-            <div class="text-6xl mb-4">📁</div>
+            <div class="text-5xl mb-4">📁</div>
             <p>No media file available</p>
           </div>
         {/if}

@@ -134,7 +134,7 @@
   <div class="mt-2 text-center w-[300px] px-2">
     <!-- Relationship (non-root only) -->
     {#if !isRoot && node.relationship}
-      <p class="text-[10px] font-medium text-gray-400 dark:text-gray-400 uppercase tracking-wide mb-0.5">
+      <p class="text-xs font-medium text-gray-400 dark:text-gray-400 uppercase tracking-wide mb-0.5">
         {formatRelationship(node.relationship)}
       </p>
     {/if}
@@ -150,21 +150,21 @@
 
     <!-- No credentials label for stubs -->
     {#if node.isStub}
-      <p class="text-[11px] text-gray-400 dark:text-gray-400 mt-0.5 italic">No Content Credentials</p>
+      <p class="text-xs text-gray-400 dark:text-gray-400 mt-0.5 italic">No Content Credentials</p>
     {:else}
       <!-- Date -->
       {#if node.date}
-        <p class="text-[11px] text-gray-500 dark:text-gray-400 mt-0.5">{node.date}</p>
+        <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{node.date}</p>
       {/if}
 
       <!-- Actions -->
       {#if node.inceptions.length > 0 || node.transformations.length > 0}
         <div class="flex flex-wrap justify-center gap-0.5 mt-1.5">
           {#each node.inceptions as s}
-            <span class="text-[10px] px-1.5 py-0.5 rounded font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300">{s}</span>
+            <span class="text-xs px-1.5 py-0.5 rounded font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300">{s}</span>
           {/each}
           {#each node.transformations as s}
-            <span class="text-[10px] px-1.5 py-0.5 rounded font-medium bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300">{s}</span>
+            <span class="text-xs px-1.5 py-0.5 rounded font-medium bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300">{s}</span>
           {/each}
         </div>
       {/if}

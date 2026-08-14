@@ -182,7 +182,7 @@
             <path d="M9 14l2 2l4 -4" />
           </svg>
         </div>
-        <h3 class="text-base font-semibold text-gray-900 dark:text-white">Available Rubrics</h3>
+        <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Available Rubrics</h3>
       </div>
       {#if index.length > 0}
         <div class="flex items-center gap-1 text-xs">
@@ -264,7 +264,7 @@
         <button
           on:click={runSelected}
           disabled={selected.size === 0 || running}
-          class="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 dark:disabled:bg-gray-700 disabled:cursor-not-allowed text-white text-sm font-semibold rounded-lg shadow-sm transition-colors"
+          class="btn btn-primary"
         >
           {#if running}
             <svg class="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">

@@ -23,6 +23,45 @@
   }
 }
 
+@layer components {
+  /* Canonical button system — one source of truth for action buttons. */
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold shadow-sm transition-colors disabled:cursor-not-allowed;
+  }
+  .btn-primary {
+    @apply bg-blue-600 text-white hover:bg-blue-700 disabled:bg-gray-300 dark:disabled:bg-gray-700;
+  }
+  .btn-secondary {
+    @apply bg-gray-600 text-white hover:bg-gray-700;
+  }
+  .btn-success {
+    @apply bg-green-600 text-white hover:bg-green-700;
+  }
+  .btn-danger {
+    @apply bg-red-600 text-white hover:bg-red-700;
+  }
+  /* Outline (primary/blue) — bordered action on a white surface. */
+  .btn-outline {
+    @apply inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-colors bg-white dark:bg-gray-700 border border-blue-300 dark:border-gray-500 text-blue-700 dark:text-gray-200 hover:bg-blue-50 dark:hover:bg-gray-600;
+  }
+  /* Outline (neutral) — bordered secondary action (copy, etc.). */
+  .btn-outline-gray {
+    @apply inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-sm transition-colors text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700;
+  }
+  /* Ghost — text-only action; add padding utilities per use site. */
+  .btn-ghost {
+    @apply inline-flex items-center justify-center gap-2 text-sm font-semibold transition-colors text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white;
+  }
+  /* Icon-only — square toggle/control button. */
+  .btn-icon {
+    @apply inline-flex items-center justify-center p-2 rounded-lg transition-colors bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600;
+  }
+  /* Tab — segmented nav; add the active-state classes inline. */
+  .btn-tab {
+    @apply inline-flex items-center gap-1.5 px-3 py-2 rounded-md text-sm transition-colors text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700;
+  }
+}
+
 @layer utilities {
   @keyframes fade-in {
     from {

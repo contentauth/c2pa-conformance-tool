@@ -349,7 +349,7 @@ MCZvLxXCtwIgCxkR0Gbdwef8k0bf1tC3dz+4NDe0S8wdCx5ZgeRPkq4=
           </svg>
         </div>
         <div class="flex-1">
-          <h4 class="font-bold text-blue-900 dark:text-blue-300 text-base mb-1">
+          <h4 class="font-bold text-blue-900 dark:text-blue-300 text-lg mb-1">
             C2PA Test Mode
           </h4>
           <p class="text-xs text-blue-800 dark:text-blue-300">
@@ -361,7 +361,7 @@ MCZvLxXCtwIgCxkR0Gbdwef8k0bf1tC3dz+4NDe0S8wdCx5ZgeRPkq4=
       <div class="flex flex-wrap items-center gap-2">
         {#if !testModeEnabled}
           <button
-            class="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-all duration-200 font-semibold text-sm shadow-md hover:shadow-lg"
+            class="btn btn-primary"
             on:click={enableTestMode}
           >
             <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M20 8.04l-12.122 12.124a2.857 2.857 0 1 1 -4.041 -4.04l12.122 -12.124" /><path d="M7 13h8" /><path d="M19 15l1.5 1.6a2 2 0 1 1 -3 0l1.5 -1.6" /><path d="M15 3l6 6" /></svg>
@@ -369,14 +369,14 @@ MCZvLxXCtwIgCxkR0Gbdwef8k0bf1tC3dz+4NDe0S8wdCx5ZgeRPkq4=
           </button>
         {:else}
           <button
-            class="inline-flex items-center gap-2 px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-all duration-200 font-semibold text-sm shadow-md hover:shadow-lg"
+            class="btn btn-secondary"
             on:click={disableTestMode}
           >
             <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M18 6l-12 12" /><path d="M6 6l12 12" /></svg>
             Disable Test Mode
           </button>
           <button
-            class="inline-flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-all duration-200 font-semibold text-sm shadow-md hover:shadow-lg"
+            class="btn btn-success"
             on:click={downloadTestSigningCert}
           >
             <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2 -2v-2" /><path d="M7 11l5 5l5 -5" /><path d="M12 4l0 12" /></svg>

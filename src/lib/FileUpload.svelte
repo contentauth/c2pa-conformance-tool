@@ -51,7 +51,7 @@
 
 {#if compact}
   <button
-    class="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors duration-200 shadow-sm whitespace-nowrap"
+    class="btn btn-primary whitespace-nowrap"
     on:click={handleClick}
   >
     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -92,7 +92,7 @@
       <p class="text-2xl font-bold text-[#444] dark:text-white text-center mb-3">
         {dragOver ? 'Drop it here!' : 'Drop a file or click to browse'}
       </p>
-      <p class="text-base text-gray-600 dark:text-gray-400 text-center">
+      <p class="text-sm text-gray-600 dark:text-gray-400 text-center">
         Supports images, videos, audio, PDFs, and standalone <code class="font-mono text-sm">.c2pa</code> sidecar files
       </p>
 

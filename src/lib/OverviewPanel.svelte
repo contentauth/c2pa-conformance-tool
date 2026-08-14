@@ -481,7 +481,7 @@
     <div class="absolute bottom-3 right-3 flex flex-col gap-1 z-10 select-none">
       <button
         on:click|stopPropagation={() => stepZoom(1)}
-        class="w-8 h-8 rounded-lg bg-white/90 dark:bg-gray-800/90 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center justify-center shadow-sm backdrop-blur-sm transition-colors text-xl font-light leading-none"
+        class="w-8 h-8 rounded-lg bg-white/90 dark:bg-gray-800/90 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center justify-center shadow-sm backdrop-blur-sm transition-colors text-xl font-medium leading-none"
         title="Zoom in (scroll up)"
       >+</button>
       <button
@@ -496,7 +496,7 @@
       </button>
       <button
         on:click|stopPropagation={() => stepZoom(-1)}
-        class="w-8 h-8 rounded-lg bg-white/90 dark:bg-gray-800/90 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center justify-center shadow-sm backdrop-blur-sm transition-colors text-xl font-light leading-none"
+        class="w-8 h-8 rounded-lg bg-white/90 dark:bg-gray-800/90 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center justify-center shadow-sm backdrop-blur-sm transition-colors text-xl font-medium leading-none"
         title="Zoom out (scroll down)"
       >−</button>
     </div>

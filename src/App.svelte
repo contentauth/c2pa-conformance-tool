@@ -420,7 +420,7 @@
           {/if}
           <button
             on:click={toggleDarkMode}
-            class="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-all duration-200 group"
+            class="btn-icon group"
             aria-label="Toggle dark mode"
             title={darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
           >
@@ -434,7 +434,7 @@
           <div class="relative">
             <button
               on:click={() => menuOpen = !menuOpen}
-              class="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-all duration-200"
+              class="btn-icon"
               aria-label="Open menu"
               aria-expanded={menuOpen}
             >
@@ -486,7 +486,7 @@
       <div class="mb-8">
         <button
           on:click={() => navigateTo('main')}
-          class="inline-flex items-center gap-2 text-sm font-semibold text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
+          class="btn-ghost"
         >
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
@@ -583,7 +583,7 @@
                 <p class="text-gray-600 dark:text-gray-300 leading-relaxed mb-4">This file doesn't appear to contain C2PA Content Credentials.</p>
                 <button
                   on:click={resetToHome}
-                  class="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white text-sm font-semibold rounded-lg transition-colors"
+                  class="btn btn-secondary"
                 >
                   Try Another File
                 </button>
@@ -603,7 +603,7 @@
                 <p class="text-red-600 dark:text-gray-300 leading-relaxed mb-4">{error}</p>
                 <button
                   on:click={resetToHome}
-                  class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-semibold rounded-lg transition-colors"
+                  class="btn btn-danger"
                 >
                   Try Another File
                 </button>
@@ -631,13 +631,13 @@
                   <FileUpload on:fileselect={(e) => handleFilesDropped([e.detail])} compact={true} />
                   <button
                     on:click={inspectSidecarWithoutAsset}
-                    class="inline-flex items-center gap-2 px-4 py-2 bg-white dark:bg-gray-700 border border-blue-300 dark:border-gray-500 text-blue-700 dark:text-gray-200 text-sm font-semibold rounded-lg hover:bg-blue-50 dark:hover:bg-gray-600 transition-colors"
+                    class="btn-outline"
                   >
                     Inspect sidecar only (no asset)
                   </button>
                   <button
                     on:click={cancelPendingSidecar}
-                    class="inline-flex items-center gap-2 px-4 py-2 text-gray-500 dark:text-gray-400 text-sm font-semibold hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
+                    class="btn-ghost px-4 py-2"
                   >
                     Cancel
                   </button>

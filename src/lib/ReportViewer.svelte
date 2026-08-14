@@ -593,25 +593,25 @@
     <div class="flex flex-wrap items-center gap-2">
       <div class="flex items-center gap-1 border border-gray-200 dark:border-gray-600 rounded-lg p-1">
         <button
-          class="inline-flex items-center gap-1.5 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors {activeTab === 'summary' ? 'bg-gray-100 dark:bg-gray-700 font-medium' : ''}"
+          class="btn-tab {activeTab === 'summary' ? 'bg-gray-100 dark:bg-gray-700 font-medium' : ''}"
           on:click={() => activeTab = 'summary'}
         >
           Summary
         </button>
         <button
-          class="inline-flex items-center gap-1.5 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors {activeTab === 'report' ? 'bg-gray-100 dark:bg-gray-700 font-medium' : ''}"
+          class="btn-tab {activeTab === 'report' ? 'bg-gray-100 dark:bg-gray-700 font-medium' : ''}"
           on:click={() => activeTab = 'report'}
         >
           Report
         </button>
         <button
-          class="inline-flex items-center gap-1.5 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors {activeTab === 'crjson' ? 'bg-gray-100 dark:bg-gray-700 font-medium' : ''}"
+          class="btn-tab {activeTab === 'crjson' ? 'bg-gray-100 dark:bg-gray-700 font-medium' : ''}"
           on:click={() => activeTab = 'crjson'}
         >
           crJSON
         </button>
         <button
-          class="inline-flex items-center gap-1.5 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors {activeTab === 'rubrics' ? 'bg-gray-100 dark:bg-gray-700 font-medium' : ''}"
+          class="btn-tab {activeTab === 'rubrics' ? 'bg-gray-100 dark:bg-gray-700 font-medium' : ''}"
           on:click={() => activeTab = 'rubrics'}
           title="Evaluate this manifest against selectable rubrics"
         >
@@ -619,7 +619,7 @@
         </button>
       </div>
       <button
-        class="inline-flex items-center gap-1.5 px-3 py-2 text-sm text-gray-600 dark:text-gray-400 rounded-lg border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+        class="btn-outline-gray"
         on:click={downloadReport}
         title="Download report as JSON"
       >
@@ -635,7 +635,7 @@
         {copied ? 'Copied!' : 'Copy'}
       </button>
       <button
-        class="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-lg shadow-sm transition-colors"
+        class="btn btn-primary"
         on:click={handleNewFile}
       >
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>
@@ -784,7 +784,7 @@
                     </svg>
                   </div>
                   <p class="text-gray-600 dark:text-gray-400 mb-4 text-lg font-medium">PDF Document</p>
-                  <a href={mediaUrl} download={file.name} class="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-lg transition-colors shadow-sm">
+                  <a href={mediaUrl} download={file.name} class="btn btn-primary">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                     </svg>
@@ -802,7 +802,7 @@
                     C2PA manifest store detached from its referenced asset. No embedded media to preview; the manifest&rsquo;s
                     contents are shown below.
                   </p>
-                  <a href={mediaUrl} download={file.name} class="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-lg transition-colors shadow-sm">
+                  <a href={mediaUrl} download={file.name} class="btn btn-primary">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                     </svg>
@@ -873,7 +873,7 @@
                     {/if}
                     <span class="text-xs font-mono text-gray-500 dark:text-gray-500 truncate max-w-xs md:max-w-md" title={group.label}>{group.label}</span>
                     {#if group.sigInfo?.common_name}
-                      <span class="text-xs font-normal text-gray-500 dark:text-gray-400 ml-auto">
+                      <span class="text-xs font-medium text-gray-500 dark:text-gray-400 ml-auto">
                         signed by <span class="font-semibold text-gray-700 dark:text-gray-300">{group.sigInfo.common_name}</span>
                       </span>
                     {/if}

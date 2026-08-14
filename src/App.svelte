@@ -697,7 +697,7 @@
   </div><!-- end flex-1 content -->
 
   <!-- Footer (always shown) -->
-  <footer class="border-t border-gray-200 dark:border-gray-700">
+  <footer class="bg-[#f3f4f6] dark:bg-gray-900">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
       <span class="text-xs text-gray-500 dark:text-gray-400">Built with ❤️ by the C2PA Conformance community</span>
       <div class="flex items-center gap-4">

@@ -15,7 +15,7 @@
   }
 
   body {
-    @apply min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100;
+    @apply min-h-screen bg-[#f3f4f6] dark:bg-gray-900 text-gray-900 dark:text-gray-100;
   }
 
   #app {
@@ -26,13 +26,13 @@
 @layer components {
   /* Canonical button system — one source of truth for action buttons. */
   .btn {
-    @apply inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold shadow-sm transition-colors disabled:cursor-not-allowed;
+    @apply inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-bold shadow-sm transition-colors disabled:cursor-not-allowed;
   }
   .btn-primary {
     @apply bg-blue-600 text-white hover:bg-blue-700 disabled:bg-gray-300 dark:disabled:bg-gray-700;
   }
   .btn-secondary {
-    @apply bg-gray-600 text-white hover:bg-gray-700;
+    @apply bg-gray-600 text-[#e5e5e5] dark:text-white hover:bg-gray-700;
   }
   .btn-success {
     @apply bg-green-700 text-white hover:bg-green-800;
@@ -45,23 +45,24 @@
   }
   /* Outline (primary/blue) — bordered action on a white surface. */
   .btn-outline {
-    @apply inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-colors bg-white dark:bg-gray-700 border border-blue-300 dark:border-gray-500 text-blue-700 dark:text-gray-200 hover:bg-blue-50 dark:hover:bg-gray-600;
+    @apply inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-colors bg-white dark:bg-gray-700 border border-blue-300 dark:border-gray-500 text-blue-700 dark:text-gray-200 hover:bg-blue-50 dark:hover:bg-gray-600;
   }
   /* Outline (neutral) — bordered secondary action (copy, etc.). */
   .btn-outline-gray {
-    @apply inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm transition-colors text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700;
+    @apply inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-colors text-gray-600 dark:text-gray-400 border-2 border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700;
+  }
+  /* Selected state (tabs/toggles): fill matches the border, and hover
+     deepens the fill rather than lightening it. */
+  .btn-outline-gray.is-selected {
+    @apply bg-gray-200 dark:bg-gray-600 text-gray-900 dark:text-white hover:bg-gray-300 dark:hover:bg-gray-700;
   }
   /* Ghost — text-only action; add padding utilities per use site. */
   .btn-ghost {
-    @apply inline-flex items-center justify-center gap-2 text-sm font-semibold transition-colors text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white;
+    @apply inline-flex items-center justify-center gap-2 text-sm font-bold transition-colors text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white;
   }
   /* Icon-only — square toggle/control button. */
   .btn-icon {
     @apply inline-flex items-center justify-center p-2 rounded-lg transition-colors bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600;
-  }
-  /* Tab — segmented nav; add the active-state classes inline. */
-  .btn-tab {
-    @apply inline-flex items-center gap-2 px-4 py-2 rounded text-sm transition-colors text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700;
   }
 }
 

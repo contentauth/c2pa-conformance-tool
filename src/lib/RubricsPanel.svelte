@@ -171,30 +171,30 @@
 
 <div class="space-y-6">
   <!-- Rubric selector -->
-  <div class="bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 rounded-2xl p-6 shadow-sm">
-    <div class="flex items-center justify-between gap-4 mb-4 pb-4 border-b border-gray-200 dark:border-gray-700">
-      <div class="flex items-center gap-2">
-        <div class="w-7 h-7 bg-gray-800 dark:bg-gray-700 rounded flex items-center justify-center text-white shadow-sm">
-          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <div class="bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 rounded-2xl p-8 shadow-sm">
+    <div class="flex items-center justify-between gap-4 mb-6">
+      <div class="flex items-center gap-4">
+        <div class="w-10 h-10 bg-gray-800 dark:bg-gray-700 rounded-lg flex items-center justify-center text-white shadow-sm">
+          <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path stroke="none" d="M0 0h24v24H0z" fill="none" />
             <path d="M9 5h-2a2 2 0 0 0 -2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-12a2 2 0 0 0 -2 -2h-2" />
             <path d="M9 3m0 2a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v0a2 2 0 0 1 -2 2h-2a2 2 0 0 1 -2 -2z" />
             <path d="M9 14l2 2l4 -4" />
           </svg>
         </div>
-        <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Available Rubrics</h3>
+        <h3 class="text-xl font-semibold text-gray-900 dark:text-white">Available Rubrics</h3>
       </div>
       {#if index.length > 0}
-        <div class="flex items-center gap-1 text-xs">
+        <div class="flex items-center gap-2">
           <button
             on:click={selectAll}
-            class="px-2 py-1 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
+            class="btn-outline-gray"
           >
             Select all
           </button>
           <button
             on:click={clearAll}
-            class="px-2 py-1 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
+            class="btn-outline-gray"
           >
             Clear
           </button>
@@ -295,7 +295,7 @@
   <!-- Results -->
   {#if results.length > 0}
     <div class="bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 rounded-2xl p-8 shadow-sm">
-      <div class="flex items-center justify-between gap-4 mb-6 pb-4 border-b border-gray-200 dark:border-gray-700">
+      <div class="flex items-center justify-between gap-4 mb-6">
         <div class="flex items-center gap-4">
           <div class="w-10 h-10 bg-gray-800 dark:bg-gray-700 rounded-lg flex items-center justify-center text-white shadow-sm">
             <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">

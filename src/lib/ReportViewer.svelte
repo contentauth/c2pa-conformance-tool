@@ -591,48 +591,30 @@
       <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">{heading.subtitle}</p>
     </div>
     <div class="flex flex-wrap items-center gap-2">
-      <div class="flex items-center gap-1 border border-gray-200 dark:border-gray-600 rounded-lg p-1">
-        <button
-          class="btn-tab {activeTab === 'summary' ? 'bg-gray-100 dark:bg-gray-700 font-medium' : ''}"
-          on:click={() => activeTab = 'summary'}
-        >
-          Summary
-        </button>
-        <button
-          class="btn-tab {activeTab === 'report' ? 'bg-gray-100 dark:bg-gray-700 font-medium' : ''}"
-          on:click={() => activeTab = 'report'}
-        >
-          Report
-        </button>
-        <button
-          class="btn-tab {activeTab === 'crjson' ? 'bg-gray-100 dark:bg-gray-700 font-medium' : ''}"
-          on:click={() => activeTab = 'crjson'}
-        >
-          crJSON
-        </button>
-        <button
-          class="btn-tab {activeTab === 'rubrics' ? 'bg-gray-100 dark:bg-gray-700 font-medium' : ''}"
-          on:click={() => activeTab = 'rubrics'}
-          title="Evaluate this manifest against selectable rubrics"
-        >
-          Rubrics
-        </button>
-      </div>
       <button
-        class="btn-outline-gray"
-        on:click={downloadReport}
-        title="Download report as JSON"
+        class="btn-outline-gray {activeTab === 'summary' ? 'is-selected' : ''}"
+        on:click={() => activeTab = 'summary'}
       >
-        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2 -2v-2" /><path d="M7 11l5 5l5 -5" /><path d="M12 4l0 12" /></svg>
-        Download
+        Summary
       </button>
       <button
-        class="inline-flex items-center gap-2 px-4 py-2 text-sm rounded-lg border transition-colors {copied ? 'border-green-500 bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300' : 'border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'}"
-        on:click={copyToClipboard}
-        title="Copy JSON to clipboard"
+        class="btn-outline-gray {activeTab === 'report' ? 'is-selected' : ''}"
+        on:click={() => activeTab = 'report'}
       >
-        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M7 9.667a2.667 2.667 0 0 1 2.667 -2.667h8.666a2.667 2.667 0 0 1 2.667 2.667v8.666a2.667 2.667 0 0 1 -2.667 2.667h-8.666a2.667 2.667 0 0 1 -2.667 -2.667l0 -8.666" /><path d="M4.012 16.737a2.005 2.005 0 0 1 -1.012 -1.737v-10c0 -1.1 .9 -2 2 -2h10c.75 0 1.158 .385 1.5 1" /></svg>
-        {copied ? 'Copied!' : 'Copy'}
+        Report
+      </button>
+      <button
+        class="btn-outline-gray {activeTab === 'crjson' ? 'is-selected' : ''}"
+        on:click={() => activeTab = 'crjson'}
+      >
+        crJSON
+      </button>
+      <button
+        class="btn-outline-gray {activeTab === 'rubrics' ? 'is-selected' : ''}"
+        on:click={() => activeTab = 'rubrics'}
+        title="Evaluate this manifest against selectable rubrics"
+      >
+        Rubrics
       </button>
       <button
         class="btn btn-primary"
@@ -700,18 +682,38 @@
   {/if}
 
   {#if activeTab === 'summary'}
-    <div class="bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 rounded-2xl p-8 shadow-sm flex-1 flex flex-col min-h-0 mb-6">
+    <div class="bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 rounded-2xl shadow-sm overflow-hidden flex-1 flex flex-col min-h-0 mb-6">
       <OverviewPanel {report} {file} />
     </div>
   {:else if activeTab === 'crjson'}
     <div class="bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 rounded-2xl p-8 shadow-sm">
-      <div class="flex items-center gap-4 mb-6 pb-4 border-b-2 border-gray-200 dark:border-gray-700">
-        <div class="w-10 h-10 bg-gray-800 dark:bg-gray-700 rounded-lg flex items-center justify-center text-white shadow-sm">
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
-          </svg>
+      <div class="flex items-center justify-between gap-4 mb-6">
+        <div class="flex items-center gap-4">
+          <div class="w-10 h-10 bg-gray-800 dark:bg-gray-700 rounded-lg flex items-center justify-center text-white shadow-sm">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+            </svg>
+          </div>
+          <h3 class="text-xl font-semibold text-gray-900 dark:text-white">crJSON Report</h3>
         </div>
-        <h3 class="text-xl font-semibold text-gray-900 dark:text-white">crJSON Report</h3>
+        <div class="flex items-center gap-2">
+          <button
+            class="btn-outline-gray"
+            on:click={downloadReport}
+            title="Download report as JSON"
+          >
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2 -2v-2" /><path d="M7 11l5 5l5 -5" /><path d="M12 4l0 12" /></svg>
+            Download
+          </button>
+          <button
+            class="inline-flex items-center gap-2 px-4 py-2 text-sm font-bold rounded-lg border-2 transition-colors {copied ? 'border-green-500 bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300' : 'border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'}"
+            on:click={copyToClipboard}
+            title="Copy JSON to clipboard"
+          >
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M7 9.667a2.667 2.667 0 0 1 2.667 -2.667h8.666a2.667 2.667 0 0 1 2.667 2.667v8.666a2.667 2.667 0 0 1 -2.667 2.667h-8.666a2.667 2.667 0 0 1 -2.667 -2.667l0 -8.666" /><path d="M4.012 16.737a2.005 2.005 0 0 1 -1.012 -1.737v-10c0 -1.1 .9 -2 2 -2h10c.75 0 1.158 .385 1.5 1" /></svg>
+            {copied ? 'Copied!' : 'Copy'}
+          </button>
+        </div>
       </div>
       <pre class="hljs bg-gray-900 dark:bg-black border-2 border-gray-700 dark:border-gray-600 rounded-2xl p-6 overflow-x-auto text-sm leading-relaxed shadow-inner"><code class="language-json"><JsonViewer value={report} /></code></pre>
     </div>
@@ -723,7 +725,7 @@
     <!-- Media Preview and Validation Status -->
     <div class="mb-8" id="media-preview">
       <div class="bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 rounded-2xl p-8 shadow-sm">
-        <div class="flex items-center gap-4 mb-6 pb-4 border-b border-gray-200 dark:border-gray-700">
+        <div class="flex items-center gap-4 mb-6">
           <div class="w-10 h-10 bg-gray-800 dark:bg-gray-700 rounded-lg flex items-center justify-center text-white shadow-sm">
             {#if mediaType === 'sidecar'}
               <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M14 3v4a1 1 0 0 0 1 1h4" /><path d="M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2z" /><path d="M9 17h6" /><path d="M9 13h6" /></svg>
@@ -855,7 +857,7 @@
       {#if activeManifest}
         <!-- Validation Status Details Section -->
         <section class="bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 rounded-2xl p-8 shadow-sm" id="validation-status">
-          <div class="flex items-center gap-4 mb-6 pb-4 border-b border-gray-200 dark:border-gray-700">
+          <div class="flex items-center gap-4 mb-6">
             <div class="w-10 h-10 bg-gray-800 dark:bg-gray-700 rounded-lg flex items-center justify-center text-white shadow-sm">
               <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M11.46 20.846a12 12 0 0 1 -7.96 -14.846a12 12 0 0 0 8.5 -3a12 12 0 0 0 8.5 3a12 12 0 0 1 -.09 7.06" /><path d="M15 19l2 2l4 -4" /></svg>
             </div>
@@ -934,7 +936,7 @@
 
         {#if signatureInfo}
           <section class="bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 rounded-2xl p-8 shadow-sm" id="signature-info">
-            <div class="flex items-center gap-4 mb-6 pb-4 border-b border-gray-200 dark:border-gray-700">
+            <div class="flex items-center gap-4 mb-6">
               <div class="w-10 h-10 bg-gray-800 dark:bg-gray-700 rounded-lg flex items-center justify-center text-white shadow-sm">
                 <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M5 7.2a2.2 2.2 0 0 1 2.2 -2.2h1a2.2 2.2 0 0 0 1.55 -.64l.7 -.7a2.2 2.2 0 0 1 3.12 0l.7 .7c.412 .41 .97 .64 1.55 .64h1a2.2 2.2 0 0 1 2.2 2.2v1c0 .58 .23 1.138 .64 1.55l.7 .7a2.2 2.2 0 0 1 0 3.12l-.7 .7a2.2 2.2 0 0 0 -.64 1.55v1a2.2 2.2 0 0 1 -2.2 2.2h-1a2.2 2.2 0 0 0 -1.55 .64l-.7 .7a2.2 2.2 0 0 1 -3.12 0l-.7 -.7a2.2 2.2 0 0 0 -1.55 -.64h-1a2.2 2.2 0 0 1 -2.2 -2.2v-1a2.2 2.2 0 0 0 -.64 -1.55l-.7 -.7a2.2 2.2 0 0 1 0 -3.12l.7 -.7a2.2 2.2 0 0 0 .64 -1.55v-1" /><path d="M9 12l2 2l4 -4" /></svg>
               </div>
@@ -1009,7 +1011,7 @@
         {/if}
 
         <section class="bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 rounded-2xl p-8 shadow-sm" id="manifest-details">
-          <div class="flex items-center gap-4 mb-6 pb-4 border-b border-gray-200 dark:border-gray-700">
+          <div class="flex items-center gap-4 mb-6">
             <div class="w-10 h-10 bg-gray-800 dark:bg-gray-700 rounded-lg flex items-center justify-center text-white shadow-sm">
               <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M14 3v4a1 1 0 0 0 1 1h4" /><path d="M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2" /><path d="M9 9l1 0" /><path d="M9 13l6 0" /><path d="M9 17l6 0" /></svg>
             </div>
@@ -1036,7 +1038,7 @@
 
         {#if assertionsList.length > 0}
           <section class="bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 rounded-2xl p-8 shadow-sm" id="assertions">
-            <div class="flex items-center gap-4 mb-6 pb-4 border-b border-gray-200 dark:border-gray-700">
+            <div class="flex items-center gap-4 mb-6">
               <div class="w-10 h-10 bg-gray-800 dark:bg-gray-700 rounded-lg flex items-center justify-center text-white shadow-sm">
                 <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M9 5h-2a2 2 0 0 0 -2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-12a2 2 0 0 0 -2 -2h-2" /><path d="M9 5a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2a2 2 0 0 1 -2 2h-2a2 2 0 0 1 -2 -2" /><path d="M9 14l2 2l4 -4" /></svg>
               </div>

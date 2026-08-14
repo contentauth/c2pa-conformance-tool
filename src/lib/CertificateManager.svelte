@@ -324,7 +324,7 @@ MCZvLxXCtwIgCxkR0Gbdwef8k0bf1tC3dz+4NDe0S8wdCx5ZgeRPkq4=
   }
 </script>
 
-<div class="bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-900/30 dark:to-orange-900/30 border-2 border-amber-300 dark:border-amber-700 rounded-2xl p-6 shadow-sm">
+<div class="bg-gradient-to-br from-amber-50 to-amber-50 dark:from-amber-900/30 dark:to-amber-900/30 border-2 border-amber-300 dark:border-amber-700 rounded-2xl p-6 shadow-sm">
   <div class="flex-1">
     <div class="flex items-start gap-3 mb-3">
       <div class="flex-shrink-0 w-10 h-10 bg-amber-600 dark:bg-amber-700 rounded-lg flex items-center justify-center">
@@ -397,7 +397,7 @@ MCZvLxXCtwIgCxkR0Gbdwef8k0bf1tC3dz+4NDe0S8wdCx5ZgeRPkq4=
         {/if}
       </div>
       <button
-        class="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 text-white rounded-lg transition-all duration-200 font-semibold text-sm whitespace-nowrap shadow-md hover:shadow-lg transform"
+        class="inline-flex items-center gap-2 px-5 py-2.5 bg-amber-700 hover:bg-amber-800 text-white rounded-lg transition-all duration-200 font-semibold text-sm whitespace-nowrap shadow-md hover:shadow-lg transform"
         on:click={handleClick}
         disabled={!testModeEnabled}
         class:opacity-50={!testModeEnabled}

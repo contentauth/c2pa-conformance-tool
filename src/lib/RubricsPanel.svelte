@@ -220,7 +220,7 @@
                 {group.category}
               </h4>
               <div class="flex-1 h-px bg-gray-200 dark:bg-gray-700"></div>
-              <span class="text-xs text-gray-400 dark:text-gray-500">
+              <span class="text-xs text-gray-500 dark:text-gray-400">
                 {group.entries.length}
               </span>
             </div>
@@ -243,11 +243,11 @@
                     <div class="flex-1 min-w-0 flex items-center gap-2 flex-wrap">
                       <span class="font-semibold text-gray-900 dark:text-white text-sm">{rubric.name}</span>
                       {#if rubric.mode === 'per-manifest'}
-                        <span class="px-1.5 py-0.5 rounded text-xs font-bold uppercase tracking-wide bg-blue-100 text-indigo-800 dark:bg-gray-700 dark:text-gray-200">
+                        <span class="px-1.5 py-0.5 rounded text-xs font-bold uppercase tracking-wide bg-blue-100 text-blue-800 dark:bg-gray-700 dark:text-gray-200">
                           signals
                         </span>
                       {/if}
-                      <span class="text-xs text-gray-400 dark:text-gray-500 font-mono truncate">{rubric.id}</span>
+                      <span class="text-xs text-gray-500 dark:text-gray-400 font-mono truncate">{rubric.id}</span>
                     </div>
                   </label>
                 </li>
@@ -313,7 +313,7 @@
                 </span>
               {/if}
               {#if docResults.length > 0 && signalsResults.length > 0}
-                <span class="text-gray-400 dark:text-gray-500"> · </span>
+                <span class="text-gray-500 dark:text-gray-400"> · </span>
               {/if}
               {#if signalsResults.length > 0}
                 <span class="font-semibold text-gray-700 dark:text-gray-300">
@@ -321,7 +321,7 @@
                 </span>
               {/if}
               {#if ranAt}
-                <span class="text-gray-400 dark:text-gray-500"> · evaluated {ranAt.toLocaleTimeString()}</span>
+                <span class="text-gray-500 dark:text-gray-400"> · evaluated {ranAt.toLocaleTimeString()}</span>
               {/if}
             </p>
           </div>
@@ -353,7 +353,7 @@
                   <div class="flex items-center gap-2 flex-wrap">
                     <span class="font-semibold text-gray-900 dark:text-white">{r.rubricName}</span>
                     {#if r.rubricVersion}
-                      <span class="text-xs text-gray-400 dark:text-gray-500 font-mono">v{r.rubricVersion}</span>
+                      <span class="text-xs text-gray-500 dark:text-gray-400 font-mono">v{r.rubricVersion}</span>
                     {/if}
                     <span class="px-2 py-0.5 rounded-full text-xs font-bold uppercase tracking-wide {r.overallPassed
                       ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300'
@@ -379,7 +379,7 @@
                         </svg>
                         <div class="flex-1 min-w-0">
                           <p class="text-gray-700 dark:text-gray-300">{s.message || s.description || s.id}</p>
-                          <p class="text-xs text-gray-400 dark:text-gray-500 font-mono mt-0.5">{s.id}</p>
+                          <p class="text-xs text-gray-500 dark:text-gray-400 font-mono mt-0.5">{s.id}</p>
                         </div>
                       </li>
                     {/each}
@@ -398,7 +398,7 @@
                         </svg>
                         <div class="flex-1 min-w-0">
                           <p class="text-gray-700 dark:text-gray-300">{s.message || s.description || s.id}</p>
-                          <p class="text-xs text-gray-400 dark:text-gray-500 font-mono mt-0.5">{s.id}</p>
+                          <p class="text-xs text-gray-500 dark:text-gray-400 font-mono mt-0.5">{s.id}</p>
                         </div>
                       </li>
                     {/each}
@@ -419,7 +419,7 @@
                         </svg>
                         <div class="flex-1 min-w-0">
                           <p class="text-gray-700 dark:text-gray-300">{s.message || s.description || s.id}</p>
-                          <p class="text-xs text-gray-400 dark:text-gray-500 font-mono mt-0.5">{s.id}</p>
+                          <p class="text-xs text-gray-500 dark:text-gray-400 font-mono mt-0.5">{s.id}</p>
                         </div>
                       </li>
                     {/each}
@@ -429,9 +429,9 @@
             </li>
           {:else if isSignalsResult(r)}
             <!-- Signals mode: one card per rubric, containing one block per manifest. -->
-            <li class="border-2 rounded-xl p-5 border-indigo-200 bg-blue-100 dark:border-gray-700 dark:bg-gray-900/40">
+            <li class="border-2 rounded-xl p-5 border-blue-200 bg-blue-100 dark:border-gray-700 dark:bg-gray-900/40">
               <div class="flex items-start gap-3 mb-4">
-                <div class="flex-shrink-0 w-8 h-8 bg-indigo-500 dark:bg-gray-600 rounded-full flex items-center justify-center text-white">
+                <div class="flex-shrink-0 w-8 h-8 bg-blue-500 dark:bg-gray-600 rounded-full flex items-center justify-center text-white">
                   <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path stroke="none" d="M0 0h24v24H0z" fill="none" />
                     <path d="M4 11a9 9 0 0 1 9 9" />
@@ -443,9 +443,9 @@
                   <div class="flex items-center gap-2 flex-wrap">
                     <span class="font-semibold text-gray-900 dark:text-white">{r.rubricName}</span>
                     {#if r.rubricVersion}
-                      <span class="text-xs text-gray-400 dark:text-gray-500 font-mono">v{r.rubricVersion}</span>
+                      <span class="text-xs text-gray-500 dark:text-gray-400 font-mono">v{r.rubricVersion}</span>
                     {/if}
-                    <span class="px-2 py-0.5 rounded-full text-xs font-bold uppercase tracking-wide bg-blue-100 text-indigo-800 dark:bg-gray-800 dark:text-gray-200">
+                    <span class="px-2 py-0.5 rounded-full text-xs font-bold uppercase tracking-wide bg-blue-100 text-blue-800 dark:bg-gray-800 dark:text-gray-200">
                       Signals
                     </span>
                     <span class="text-xs text-gray-500 dark:text-gray-400">
@@ -479,23 +479,23 @@
 
                     {#if m.localInceptions.length > 0}
                       <div class="mt-3">
-                        <h5 class="text-xs font-semibold text-indigo-700 dark:text-gray-300 uppercase tracking-wider mb-2">
+                        <h5 class="text-xs font-semibold text-blue-700 dark:text-gray-300 uppercase tracking-wider mb-2">
                           Inception ({m.localInceptions.length})
                         </h5>
                         <ul class="space-y-1.5">
                           {#each m.localInceptions as sig (sig.trait)}
                             <li class="flex items-start gap-2 text-sm">
-                              <svg class="w-4 h-4 text-indigo-600 dark:text-gray-400 flex-shrink-0 mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                              <svg class="w-4 h-4 text-blue-600 dark:text-gray-400 flex-shrink-0 mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                                 <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
                               </svg>
                               <div class="flex-1 min-w-0">
                                 <p class="text-gray-700 dark:text-gray-300">
                                   {sig.reportText}
                                   {#if sig.multiple}
-                                    <span class="ml-1 text-xs uppercase font-semibold text-gray-400 dark:text-gray-500">×multiple</span>
+                                    <span class="ml-1 text-xs uppercase font-semibold text-gray-500 dark:text-gray-400">×multiple</span>
                                   {/if}
                                 </p>
-                                <p class="text-xs text-gray-400 dark:text-gray-500 font-mono mt-0.5">{sig.trait}</p>
+                                <p class="text-xs text-gray-500 dark:text-gray-400 font-mono mt-0.5">{sig.trait}</p>
                               </div>
                             </li>
                           {/each}
@@ -519,10 +519,10 @@
                                 <p class="text-gray-700 dark:text-gray-300">
                                   {sig.reportText}
                                   {#if sig.multiple}
-                                    <span class="ml-1 text-xs uppercase font-semibold text-gray-400 dark:text-gray-500">×multiple</span>
+                                    <span class="ml-1 text-xs uppercase font-semibold text-gray-500 dark:text-gray-400">×multiple</span>
                                   {/if}
                                 </p>
-                                <p class="text-xs text-gray-400 dark:text-gray-500 font-mono mt-0.5">{sig.trait}</p>
+                                <p class="text-xs text-gray-500 dark:text-gray-400 font-mono mt-0.5">{sig.trait}</p>
                               </div>
                             </li>
                           {/each}

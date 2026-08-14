@@ -672,7 +672,7 @@
   <!-- Section Navigation — only relevant on the Formatted tab (anchors live there) -->
   {#if activeManifest && activeTab === 'report'}
     <div class="mb-6 flex items-center gap-1 flex-wrap">
-      <span class="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wide mr-2">Jump to:</span>
+      <span class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mr-2">Jump to:</span>
       <a href="#media-preview" class="text-sm px-2 py-1 text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-200 transition-colors">Media</a>
       <span class="text-gray-300 dark:text-gray-600 select-none">·</span>
       <a href="#validation-status" class="text-sm px-2 py-1 text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-200 transition-colors">Validation</a>
@@ -765,7 +765,7 @@
                 </video>
               {:else if mediaType === 'audio'}
                 <div class="w-full max-w-md">
-                  <div class="w-20 h-20 mx-auto bg-gradient-to-br from-purple-500 to-pink-500 dark:from-purple-700 dark:to-pink-700 rounded-2xl flex items-center justify-center text-white mb-6 shadow-lg">
+                  <div class="w-20 h-20 mx-auto bg-gradient-to-br from-blue-500 to-blue-500 dark:from-blue-700 dark:to-blue-700 rounded-2xl flex items-center justify-center text-white mb-6 shadow-lg">
                     <svg class="w-10 h-10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                       <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
                       <path d="M3 17a3 3 0 1 0 6 0a3 3 0 0 0-6 0"/><path d="M6 17v-13l12-2v13"/><path d="M15 15a3 3 0 1 0 6 0a3 3 0 0 0-6 0"/>
@@ -777,7 +777,7 @@
                 </div>
               {:else if mediaType === 'document'}
                 <div class="text-center">
-                  <div class="w-20 h-20 mx-auto bg-gradient-to-br from-red-500 to-orange-500 dark:from-red-700 dark:to-orange-600 rounded-2xl flex items-center justify-center text-white mb-6 shadow-lg">
+                  <div class="w-20 h-20 mx-auto bg-gradient-to-br from-blue-500 to-blue-600 dark:from-blue-700 dark:to-blue-800 rounded-2xl flex items-center justify-center text-white mb-6 shadow-lg">
                     <svg class="w-10 h-10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                       <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
                       <path d="M14 3v4a1 1 0 0 0 1 1h4"/><path d="M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2z"/><path d="M9 17h6"/><path d="M9 13h6"/>
@@ -793,7 +793,7 @@
                 </div>
               {:else if mediaType === 'sidecar'}
                 <div class="text-center max-w-md">
-                  <div class="w-20 h-20 mx-auto bg-gradient-to-br from-blue-500 to-indigo-600 dark:from-gray-600 dark:to-gray-700 rounded-2xl flex items-center justify-center text-white mb-6 shadow-lg">
+                  <div class="w-20 h-20 mx-auto bg-gradient-to-br from-blue-500 to-blue-600 dark:from-gray-600 dark:to-gray-700 rounded-2xl flex items-center justify-center text-white mb-6 shadow-lg">
                     <svg class="w-10 h-10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M14 3v4a1 1 0 0 0 1 1h4" /><path d="M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2z" /><path d="M9 17h6" /><path d="M9 13h6" /></svg>
                   </div>
                   <p class="text-gray-900 dark:text-gray-100 mb-2 text-lg font-semibold">Standalone manifest sidecar</p>
@@ -869,7 +869,7 @@
                     {#if group.isActive}
                       <span class="px-2.5 py-1 bg-blue-100 dark:bg-blue-900/50 text-blue-800 dark:text-blue-300 text-xs font-semibold rounded-full">Active Asset</span>
                     {:else}
-                      <span class="px-2.5 py-1 bg-orange-100 dark:bg-orange-900/50 text-orange-800 dark:text-orange-300 text-xs font-semibold rounded-full">Ingredient {group.index}</span>
+                      <span class="px-2.5 py-1 bg-blue-100 dark:bg-blue-900/50 text-blue-800 dark:text-blue-300 text-xs font-semibold rounded-full">Ingredient {group.index}</span>
                     {/if}
                     <span class="text-xs font-mono text-gray-500 dark:text-gray-500 truncate max-w-xs md:max-w-md" title={group.label}>{group.label}</span>
                     {#if group.sigInfo?.common_name}
@@ -897,7 +897,7 @@
                     {#each group.success as status}
                       <div class="rounded-xl p-4 border bg-green-50/50 dark:bg-gray-900/30 border-green-100 dark:border-green-900/30 text-green-800 dark:text-green-300">
                          <div class="flex items-start gap-3">
-                           <span class="flex-shrink-0 w-5 h-5 rounded-full bg-green-600 dark:bg-green-800 text-white flex items-center justify-center text-xs font-bold">✓</span>
+                           <span class="flex-shrink-0 w-5 h-5 rounded-full bg-green-700 dark:bg-green-800 text-white flex items-center justify-center text-xs font-bold">✓</span>
                            <div class="flex-1 text-left">
                              <span class="font-bold text-xs font-mono block sm:inline mb-1 sm:mb-0 mr-2">{status.code}</span>
                              {#if status.isInterim}
@@ -1046,19 +1046,19 @@
               <div class="flex items-center gap-2">
                 <button
                   on:click={expandAllAssertions}
-                  class="text-xs px-3 py-1 bg-purple-100 dark:bg-gray-800 hover:bg-purple-200 dark:hover:bg-gray-700 text-purple-700 dark:text-gray-300 rounded-lg transition-colors font-semibold"
+                  class="text-xs px-3 py-1 bg-blue-100 dark:bg-gray-800 hover:bg-blue-200 dark:hover:bg-gray-700 text-blue-700 dark:text-gray-300 rounded-lg transition-colors font-semibold"
                   title="Expand all assertions"
                 >
                   Expand All
                 </button>
                 <button
                   on:click={collapseAllAssertions}
-                  class="text-xs px-3 py-1 bg-purple-100 dark:bg-gray-800 hover:bg-purple-200 dark:hover:bg-gray-700 text-purple-700 dark:text-gray-300 rounded-lg transition-colors font-semibold"
+                  class="text-xs px-3 py-1 bg-blue-100 dark:bg-gray-800 hover:bg-blue-200 dark:hover:bg-gray-700 text-blue-700 dark:text-gray-300 rounded-lg transition-colors font-semibold"
                   title="Collapse all assertions"
                 >
                   Collapse All
                 </button>
-                <div class="px-3 py-1 bg-purple-100 dark:bg-gray-800 text-purple-700 dark:text-gray-300 rounded-full text-sm font-bold">
+                <div class="px-3 py-1 bg-blue-100 dark:bg-gray-800 text-blue-700 dark:text-gray-300 rounded-full text-sm font-bold">
                   {assertionsList.length}
                 </div>
               </div>
@@ -1069,7 +1069,7 @@
                 {@const summary = assertion.data ? extractAssertionSummary(assertion.data) : []}
                 <div class="bg-gray-50 dark:bg-gray-900 rounded-xl p-5 border border-gray-200 dark:border-gray-700">
                   <div class="flex items-start gap-3 mb-3">
-                    <div class="flex-shrink-0 w-8 h-8 bg-purple-100 dark:bg-gray-800 rounded-lg flex items-center justify-center text-purple-700 dark:text-gray-300 font-bold text-sm">
+                    <div class="flex-shrink-0 w-8 h-8 bg-blue-100 dark:bg-gray-800 rounded-lg flex items-center justify-center text-blue-700 dark:text-gray-300 font-bold text-sm">
                       {index + 1}
                     </div>
                     <div class="flex-1">
@@ -1077,7 +1077,7 @@
                       {#if assertion.data}
                         <button
                           on:click={() => toggleAssertion(index)}
-                          class="mt-1 inline-flex items-center gap-1 text-xs font-semibold text-purple-600 dark:text-gray-400 hover:text-purple-700 dark:hover:text-gray-300 transition-colors"
+                          class="mt-1 inline-flex items-center gap-1 text-xs font-semibold text-blue-600 dark:text-gray-400 hover:text-blue-700 dark:hover:text-gray-300 transition-colors"
                         >
                           <svg class="w-3 h-3 transition-transform {isExpanded ? 'rotate-90' : ''}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
@@ -1115,7 +1115,7 @@
                                         href={item.digitalSourceType}
                                         target="_blank"
                                         rel="noopener noreferrer"
-                                        class="text-sm font-medium text-purple-600 dark:text-gray-400 hover:text-purple-700 dark:hover:text-gray-300 underline"
+                                        class="text-sm font-medium text-blue-600 dark:text-gray-400 hover:text-blue-700 dark:hover:text-gray-300 underline"
                                       >
                                         {getAbbreviatedSourceType(item.digitalSourceType)}
                                       </a>
@@ -1150,10 +1150,10 @@
                       {#if isExpanded}
                         <div class="mt-3 animate-fade-in">
                           <div class="flex items-center gap-2 mb-2">
-                            <svg class="w-4 h-4 text-purple-600 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg class="w-4 h-4 text-blue-600 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
                             </svg>
-                            <span class="text-xs font-bold text-purple-700 dark:text-gray-300 uppercase tracking-wide">Complete Data</span>
+                            <span class="text-xs font-bold text-blue-700 dark:text-gray-300 uppercase tracking-wide">Complete Data</span>
                           </div>
                           <pre class="bg-gray-900 dark:bg-black/50 p-4 rounded-lg text-xs overflow-x-auto text-gray-100 dark:text-gray-300 border border-gray-700 leading-relaxed">{formatAssertionData(assertion.data)}</pre>
                         </div>

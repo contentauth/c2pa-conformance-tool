@@ -449,7 +449,7 @@
     bind:clientWidth={containerWidth}
     use:touchAction
     class="relative w-full flex-1 overflow-hidden rounded-2xl"
-    style="cursor: {isDragging ? 'grabbing' : 'grab'}; background-color: var(--canvas-bg, #f8f9fb);"
+    style="cursor: {isDragging ? 'grabbing' : 'grab'}; background-color: var(--canvas-bg, #fafafa);"
     role="application"
     aria-label="Provenance tree — drag to pan, scroll to zoom"
     on:mousedown={onMouseDown}

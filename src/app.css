@@ -15,7 +15,7 @@
   }
 
   body {
-    @apply min-h-screen bg-[#F9F9F9] dark:bg-gray-900 text-gray-900 dark:text-gray-100;
+    @apply min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100;
   }
 
   #app {
@@ -35,7 +35,7 @@
     @apply bg-gray-600 text-white hover:bg-gray-700;
   }
   .btn-success {
-    @apply bg-green-600 text-white hover:bg-green-700;
+    @apply bg-green-700 text-white hover:bg-green-800;
   }
   .btn-danger {
     @apply bg-red-600 text-white hover:bg-red-700;

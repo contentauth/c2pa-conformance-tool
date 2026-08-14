@@ -371,11 +371,11 @@
     <div class="fixed inset-0 z-50 flex items-center justify-center bg-gradient-to-br from-blue-100 to-blue-100 dark:from-gray-700 dark:to-gray-800 bg-opacity-98 backdrop-blur-md transition-all duration-100">
       <div class="text-center text-blue-900 dark:text-white">
         <div class="mb-8 animate-bounce">
-          <div class="inline-flex items-center justify-center w-32 h-32 bg-blue-900 dark:bg-gray-600 rounded-3xl shadow-2xl">
+          <div class="inline-flex items-center justify-center w-32 h-32 bg-blue-900 dark:bg-gray-600 rounded-2xl shadow-lg">
             <svg class="w-20 h-20 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M7 18a4.6 4.4 0 0 1 0 -9a5 4.5 0 0 1 11 2h1a3.5 3.5 0 0 1 0 7h-1" /><path d="M9 15l3 -3l3 3" /><path d="M12 12l0 9" /></svg>
           </div>
         </div>
-        <p class="text-3xl font-bold mb-3">Drop file to analyze</p>
+        <p class="text-3xl font-bold mb-4">Drop file to analyze</p>
         <p class="text-xl opacity-90">We'll validate it instantly</p>
       </div>
     </div>
@@ -394,22 +394,22 @@
               aria-label="Return to home"
             >
               C2PA Verify
-              <span class="text-xs leading-5 font-semibold tracking-wide px-2 py-0.5 rounded-full bg-gray-200 text-gray-700 dark:bg-blue-900/60 dark:text-blue-300">Beta</span>
+              <span class="text-xs leading-5 font-semibold tracking-wide px-2 py-1 rounded-full bg-gray-200 text-gray-700 dark:bg-blue-900/60 dark:text-blue-300">Beta</span>
             </button>
           {:else}
             <h1 class="flex items-center gap-2 text-xl font-bold text-gray-900 dark:text-white">
               C2PA Verify
-              <span class="text-xs leading-5 font-semibold tracking-wide px-2 py-0.5 rounded-full bg-gray-200 text-gray-700 dark:bg-blue-900/60 dark:text-blue-300">Beta</span>
+              <span class="text-xs leading-5 font-semibold tracking-wide px-2 py-1 rounded-full bg-gray-200 text-gray-700 dark:bg-blue-900/60 dark:text-blue-300">Beta</span>
             </h1>
           {/if}
         </div>
 
         <!-- Right: Test Mode Badge + Dark mode toggle + C2PA Logo + Hamburger -->
-        <div class="flex items-center justify-end gap-3">
+        <div class="flex items-center justify-end gap-4">
           {#if testModeEnabled}
             <button
               on:click={() => navigateTo('test-certificates')}
-              class="inline-flex items-center gap-2 px-3 py-1.5 bg-amber-700 dark:bg-gray-600 text-white rounded-lg hover:bg-amber-800 dark:hover:bg-gray-500 transition-colors text-sm font-semibold shadow-sm"
+              class="inline-flex items-center gap-2 px-4 py-2 bg-amber-700 dark:bg-gray-600 text-white rounded-lg hover:bg-amber-800 dark:hover:bg-gray-500 transition-colors text-sm font-semibold shadow-sm"
               title="Test mode active - click to manage certificates"
             >
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -457,18 +457,18 @@
               ></button>
 
               <!-- Dropdown panel -->
-              <div class="absolute right-0 mt-2 w-56 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-lg z-50 py-1 animate-fade-in">
-                <div class="px-3 py-2 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+              <div class="absolute right-0 mt-2 w-56 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-lg z-50 py-1 animate-fade-in">
+                <div class="px-4 py-2 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   Advanced
                 </div>
                 <button
                   on:click={() => navigateTo('test-certificates')}
-                  class="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-left"
+                  class="w-full flex items-center gap-4 px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-left"
                 >
                   <svg class="w-4 h-4 text-amber-600 dark:text-gray-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M9 3l6 0" /><path d="M10 9l4 0" /><path d="M10 3v6l-4 11a.7 .7 0 0 0 .5 1h11a.7 .7 0 0 0 .5 -1l-4 -11v-6" /></svg>
                   <span>Test Certificates</span>
                   {#if testCertificates.length > 0}
-                    <span class="ml-auto px-1.5 py-0.5 bg-amber-700 dark:bg-gray-600 text-white rounded-full text-xs font-bold">{testCertificates.length}</span>
+                    <span class="ml-auto px-2 py-1 bg-amber-700 dark:bg-gray-600 text-white rounded-full text-xs font-bold">{testCertificates.length}</span>
                   {/if}
                 </button>
               </div>
@@ -543,7 +543,7 @@
                 <a href="https://contentcredentials.org/" target="_blank" rel="noopener noreferrer" class="underline">Content Credentials</a> from the <a href="https://c2pa.org" target="_blank" rel="noopener noreferrer" class="underline">Coalition for Content Provenance and Authenticity (C2PA)</a> is the technical standard for digital provenance. It provides verifiable assertions about the origin and history of digital content including images, video, audio, and documents.
               </p>
               <div class="grid sm:grid-cols-3 gap-4">
-                <div class="bg-white dark:bg-gray-800 rounded-xl p-4 backdrop-blur-sm">
+                <div class="bg-white dark:bg-gray-800 rounded-2xl p-4 backdrop-blur-sm">
                   <div class="text-3xl mb-2">
                     <!-- photo-search / inspect icon -->
                     <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M15 8h.01" /><path d="M11 20h-4a3 3 0 0 1 -3 -3v-10a3 3 0 0 1 3 -3h10a3 3 0 0 1 3 3v4" /><path d="M4 15l4 -4c.928 -.893 2.072 -.893 3 0l3 3" /><path d="M14 14l1 -1c.617 -.593 1.328 -.793 2.009 -.598" /><path d="M18 18m-3 0a3 3 0 1 0 6 0a3 3 0 1 0 -6 0" /><path d="M20.2 20.2l1.8 1.8" /></svg>
@@ -551,7 +551,7 @@
                   <h4 class="font-semibold text-gray-700 dark:text-white mb-1">Explore media manifests</h4>
                   <p class="text-sm text-gray-600 dark:text-gray-400">Inspect assertions, actions, ingredients, and provenance history in any C2PA-signed file</p>
                 </div>
-                <div class="bg-white dark:bg-gray-800 rounded-xl p-4 backdrop-blur-sm">
+                <div class="bg-white dark:bg-gray-800 rounded-2xl p-4 backdrop-blur-sm">
                   <div class="text-3xl mb-2">
                     <!-- clipboard-check icon -->
                     <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M9 5h-2a2 2 0 0 0 -2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-12a2 2 0 0 0 -2 -2h-2" /><path d="M9 3m0 2a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v0a2 2 0 0 1 -2 2h-2a2 2 0 0 1 -2 -2z" /><path d="M9 14l2 2l4 -4" /></svg>
@@ -559,7 +559,7 @@
                   <h4 class="font-semibold text-gray-700 dark:text-white mb-1">Test & prepare for Conformance</h4>
                   <p class="text-sm text-gray-600 dark:text-gray-400">Run structured rubric checks against C2PA spec versions before submitting to the <a href="https://c2pa.org/conformance" target="_blank" rel="noopener noreferrer" class="underline hover:text-gray-800 dark:hover:text-gray-200 transition-colors">Conformance Program</a></p>
                 </div>
-                <div class="bg-white dark:bg-gray-800 rounded-xl p-4 backdrop-blur-sm">
+                <div class="bg-white dark:bg-gray-800 rounded-2xl p-4 backdrop-blur-sm">
                   <div class="text-3xl mb-2">
                     <!-- shield-check / trust icon -->
                     <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M11.46 20.846a12 12 0 0 1 -7.96 -14.846a12 12 0 0 0 8.5 -3a12 12 0 0 0 8.5 3a12 12 0 0 1 -.09 7.06" /><path d="M15 19l2 2l4 -4" /></svg>
@@ -579,7 +579,7 @@
                 🔍
               </div>
               <div class="flex-1">
-                <h2 class="text-2xl font-bold text-gray-700 dark:text-gray-200 mb-3">No C2PA Content Credentials Found</h2>
+                <h2 class="text-2xl font-bold text-gray-700 dark:text-gray-200 mb-4">No C2PA Content Credentials Found</h2>
                 <p class="text-gray-600 dark:text-gray-300 leading-relaxed mb-4">This file doesn't appear to contain C2PA Content Credentials.</p>
                 <button
                   on:click={resetToHome}
@@ -599,7 +599,7 @@
                 ⚠
               </div>
               <div class="flex-1">
-                <h2 class="text-2xl font-bold text-red-700 dark:text-gray-300 mb-3">Error Processing File</h2>
+                <h2 class="text-2xl font-bold text-red-700 dark:text-gray-300 mb-4">Error Processing File</h2>
                 <p class="text-red-700 dark:text-gray-300 leading-relaxed mb-4">{error}</p>
                 <button
                   on:click={resetToHome}
@@ -627,7 +627,7 @@
                 <p class="text-sm text-blue-600 dark:text-gray-400 mb-4">
                   Drop or select the asset file this sidecar belongs to. The asset will be shown alongside the manifest for context.
                 </p>
-                <div class="flex flex-wrap gap-3">
+                <div class="flex flex-wrap gap-4">
                   <FileUpload on:fileselect={(e) => handleFilesDropped([e.detail])} compact={true} />
                   <button
                     on:click={inspectSidecarWithoutAsset}
@@ -698,9 +698,9 @@
 
   <!-- Footer (always shown) -->
   <footer class="border-t border-gray-200 dark:border-gray-700">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
       <span class="text-xs text-gray-500 dark:text-gray-400">Built with ❤️ by the C2PA Conformance community</span>
-      <div class="flex items-center gap-3">
+      <div class="flex items-center gap-4">
         <a href="https://contentcredentials.org" target="_blank" rel="noopener noreferrer" aria-label="Visit Content Credentials website">
           <img src="{import.meta.env.BASE_URL}content_credentials_icon.svg" alt="Content Credentials" class="h-6 w-auto opacity-60 hover:opacity-100 transition-opacity dark:brightness-0 dark:invert" />
         </a>

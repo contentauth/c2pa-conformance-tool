@@ -46,7 +46,7 @@
   }
   /* Outline (neutral) — bordered secondary action (copy, etc.). */
   .btn-outline-gray {
-    @apply inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-sm transition-colors text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700;
+    @apply inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm transition-colors text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700;
   }
   /* Ghost — text-only action; add padding utilities per use site. */
   .btn-ghost {
@@ -58,7 +58,7 @@
   }
   /* Tab — segmented nav; add the active-state classes inline. */
   .btn-tab {
-    @apply inline-flex items-center gap-1.5 px-3 py-2 rounded-md text-sm transition-colors text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700;
+    @apply inline-flex items-center gap-2 px-4 py-2 rounded text-sm transition-colors text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700;
   }
 }
 

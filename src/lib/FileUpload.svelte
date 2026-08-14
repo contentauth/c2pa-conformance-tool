@@ -70,7 +70,7 @@
   <div
     class={`relative border-2 border-dashed rounded-2xl p-12 sm:p-16 cursor-pointer transition-colors duration-200 group ${
       dragOver
-        ? 'border-blue-400 bg-blue-50 dark:bg-gray-700/40 shadow-md'
+        ? 'border-blue-400 bg-blue-50 dark:bg-gray-700/40 shadow-sm'
         : 'border-gray-400 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-blue-400 hover:bg-blue-50 dark:hover:bg-gray-700/50'
     }`}
     on:dragover={handleDragOver}
@@ -89,7 +89,7 @@
           <svg xmlns="http://www.w3.org/2000/svg" width="50%" height="50%" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-cloud-upload"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M7 18a4.6 4.4 0 0 1 0 -9a5 4.5 0 0 1 11 2h1a3.5 3.5 0 0 1 0 7h-1" /><path d="M9 15l3 -3l3 3" /><path d="M12 12l0 9" /></svg>
         </div>
       </div>
-      <p class="text-2xl font-bold text-gray-700 dark:text-white text-center mb-3">
+      <p class="text-2xl font-bold text-gray-700 dark:text-white text-center mb-4">
         {dragOver ? 'Drop it here!' : 'Drop a file or click to browse'}
       </p>
       <p class="text-sm text-gray-600 dark:text-gray-400 text-center">
@@ -98,11 +98,11 @@
 
       <!-- File type badges -->
       <div class="flex items-center justify-center gap-2 mt-6 flex-wrap">
-        <span class="px-3 py-1 bg-gray-100 group-hover:bg-white dark:group-hover:bg-gray-600 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-full text-xs font-medium transition duration-200">Images</span>
-        <span class="px-3 py-1 bg-gray-100 group-hover:bg-white dark:group-hover:bg-gray-600 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-full text-xs font-medium transition duration-200">Videos</span>
-        <span class="px-3 py-1 bg-gray-100 group-hover:bg-white dark:group-hover:bg-gray-600 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-full text-xs font-medium transition duration-200">Audio</span>
-        <span class="px-3 py-1 bg-gray-100 group-hover:bg-white dark:group-hover:bg-gray-600 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-full text-xs font-medium transition duration-200">PDFs</span>
-        <span class="px-3 py-1 bg-gray-100 group-hover:bg-white dark:group-hover:bg-gray-600 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-full text-xs font-medium transition duration-200">.c2pa sidecars</span>
+        <span class="px-4 py-1 bg-gray-100 group-hover:bg-white dark:group-hover:bg-gray-600 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-full text-xs font-medium transition duration-200">Images</span>
+        <span class="px-4 py-1 bg-gray-100 group-hover:bg-white dark:group-hover:bg-gray-600 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-full text-xs font-medium transition duration-200">Videos</span>
+        <span class="px-4 py-1 bg-gray-100 group-hover:bg-white dark:group-hover:bg-gray-600 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-full text-xs font-medium transition duration-200">Audio</span>
+        <span class="px-4 py-1 bg-gray-100 group-hover:bg-white dark:group-hover:bg-gray-600 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-full text-xs font-medium transition duration-200">PDFs</span>
+        <span class="px-4 py-1 bg-gray-100 group-hover:bg-white dark:group-hover:bg-gray-600 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-full text-xs font-medium transition duration-200">.c2pa sidecars</span>
       </div>
     </div>
 

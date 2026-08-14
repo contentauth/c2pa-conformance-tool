@@ -21,7 +21,7 @@
 
 {#each nodes as node}
   <div class="flex flex-col">
-    <div class="flex items-start gap-3 p-3 rounded-xl border transition-colors
+    <div class="flex items-start gap-4 p-4 rounded-2xl border transition-colors
       {node.isRoot
         ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800'
         : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700'}">
@@ -58,22 +58,22 @@
         <div class="flex items-center gap-2 flex-wrap">
           <span class="font-semibold text-sm text-gray-900 dark:text-gray-100 truncate">{node.title}</span>
           {#if node.isRoot}
-            <span class="text-xs px-1.5 py-0.5 rounded font-medium bg-blue-200 dark:bg-blue-800/60 text-blue-800 dark:text-blue-200">active</span>
+            <span class="text-xs px-2 py-1 rounded font-medium bg-blue-200 dark:bg-blue-800/60 text-blue-800 dark:text-blue-200">active</span>
           {:else if node.relationship}
-            <span class="text-xs px-1.5 py-0.5 rounded font-medium {relationshipClass(node.relationship)}">{node.relationship}</span>
+            <span class="text-xs px-2 py-1 rounded font-medium {relationshipClass(node.relationship)}">{node.relationship}</span>
           {/if}
         </div>
         {#if node.claimGenerator}
-          <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5 truncate">{node.claimGenerator}</p>
+          <p class="text-xs text-gray-500 dark:text-gray-400 mt-1 truncate">{node.claimGenerator}</p>
         {/if}
         {#if node.format}
-          <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5 font-mono">{formatLabel(node.format)}</p>
+          <p class="text-xs text-gray-500 dark:text-gray-400 mt-1 font-mono">{formatLabel(node.format)}</p>
         {/if}
       </div>
     </div>
 
     {#if node.children.length > 0}
-      <div class="ml-5 mt-1.5 pl-4 border-l-2 border-blue-200 dark:border-blue-800 space-y-1.5 pb-1">
+      <div class="ml-6 mt-2 pl-4 border-l-2 border-blue-200 dark:border-blue-800 space-y-2 pb-1">
         <svelte:self nodes={node.children} depth={depth + 1} />
       </div>
     {/if}

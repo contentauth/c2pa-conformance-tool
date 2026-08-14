@@ -72,7 +72,7 @@
         ? 'border-dashed border-gray-300 dark:border-gray-600 cursor-default'
         : isRoot || !onZoom
           ? 'border-blue-500 shadow-lg cursor-default'
-          : 'border-gray-200 dark:border-gray-700 hover:border-gray-400 dark:hover:border-gray-500 hover:shadow-md cursor-pointer'}"
+          : 'border-gray-200 dark:border-gray-700 hover:border-gray-400 dark:hover:border-gray-500 hover:shadow-sm cursor-pointer'}"
     style="aspect-ratio: 4/3"
     on:click={() => onZoom && !isRoot && !node.isStub && onZoom(node.manifestIdx)}
   >
@@ -119,7 +119,7 @@
 
     <!-- Top-left C2PA badge — hidden for stub nodes -->
     {#if !node.isStub}
-      <div class="absolute top-2 left-2 flex items-center bg-white/90 dark:bg-gray-900/85 backdrop-blur-sm rounded-lg px-1.5 py-1 shadow-sm">
+      <div class="absolute top-2 left-2 flex items-center bg-white/90 dark:bg-gray-900/85 backdrop-blur-sm rounded-lg px-2 py-1 shadow-sm">
         <img src="{import.meta.env.BASE_URL}content_credentials_icon.svg" alt="" class="w-3.5 h-3.5 flex-shrink-0 dark:brightness-0 dark:invert" />
       </div>
     {/if}
@@ -134,7 +134,7 @@
   <div class="mt-2 text-center w-[300px] px-2">
     <!-- Relationship (non-root only) -->
     {#if !isRoot && node.relationship}
-      <p class="text-xs font-medium text-gray-400 dark:text-gray-400 uppercase tracking-wide mb-0.5">
+      <p class="text-xs font-medium text-gray-400 dark:text-gray-400 uppercase tracking-wide mb-1">
         {formatRelationship(node.relationship)}
       </p>
     {/if}
@@ -150,21 +150,21 @@
 
     <!-- No credentials label for stubs -->
     {#if node.isStub}
-      <p class="text-xs text-gray-400 dark:text-gray-400 mt-0.5 italic">No Content Credentials</p>
+      <p class="text-xs text-gray-400 dark:text-gray-400 mt-1 italic">No Content Credentials</p>
     {:else}
       <!-- Date -->
       {#if node.date}
-        <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{node.date}</p>
+        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">{node.date}</p>
       {/if}
 
       <!-- Actions -->
       {#if node.inceptions.length > 0 || node.transformations.length > 0}
-        <div class="flex flex-wrap justify-center gap-0.5 mt-1.5">
+        <div class="flex flex-wrap justify-center gap-1 mt-2">
           {#each node.inceptions as s}
-            <span class="text-xs px-1.5 py-0.5 rounded font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300">{s}</span>
+            <span class="text-xs px-2 py-1 rounded font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300">{s}</span>
           {/each}
           {#each node.transformations as s}
-            <span class="text-xs px-1.5 py-0.5 rounded font-medium bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300">{s}</span>
+            <span class="text-xs px-2 py-1 rounded font-medium bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300">{s}</span>
           {/each}
         </div>
       {/if}
@@ -202,7 +202,7 @@
     <!-- Children row — no individual stems, the SVG handles the full span -->
     <div class="flex flex-row">
       {#each node.children as child, i}
-        <div class="flex flex-col items-center px-3" bind:clientWidth={colWidths[i]}>
+        <div class="flex flex-col items-center px-4" bind:clientWidth={colWidths[i]}>
           <svelte:self node={child} {onZoom} isRoot={false} />
         </div>
       {/each}

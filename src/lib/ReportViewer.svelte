@@ -534,7 +534,7 @@
               class="inline-flex items-center gap-1 ml-2 text-xs underline hover:no-underline"
               title="The Interim Trust List (ITL) contains certificates that are in the process of C2PA certification"
             >
-              <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+              <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                 <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
               </svg>
               What is the ITL?
@@ -546,10 +546,10 @@
           {:else}
             {#if failures.length > 0}
               <span class="font-semibold">Validation failed with the following errors:</span>
-              <div class="mt-2 space-y-1 text-xs font-mono bg-red-50/50 dark:bg-gray-900/50 p-3 rounded-lg border border-red-100 dark:border-gray-700 w-full">
+              <div class="mt-2 space-y-1 text-xs font-mono bg-red-50/50 dark:bg-gray-900/50 p-4 rounded-lg border border-red-100 dark:border-gray-700 w-full">
                 {#each failures as failure}
                   <div class="flex items-start gap-2">
-                    <span class="text-red-500 mt-0.5">✕</span>
+                    <span class="text-red-500 mt-1">✕</span>
                     <div class="flex-1 text-left">
                       <span class="font-bold">{failure.code}:</span>
                       <span class="text-gray-700 dark:text-gray-300">{getFailureDescription(failure.code, failure.explanation)}</span>
@@ -564,8 +564,8 @@
         </div>
         {#if usedITL && isTrusted}
           <div class="mt-2 flex items-center gap-2 flex-wrap">
-            <span class="inline-flex items-center gap-1.5 px-3 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 rounded-full text-xs font-semibold">
-              <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+            <span class="inline-flex items-center gap-2 px-4 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 rounded-full text-xs font-semibold">
+              <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                 <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
               </svg>
               ITL Validated
@@ -573,8 +573,8 @@
           </div>
         {:else if actuallyUsedTestCert && isTrusted}
           <div class="mt-2">
-            <span class="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-300 rounded-full text-xs font-semibold">
-              <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+            <span class="inline-flex items-center gap-2 px-4 py-1 bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-300 rounded-full text-xs font-semibold">
+              <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                 <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
               </svg>
               Test Mode
@@ -588,7 +588,7 @@
   <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-6 gap-4">
     <div>
       <h2 class="text-xl font-semibold text-gray-900 dark:text-white">{heading.title}</h2>
-      <p class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">{heading.subtitle}</p>
+      <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">{heading.subtitle}</p>
     </div>
     <div class="flex flex-wrap items-center gap-2">
       <div class="flex items-center gap-1 border border-gray-200 dark:border-gray-600 rounded-lg p-1">
@@ -627,7 +627,7 @@
         Download
       </button>
       <button
-        class="inline-flex items-center gap-1.5 px-3 py-2 text-sm rounded-lg border transition-colors {copied ? 'border-green-500 bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300' : 'border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'}"
+        class="inline-flex items-center gap-2 px-4 py-2 text-sm rounded-lg border transition-colors {copied ? 'border-green-500 bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300' : 'border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'}"
         on:click={copyToClipboard}
         title="Copy JSON to clipboard"
       >
@@ -656,7 +656,7 @@
   {#if usedTestCertificates}
     <div class="mb-8 bg-amber-50 dark:bg-amber-900/30 border border-amber-300 dark:border-amber-700 rounded-2xl p-6 shadow-sm">
       <div class="flex items-start gap-4">
-        <div class="flex-shrink-0 w-12 h-12 bg-amber-600 dark:bg-amber-700 rounded-full flex items-center justify-center text-white text-2xl shadow-md">
+        <div class="flex-shrink-0 w-12 h-12 bg-amber-600 dark:bg-amber-700 rounded-full flex items-center justify-center text-white text-2xl shadow-sm">
           ⚠
         </div>
         <div class="flex-1">
@@ -691,7 +691,7 @@
   {#if showBackToTop}
     <button
       on:click={scrollToTop}
-      class="fixed bottom-8 right-8 z-50 p-4 bg-blue-600 hover:bg-blue-700 text-white rounded-full shadow-2xl transition-all duration-200 hover:scale-110 animate-fade-in"
+      class="fixed bottom-8 right-8 z-50 p-4 bg-blue-600 hover:bg-blue-700 text-white rounded-full shadow-lg transition-all duration-200 hover:scale-110 animate-fade-in"
       aria-label="Back to top"
       title="Back to top"
     >
@@ -705,15 +705,15 @@
     </div>
   {:else if activeTab === 'crjson'}
     <div class="bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 rounded-2xl p-8 shadow-sm">
-      <div class="flex items-center gap-3 mb-6 pb-4 border-b-2 border-gray-200 dark:border-gray-700">
-        <div class="w-10 h-10 bg-gray-800 dark:bg-gray-700 rounded-lg flex items-center justify-center text-white shadow-md">
+      <div class="flex items-center gap-4 mb-6 pb-4 border-b-2 border-gray-200 dark:border-gray-700">
+        <div class="w-10 h-10 bg-gray-800 dark:bg-gray-700 rounded-lg flex items-center justify-center text-white shadow-sm">
           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
           </svg>
         </div>
         <h3 class="text-xl font-semibold text-gray-900 dark:text-white">crJSON Report</h3>
       </div>
-      <pre class="hljs bg-gray-900 dark:bg-black border-2 border-gray-700 dark:border-gray-600 rounded-xl p-6 overflow-x-auto text-sm leading-relaxed shadow-inner"><code class="language-json"><JsonViewer value={report} /></code></pre>
+      <pre class="hljs bg-gray-900 dark:bg-black border-2 border-gray-700 dark:border-gray-600 rounded-2xl p-6 overflow-x-auto text-sm leading-relaxed shadow-inner"><code class="language-json"><JsonViewer value={report} /></code></pre>
     </div>
   {:else if activeTab === 'rubrics'}
     <div class="w-full">
@@ -723,8 +723,8 @@
     <!-- Media Preview and Validation Status -->
     <div class="mb-8" id="media-preview">
       <div class="bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 rounded-2xl p-8 shadow-sm">
-        <div class="flex items-center gap-3 mb-6 pb-4 border-b border-gray-200 dark:border-gray-700">
-          <div class="w-10 h-10 bg-gray-800 dark:bg-gray-700 rounded-lg flex items-center justify-center text-white shadow-md">
+        <div class="flex items-center gap-4 mb-6 pb-4 border-b border-gray-200 dark:border-gray-700">
+          <div class="w-10 h-10 bg-gray-800 dark:bg-gray-700 rounded-lg flex items-center justify-center text-white shadow-sm">
             {#if mediaType === 'sidecar'}
               <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M14 3v4a1 1 0 0 0 1 1h4" /><path d="M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2z" /><path d="M9 17h6" /><path d="M9 13h6" /></svg>
             {:else}
@@ -739,17 +739,17 @@
         {#if file && mediaUrl}
           <div class="flex flex-col gap-6">
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div class="bg-gray-50 dark:bg-gray-900 rounded-xl p-4">
+              <div class="bg-gray-50 dark:bg-gray-900 rounded-2xl p-4">
                 <div class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">Filename</div>
                 <p class="text-sm font-medium text-gray-900 dark:text-gray-100 truncate" title={file.name}>{file.name}</p>
               </div>
-              <div class="bg-gray-50 dark:bg-gray-900 rounded-xl p-4">
+              <div class="bg-gray-50 dark:bg-gray-900 rounded-2xl p-4">
                 <div class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">Type</div>
                 <p class="text-sm font-medium text-gray-900 dark:text-gray-100">
                   {mediaType === 'sidecar' ? 'application/c2pa (sidecar)' : (file.type || 'Unknown')}
                 </p>
               </div>
-              <div class="bg-gray-50 dark:bg-gray-900 rounded-xl p-4">
+              <div class="bg-gray-50 dark:bg-gray-900 rounded-2xl p-4">
                 <div class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">Size</div>
                 <p class="text-sm font-medium text-gray-900 dark:text-gray-100">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
               </div>
@@ -757,9 +757,9 @@
 
             <div class="bg-gray-50 dark:bg-gray-900 rounded-2xl p-6 flex items-center justify-center min-h-[350px] border-2 border-gray-200 dark:border-gray-600">
               {#if mediaType === 'image'}
-                <img src={mediaUrl} alt="Preview" class="max-w-full max-h-[600px] object-contain rounded-xl shadow-lg" />
+                <img src={mediaUrl} alt="Preview" class="max-w-full max-h-[600px] object-contain rounded-2xl shadow-lg" />
               {:else if mediaType === 'video'}
-                <video src={mediaUrl} controls class="max-w-full max-h-[600px] rounded-xl shadow-lg">
+                <video src={mediaUrl} controls class="max-w-full max-h-[600px] rounded-2xl shadow-lg">
                   <track kind="captions" />
                   Your browser does not support video playback.
                 </video>
@@ -798,7 +798,7 @@
                   </div>
                   <p class="text-gray-900 dark:text-gray-100 mb-2 text-lg font-semibold">Standalone manifest sidecar</p>
                   <p class="text-sm text-gray-600 dark:text-gray-400 leading-relaxed mb-4">
-                    This is a <code class="font-mono text-xs bg-gray-200 dark:bg-gray-700 px-1.5 py-0.5 rounded">.c2pa</code> file &mdash; a
+                    This is a <code class="font-mono text-xs bg-gray-200 dark:bg-gray-700 px-2 py-1 rounded">.c2pa</code> file &mdash; a
                     C2PA manifest store detached from its referenced asset. No embedded media to preview; the manifest&rsquo;s
                     contents are shown below.
                   </p>
@@ -855,8 +855,8 @@
       {#if activeManifest}
         <!-- Validation Status Details Section -->
         <section class="bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 rounded-2xl p-8 shadow-sm" id="validation-status">
-          <div class="flex items-center gap-3 mb-6 pb-4 border-b border-gray-200 dark:border-gray-700">
-            <div class="w-10 h-10 bg-gray-800 dark:bg-gray-700 rounded-lg flex items-center justify-center text-white shadow-md">
+          <div class="flex items-center gap-4 mb-6 pb-4 border-b border-gray-200 dark:border-gray-700">
+            <div class="w-10 h-10 bg-gray-800 dark:bg-gray-700 rounded-lg flex items-center justify-center text-white shadow-sm">
               <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M11.46 20.846a12 12 0 0 1 -7.96 -14.846a12 12 0 0 0 8.5 -3a12 12 0 0 0 8.5 3a12 12 0 0 1 -.09 7.06" /><path d="M15 19l2 2l4 -4" /></svg>
             </div>
             <h3 class="text-xl font-semibold text-gray-900 dark:text-white">Validation Status Details</h3>
@@ -865,11 +865,11 @@
             <div class="space-y-6">
               {#each validationGroups as group}
                 <div class="manifest-group-card border border-gray-200 dark:border-gray-700 rounded-2xl p-6 bg-gray-50/30 dark:bg-gray-900/10 shadow-sm">
-                  <h4 class="font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2 flex-wrap pb-3 border-b border-gray-100 dark:border-gray-800">
+                  <h4 class="font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2 flex-wrap pb-4 border-b border-gray-100 dark:border-gray-800">
                     {#if group.isActive}
-                      <span class="px-2.5 py-1 bg-blue-100 dark:bg-blue-900/50 text-blue-800 dark:text-blue-300 text-xs font-semibold rounded-full">Active Asset</span>
+                      <span class="px-2 py-1 bg-blue-100 dark:bg-blue-900/50 text-blue-800 dark:text-blue-300 text-xs font-semibold rounded-full">Active Asset</span>
                     {:else}
-                      <span class="px-2.5 py-1 bg-blue-100 dark:bg-blue-900/50 text-blue-800 dark:text-blue-300 text-xs font-semibold rounded-full">Ingredient {group.index}</span>
+                      <span class="px-2 py-1 bg-blue-100 dark:bg-blue-900/50 text-blue-800 dark:text-blue-300 text-xs font-semibold rounded-full">Ingredient {group.index}</span>
                     {/if}
                     <span class="text-xs font-mono text-gray-500 dark:text-gray-500 truncate max-w-xs md:max-w-md" title={group.label}>{group.label}</span>
                     {#if group.sigInfo?.common_name}
@@ -879,11 +879,11 @@
                     {/if}
                   </h4>
 
-                  <div class="space-y-3">
+                  <div class="space-y-4">
                     <!-- Failures -->
                     {#each group.failure as status}
-                      <div class="rounded-xl p-4 border bg-red-50/50 dark:bg-gray-900/30 border-red-100 dark:border-red-900/30 text-red-800 dark:text-red-300">
-                         <div class="flex items-start gap-3">
+                      <div class="rounded-2xl p-4 border bg-red-50/50 dark:bg-gray-900/30 border-red-100 dark:border-red-900/30 text-red-800 dark:text-red-300">
+                         <div class="flex items-start gap-4">
                            <span class="flex-shrink-0 w-5 h-5 rounded-full bg-red-600 dark:bg-red-800 text-white flex items-center justify-center text-xs font-bold">✕</span>
                            <div class="flex-1 text-left">
                              <span class="font-bold text-xs font-mono block sm:inline mb-1 sm:mb-0 mr-2">{status.code}</span>
@@ -895,13 +895,13 @@
 
                     <!-- Successes -->
                     {#each group.success as status}
-                      <div class="rounded-xl p-4 border bg-green-50/50 dark:bg-gray-900/30 border-green-100 dark:border-green-900/30 text-green-800 dark:text-green-300">
-                         <div class="flex items-start gap-3">
+                      <div class="rounded-2xl p-4 border bg-green-50/50 dark:bg-gray-900/30 border-green-100 dark:border-green-900/30 text-green-800 dark:text-green-300">
+                         <div class="flex items-start gap-4">
                            <span class="flex-shrink-0 w-5 h-5 rounded-full bg-green-700 dark:bg-green-800 text-white flex items-center justify-center text-xs font-bold">✓</span>
                            <div class="flex-1 text-left">
                              <span class="font-bold text-xs font-mono block sm:inline mb-1 sm:mb-0 mr-2">{status.code}</span>
                              {#if status.isInterim}
-                               <span class="ml-2 px-2 py-0.5 bg-blue-100 dark:bg-gray-700 text-blue-900 dark:text-gray-100 text-xs font-semibold rounded">ITL</span>
+                               <span class="ml-2 px-2 py-1 bg-blue-100 dark:bg-gray-700 text-blue-900 dark:text-gray-100 text-xs font-semibold rounded">ITL</span>
                              {/if}
                              <p class="text-sm leading-relaxed mt-1 text-green-700 dark:text-green-400">{status.explanation}</p>
                            </div>
@@ -911,8 +911,8 @@
 
                     <!-- Informationals -->
                     {#each group.informational as status}
-                      <div class="rounded-xl p-4 border bg-blue-100 dark:bg-gray-900/30 border-blue-100 dark:border-blue-900/30 text-blue-800 dark:text-blue-300">
-                         <div class="flex items-start gap-3">
+                      <div class="rounded-2xl p-4 border bg-blue-100 dark:bg-gray-900/30 border-blue-100 dark:border-blue-900/30 text-blue-800 dark:text-blue-300">
+                         <div class="flex items-start gap-4">
                            <span class="flex-shrink-0 w-5 h-5 rounded-full bg-blue-600 dark:bg-blue-800 text-white flex items-center justify-center text-xs font-bold">i</span>
                            <div class="flex-1 text-left">
                              <span class="font-bold text-xs font-mono block sm:inline mb-1 sm:mb-0 mr-2">{status.code}</span>
@@ -926,7 +926,7 @@
               {/each}
             </div>
           {:else}
-            <div class="bg-gray-50 dark:bg-gray-900 border-2 border-gray-200 dark:border-gray-700 rounded-xl p-6 text-center">
+            <div class="bg-gray-50 dark:bg-gray-900 border-2 border-gray-200 dark:border-gray-700 rounded-2xl p-6 text-center">
               <p class="text-gray-600 dark:text-gray-400">No validation status available</p>
             </div>
           {/if}
@@ -934,34 +934,34 @@
 
         {#if signatureInfo}
           <section class="bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 rounded-2xl p-8 shadow-sm" id="signature-info">
-            <div class="flex items-center gap-3 mb-6 pb-4 border-b border-gray-200 dark:border-gray-700">
-              <div class="w-10 h-10 bg-gray-800 dark:bg-gray-700 rounded-lg flex items-center justify-center text-white shadow-md">
+            <div class="flex items-center gap-4 mb-6 pb-4 border-b border-gray-200 dark:border-gray-700">
+              <div class="w-10 h-10 bg-gray-800 dark:bg-gray-700 rounded-lg flex items-center justify-center text-white shadow-sm">
                 <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M5 7.2a2.2 2.2 0 0 1 2.2 -2.2h1a2.2 2.2 0 0 0 1.55 -.64l.7 -.7a2.2 2.2 0 0 1 3.12 0l.7 .7c.412 .41 .97 .64 1.55 .64h1a2.2 2.2 0 0 1 2.2 2.2v1c0 .58 .23 1.138 .64 1.55l.7 .7a2.2 2.2 0 0 1 0 3.12l-.7 .7a2.2 2.2 0 0 0 -.64 1.55v1a2.2 2.2 0 0 1 -2.2 2.2h-1a2.2 2.2 0 0 0 -1.55 .64l-.7 .7a2.2 2.2 0 0 1 -3.12 0l-.7 -.7a2.2 2.2 0 0 0 -1.55 -.64h-1a2.2 2.2 0 0 1 -2.2 -2.2v-1a2.2 2.2 0 0 0 -.64 -1.55l-.7 -.7a2.2 2.2 0 0 1 0 -3.12l.7 -.7a2.2 2.2 0 0 0 .64 -1.55v-1" /><path d="M9 12l2 2l4 -4" /></svg>
               </div>
               <h3 class="text-xl font-semibold text-gray-900 dark:text-white">Signature Information</h3>
             </div>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
               {#if signatureInfo.common_name}
-                <div class="bg-gray-50 dark:bg-gray-900 rounded-xl p-4">
+                <div class="bg-gray-50 dark:bg-gray-900 rounded-2xl p-4">
                   <div class="text-xs font-semibold text-gray-500 dark:text-gray-500 uppercase tracking-wide mb-2">Common Name</div>
                   <p class="text-sm font-medium text-gray-900 dark:text-gray-100 break-all">{signatureInfo.common_name}</p>
                 </div>
               {/if}
               {#if signatureInfo.issuer}
-                <div class="bg-gray-50 dark:bg-gray-900 rounded-xl p-4">
+                <div class="bg-gray-50 dark:bg-gray-900 rounded-2xl p-4">
                   <div class="text-xs font-semibold text-gray-500 dark:text-gray-500 uppercase tracking-wide mb-2">Issuer</div>
                   <p class="text-sm font-medium text-gray-900 dark:text-gray-100 break-all">{signatureInfo.issuer}</p>
                 </div>
               {/if}
               {#if signatureInfo.time}
-                <div class="bg-gray-50 dark:bg-gray-900 rounded-xl p-4">
+                <div class="bg-gray-50 dark:bg-gray-900 rounded-2xl p-4">
                   <div class="text-xs font-semibold text-gray-500 dark:text-gray-500 uppercase tracking-wide mb-2">Signed</div>
                   <p class="text-sm font-medium text-gray-900 dark:text-gray-100">{signatureInfo.time}</p>
                 </div>
               {/if}
               <!-- Certificate Validity -->
               {#if certValidityStatus !== 'unknown'}
-                <div class="bg-gray-50 dark:bg-gray-900 rounded-xl p-4">
+                <div class="bg-gray-50 dark:bg-gray-900 rounded-2xl p-4">
                   <div class="text-xs font-semibold text-gray-500 dark:text-gray-500 uppercase tracking-wide mb-2">Certificate Validity</div>
                   {#if certValidityStatus === 'valid'}
                     <div class="flex items-center gap-2">
@@ -979,7 +979,7 @@
 
               <!-- OCSP Revocation Status -->
               {#if ocspStatus !== 'unknown'}
-                <div class="bg-gray-50 dark:bg-gray-900 rounded-xl p-4">
+                <div class="bg-gray-50 dark:bg-gray-900 rounded-2xl p-4">
                   <div class="text-xs font-semibold text-gray-500 dark:text-gray-500 uppercase tracking-wide mb-2">OCSP Revocation</div>
                   {#if ocspStatus === 'not_revoked'}
                     <div class="flex items-center gap-2">
@@ -1009,14 +1009,14 @@
         {/if}
 
         <section class="bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 rounded-2xl p-8 shadow-sm" id="manifest-details">
-          <div class="flex items-center gap-3 mb-6 pb-4 border-b border-gray-200 dark:border-gray-700">
-            <div class="w-10 h-10 bg-gray-800 dark:bg-gray-700 rounded-lg flex items-center justify-center text-white shadow-md">
+          <div class="flex items-center gap-4 mb-6 pb-4 border-b border-gray-200 dark:border-gray-700">
+            <div class="w-10 h-10 bg-gray-800 dark:bg-gray-700 rounded-lg flex items-center justify-center text-white shadow-sm">
               <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M14 3v4a1 1 0 0 0 1 1h4" /><path d="M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2" /><path d="M9 9l1 0" /><path d="M9 13l6 0" /><path d="M9 17l6 0" /></svg>
             </div>
             <h3 class="text-xl font-semibold text-gray-900 dark:text-white">Active Manifest</h3>
           </div>
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-            <div class="bg-gray-50 dark:bg-gray-900 rounded-xl p-4">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="bg-gray-50 dark:bg-gray-900 rounded-2xl p-4">
               <div class="text-xs font-semibold text-gray-500 dark:text-gray-500 uppercase tracking-wide mb-2">Claim Generator</div>
               <p class="text-sm font-medium text-gray-900 dark:text-gray-100">
                 {#if claimInfo?.claim_generator_info?.[0]?.name}
@@ -1036,8 +1036,8 @@
 
         {#if assertionsList.length > 0}
           <section class="bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 rounded-2xl p-8 shadow-sm" id="assertions">
-            <div class="flex items-center gap-3 mb-6 pb-4 border-b border-gray-200 dark:border-gray-700">
-              <div class="w-10 h-10 bg-gray-800 dark:bg-gray-700 rounded-lg flex items-center justify-center text-white shadow-md">
+            <div class="flex items-center gap-4 mb-6 pb-4 border-b border-gray-200 dark:border-gray-700">
+              <div class="w-10 h-10 bg-gray-800 dark:bg-gray-700 rounded-lg flex items-center justify-center text-white shadow-sm">
                 <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M9 5h-2a2 2 0 0 0 -2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-12a2 2 0 0 0 -2 -2h-2" /><path d="M9 5a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2a2 2 0 0 1 -2 2h-2a2 2 0 0 1 -2 -2" /><path d="M9 14l2 2l4 -4" /></svg>
               </div>
               <div class="flex-1">
@@ -1046,19 +1046,19 @@
               <div class="flex items-center gap-2">
                 <button
                   on:click={expandAllAssertions}
-                  class="text-xs px-3 py-1 bg-blue-100 dark:bg-gray-800 hover:bg-blue-200 dark:hover:bg-gray-700 text-blue-700 dark:text-gray-300 rounded-lg transition-colors font-semibold"
+                  class="text-xs px-4 py-1 bg-blue-100 dark:bg-gray-800 hover:bg-blue-200 dark:hover:bg-gray-700 text-blue-700 dark:text-gray-300 rounded-lg transition-colors font-semibold"
                   title="Expand all assertions"
                 >
                   Expand All
                 </button>
                 <button
                   on:click={collapseAllAssertions}
-                  class="text-xs px-3 py-1 bg-blue-100 dark:bg-gray-800 hover:bg-blue-200 dark:hover:bg-gray-700 text-blue-700 dark:text-gray-300 rounded-lg transition-colors font-semibold"
+                  class="text-xs px-4 py-1 bg-blue-100 dark:bg-gray-800 hover:bg-blue-200 dark:hover:bg-gray-700 text-blue-700 dark:text-gray-300 rounded-lg transition-colors font-semibold"
                   title="Collapse all assertions"
                 >
                   Collapse All
                 </button>
-                <div class="px-3 py-1 bg-blue-100 dark:bg-gray-800 text-blue-700 dark:text-gray-300 rounded-full text-sm font-bold">
+                <div class="px-4 py-1 bg-blue-100 dark:bg-gray-800 text-blue-700 dark:text-gray-300 rounded-full text-sm font-bold">
                   {assertionsList.length}
                 </div>
               </div>
@@ -1067,8 +1067,8 @@
               {#each assertionsList as assertion, index}
                 {@const isExpanded = expandedAssertions.has(index)}
                 {@const summary = assertion.data ? extractAssertionSummary(assertion.data) : []}
-                <div class="bg-gray-50 dark:bg-gray-900 rounded-xl p-5 border border-gray-200 dark:border-gray-700">
-                  <div class="flex items-start gap-3 mb-3">
+                <div class="bg-gray-50 dark:bg-gray-900 rounded-2xl p-6 border border-gray-200 dark:border-gray-700">
+                  <div class="flex items-start gap-4 mb-4">
                     <div class="flex-shrink-0 w-8 h-8 bg-blue-100 dark:bg-gray-800 rounded-lg flex items-center justify-center text-blue-700 dark:text-gray-300 font-bold text-sm">
                       {index + 1}
                     </div>
@@ -1079,7 +1079,7 @@
                           on:click={() => toggleAssertion(index)}
                           class="mt-1 inline-flex items-center gap-1 text-xs font-semibold text-blue-600 dark:text-gray-400 hover:text-blue-700 dark:hover:text-gray-300 transition-colors"
                         >
-                          <svg class="w-3 h-3 transition-transform {isExpanded ? 'rotate-90' : ''}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <svg class="w-4 h-4 transition-transform {isExpanded ? 'rotate-90' : ''}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
                           </svg>
                           {isExpanded ? 'Hide' : 'Show'} raw data
@@ -1091,9 +1091,9 @@
                   {#if assertion.data}
                     <div class="ml-11">
                       {#if summary.length > 0}
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-3">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-4">
                           {#each summary as item}
-                            <div class="bg-white dark:bg-gray-800 rounded-lg p-3">
+                            <div class="bg-white dark:bg-gray-800 rounded-lg p-4">
                               {#if item.isAction}
                                 <!-- Special display for actions -->
                                 <div class="space-y-2">
@@ -1148,7 +1148,7 @@
                       {/if}
 
                       {#if isExpanded}
-                        <div class="mt-3 animate-fade-in">
+                        <div class="mt-4 animate-fade-in">
                           <div class="flex items-center gap-2 mb-2">
                             <svg class="w-4 h-4 text-blue-600 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />

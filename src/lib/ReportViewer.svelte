@@ -867,7 +867,7 @@
             <div class="space-y-6">
               {#each validationGroups as group}
                 <div class="manifest-group-card border border-gray-200 dark:border-gray-700 rounded-2xl p-6 bg-gray-50/30 dark:bg-gray-900/10 shadow-sm">
-                  <h4 class="font-bold text-[#1e293b] dark:text-white mb-4 flex items-center gap-2 flex-wrap pb-4 border-b border-gray-100 dark:border-gray-800">
+                  <h4 class="font-bold text-[#1e293b] dark:text-white mb-4 flex items-center gap-2 flex-wrap">
                     {#if group.isActive}
                       <span class="badge bg-blue-100 dark:bg-blue-900/50 text-blue-800 dark:text-blue-300">Active Asset</span>
                     {:else}
@@ -1043,29 +1043,26 @@
                 <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M9 5h-2a2 2 0 0 0 -2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-12a2 2 0 0 0 -2 -2h-2" /><path d="M9 5a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2a2 2 0 0 1 -2 2h-2a2 2 0 0 1 -2 -2" /><path d="M9 14l2 2l4 -4" /></svg>
               </div>
               <div class="flex-1">
-                <h3 class="text-xl font-semibold text-[#1e293b] dark:text-white">Assertions</h3>
+                <h3 class="text-xl font-semibold text-[#1e293b] dark:text-white">Assertions ({assertionsList.length})</h3>
               </div>
               <div class="flex items-center gap-2">
                 <button
                   on:click={expandAllAssertions}
-                  class="text-xs px-4 py-1 bg-blue-100 dark:bg-gray-800 hover:bg-blue-200 dark:hover:bg-gray-700 text-blue-700 dark:text-gray-300 rounded-lg transition-colors font-semibold"
+                  class="btn-outline-gray"
                   title="Expand all assertions"
                 >
                   Expand All
                 </button>
                 <button
                   on:click={collapseAllAssertions}
-                  class="text-xs px-4 py-1 bg-blue-100 dark:bg-gray-800 hover:bg-blue-200 dark:hover:bg-gray-700 text-blue-700 dark:text-gray-300 rounded-lg transition-colors font-semibold"
+                  class="btn-outline-gray"
                   title="Collapse all assertions"
                 >
                   Collapse All
                 </button>
-                <div class="px-4 py-1 bg-blue-100 dark:bg-gray-800 text-blue-700 dark:text-gray-300 rounded-full text-sm font-bold">
-                  {assertionsList.length}
-                </div>
               </div>
             </div>
-            <div class="space-y-4">
+            <div class="space-y-6">
               {#each assertionsList as assertion, index}
                 {@const isExpanded = expandedAssertions.has(index)}
                 {@const summary = assertion.data ? extractAssertionSummary(assertion.data) : []}
@@ -1095,7 +1092,7 @@
                       {#if summary.length > 0}
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-4">
                           {#each summary as item}
-                            <div class="bg-white dark:bg-gray-800 rounded-lg p-4">
+                            <div class="bg-white dark:bg-gray-800 rounded-lg p-4 {item.key === 'ocspVals' ? 'sm:col-span-2' : ''}">
                               {#if item.isAction}
                                 <!-- Special display for actions -->
                                 <div class="space-y-2">

@@ -15,7 +15,7 @@
   }
 
   body {
-    @apply min-h-screen bg-[#f3f4f6] dark:bg-gray-900 text-gray-900 dark:text-gray-100;
+    @apply min-h-screen bg-[#f3f4f6] dark:bg-gray-900 text-[#1e293b] dark:text-gray-100;
   }
 
   #app {
@@ -54,15 +54,21 @@
   /* Selected state (tabs/toggles): fill matches the border, and hover
      deepens the fill rather than lightening it. */
   .btn-outline-gray.is-selected {
-    @apply bg-gray-200 dark:bg-gray-600 text-gray-900 dark:text-white hover:bg-gray-300 dark:hover:bg-gray-700;
+    @apply bg-gray-200 dark:bg-gray-600 text-[#1e293b] dark:text-white hover:bg-gray-300 dark:hover:bg-gray-700;
   }
   /* Ghost — text-only action; add padding utilities per use site. */
   .btn-ghost {
-    @apply inline-flex items-center justify-center gap-2 text-sm font-bold transition-colors text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white;
+    @apply inline-flex items-center justify-center gap-2 text-sm font-bold transition-colors text-gray-500 dark:text-gray-400 hover:text-[#1e293b] dark:hover:text-white;
   }
   /* Icon-only — square toggle/control button. */
   .btn-icon {
     @apply inline-flex items-center justify-center p-2 rounded-lg transition-colors bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600;
+  }
+  /* Badge/tag — one radius + text treatment for all pills. leading-none
+     keeps host rows a consistent height whether or not a badge is present.
+     Add `uppercase tracking-wide` for category/status tags; colors inline. */
+  .badge {
+    @apply inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold leading-none;
   }
 }
 

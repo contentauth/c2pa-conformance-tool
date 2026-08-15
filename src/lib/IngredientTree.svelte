@@ -56,11 +56,11 @@
       <!-- Info -->
       <div class="flex-1 min-w-0">
         <div class="flex items-center gap-2 flex-wrap">
-          <span class="font-semibold text-sm text-gray-900 dark:text-gray-100 truncate">{node.title}</span>
+          <span class="font-semibold text-sm text-[#1e293b] dark:text-gray-100 truncate">{node.title}</span>
           {#if node.isRoot}
-            <span class="text-xs px-2 py-1 rounded font-medium bg-blue-200 dark:bg-blue-800/60 text-blue-800 dark:text-blue-200">active</span>
+            <span class="badge bg-blue-200 dark:bg-blue-800/60 text-blue-800 dark:text-blue-200">active</span>
           {:else if node.relationship}
-            <span class="text-xs px-2 py-1 rounded font-medium {relationshipClass(node.relationship)}">{node.relationship}</span>
+            <span class="badge {relationshipClass(node.relationship)}">{node.relationship}</span>
           {/if}
         </div>
         {#if node.claimGenerator}

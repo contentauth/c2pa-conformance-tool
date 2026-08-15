@@ -335,7 +335,7 @@ MCZvLxXCtwIgCxkR0Gbdwef8k0bf1tC3dz+4NDe0S8wdCx5ZgeRPkq4=
           </svg>
         </div>
         <div class="flex-1">
-          <h4 class="font-bold text-gray-900 dark:text-white text-lg mb-1">
+          <h4 class="font-bold text-[#1e293b] dark:text-white text-lg mb-1">
             C2PA Test Mode
           </h4>
           <p class="text-xs text-gray-600 dark:text-gray-400">
@@ -376,7 +376,7 @@ MCZvLxXCtwIgCxkR0Gbdwef8k0bf1tC3dz+4NDe0S8wdCx5ZgeRPkq4=
     <div class="flex items-center justify-between gap-4">
       <div>
         {#if testCertificates.length > 0}
-          <span class="inline-flex items-center gap-2 px-4 py-1 bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-full text-sm font-semibold">
+          <span class="inline-flex items-center gap-2 px-4 py-1 bg-gray-100 dark:bg-gray-700 text-[#1e293b] dark:text-gray-100 rounded-full text-sm font-semibold">
             <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M11.998 2l.118 .007l.059 .008l.061 .013l.111 .034a.993 .993 0 0 1 .217 .112l.104 .082l.255 .218a11 11 0 0 0 7.189 2.537l.342 -.01a1 1 0 0 1 1.005 .717a13 13 0 0 1 -9.208 16.25a1 1 0 0 1 -.502 0a13 13 0 0 1 -9.209 -16.25a1 1 0 0 1 1.005 -.717a11 11 0 0 0 7.531 -2.527l.263 -.225l.096 -.075a.993 .993 0 0 1 .217 -.112l.112 -.034a.97 .97 0 0 1 .119 -.021l.115 -.007zm3.71 7.293a1 1 0 0 0 -1.415 0l-3.293 3.292l-1.293 -1.292l-.094 -.083a1 1 0 0 0 -1.32 1.497l2 2l.094 .083a1 1 0 0 0 1.32 -.083l4 -4l.083 -.094a1 1 0 0 0 -.083 -1.32z" /></svg>
             {testCertificates.length} {testCertificates.length === 1 ? 'certificate' : 'certificates'} loaded
           </span>
@@ -406,11 +406,11 @@ MCZvLxXCtwIgCxkR0Gbdwef8k0bf1tC3dz+4NDe0S8wdCx5ZgeRPkq4=
                   <svg class="w-4 h-4 {isTestRoot ? 'text-blue-700 dark:text-blue-300' : 'text-gray-500 dark:text-gray-400'}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M14 3v4a1 1 0 0 0 1 1h4" /><path d="M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2" /><path d="M9 9l1 0" /><path d="M9 13l6 0" /><path d="M9 17l6 0" /></svg>
                 </div>
                 <div class="flex-1 min-w-0">
-                  <span class="text-gray-900 dark:text-gray-100 font-medium block truncate">
+                  <span class="text-[#1e293b] dark:text-gray-100 font-medium block truncate">
                     {extractSubjectFromPEM(cert)}
                   </span>
                   {#if isTestRoot}
-                    <span class="inline-block mt-1 px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-900 dark:text-blue-300 text-xs font-semibold rounded">
+                    <span class="mt-1 badge bg-blue-100 dark:bg-blue-900/30 text-blue-900 dark:text-blue-300">
                       Test Root
                     </span>
                   {/if}
@@ -440,34 +440,34 @@ MCZvLxXCtwIgCxkR0Gbdwef8k0bf1tC3dz+4NDe0S8wdCx5ZgeRPkq4=
                   <div class="space-y-2 text-xs">
                     <div class="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 items-start">
                       <div class="font-semibold text-gray-500 dark:text-gray-400 text-left">Subject:</div>
-                      <div class="text-gray-900 dark:text-gray-100 font-mono break-all text-left">{certInfo.subject}</div>
+                      <div class="text-[#1e293b] dark:text-gray-100 font-mono break-all text-left">{certInfo.subject}</div>
                       
                       <div class="font-semibold text-gray-500 dark:text-gray-400 text-left">Issuer:</div>
-                      <div class="text-gray-900 dark:text-gray-100 font-mono break-all text-left">{certInfo.issuer}</div>
+                      <div class="text-[#1e293b] dark:text-gray-100 font-mono break-all text-left">{certInfo.issuer}</div>
                       
                       <div class="font-semibold text-gray-500 dark:text-gray-400 text-left">Valid From:</div>
-                      <div class="text-gray-900 dark:text-gray-100 text-left">{certInfo.validFrom}</div>
+                      <div class="text-[#1e293b] dark:text-gray-100 text-left">{certInfo.validFrom}</div>
                       
                       <div class="font-semibold text-gray-500 dark:text-gray-400 text-left">Valid To:</div>
-                      <div class="text-gray-900 dark:text-gray-100 text-left">{certInfo.validTo}</div>
+                      <div class="text-[#1e293b] dark:text-gray-100 text-left">{certInfo.validTo}</div>
                       
                       <div class="font-semibold text-gray-500 dark:text-gray-400 text-left">Serial Number:</div>
-                      <div class="text-gray-900 dark:text-gray-100 font-mono break-all text-left">{certInfo.serialNumber}</div>
+                      <div class="text-[#1e293b] dark:text-gray-100 font-mono break-all text-left">{certInfo.serialNumber}</div>
                       
                       <div class="font-semibold text-gray-500 dark:text-gray-400 text-left">Signature Algorithm:</div>
-                      <div class="text-gray-900 dark:text-gray-100 text-left">{certInfo.signatureAlgorithm}</div>
+                      <div class="text-[#1e293b] dark:text-gray-100 text-left">{certInfo.signatureAlgorithm}</div>
                       
                       <div class="font-semibold text-gray-500 dark:text-gray-400 text-left">Public Key Algorithm:</div>
-                      <div class="text-gray-900 dark:text-gray-100 text-left">{certInfo.publicKeyAlgorithm}</div>
+                      <div class="text-[#1e293b] dark:text-gray-100 text-left">{certInfo.publicKeyAlgorithm}</div>
                       
                       {#if certInfo.keyUsage.length > 0}
                         <div class="font-semibold text-gray-500 dark:text-gray-400 text-left">Key Usage:</div>
-                        <div class="text-gray-900 dark:text-gray-100 text-left">{certInfo.keyUsage.join(', ')}</div>
+                        <div class="text-[#1e293b] dark:text-gray-100 text-left">{certInfo.keyUsage.join(', ')}</div>
                       {/if}
                       
                       {#if certInfo.extendedKeyUsage.length > 0}
                         <div class="font-semibold text-gray-500 dark:text-gray-400 text-left">Extended Key Usage:</div>
-                        <div class="text-gray-900 dark:text-gray-100 text-left">{certInfo.extendedKeyUsage.join(', ')}</div>
+                        <div class="text-[#1e293b] dark:text-gray-100 text-left">{certInfo.extendedKeyUsage.join(', ')}</div>
                       {/if}
                     </div>
                   </div>

@@ -161,10 +161,10 @@
       {#if node.inceptions.length > 0 || node.transformations.length > 0}
         <div class="flex flex-wrap justify-center gap-1 mt-2">
           {#each node.inceptions as s}
-            <span class="text-xs px-2 py-1 rounded font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300">{s}</span>
+            <span class="badge bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300">{s}</span>
           {/each}
           {#each node.transformations as s}
-            <span class="text-xs px-2 py-1 rounded font-medium bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300">{s}</span>
+            <span class="badge bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300">{s}</span>
           {/each}
         </div>
       {/if}

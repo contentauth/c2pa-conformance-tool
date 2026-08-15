@@ -182,7 +182,7 @@
             <path d="M9 14l2 2l4 -4" />
           </svg>
         </div>
-        <h3 class="text-xl font-semibold text-gray-900 dark:text-white">Available Rubrics</h3>
+        <h3 class="text-xl font-semibold text-[#1e293b] dark:text-white">Available Rubrics</h3>
       </div>
       {#if index.length > 0}
         <div class="flex items-center gap-2">
@@ -211,18 +211,14 @@
     {:else if index.length === 0}
       <p class="text-sm text-gray-500 dark:text-gray-400">No rubrics available.</p>
     {:else}
-      <div class="space-y-4">
+      <div class="space-y-8">
         {#each groups as group (group.category)}
           <section>
-            <!-- Category divider: small-caps label + hairline rule. -->
-            <div class="flex items-center gap-4 mb-2">
+            <!-- Category label with count. -->
+            <div class="mb-4">
               <h4 class="text-xs font-bold uppercase tracking-[0.12em] text-gray-500 dark:text-gray-400">
-                {group.category}
+                {group.category} ({group.entries.length})
               </h4>
-              <div class="flex-1 h-px bg-gray-200 dark:bg-gray-700"></div>
-              <span class="text-xs text-gray-500 dark:text-gray-400">
-                {group.entries.length}
-              </span>
             </div>
             <ul class="space-y-2">
               {#each group.entries as rubric (rubric.id)}
@@ -241,9 +237,9 @@
                       class="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 flex-shrink-0"
                     />
                     <div class="flex-1 min-w-0 flex items-center gap-2 flex-wrap">
-                      <span class="font-semibold text-gray-900 dark:text-white text-sm">{rubric.name}</span>
+                      <span class="font-semibold text-[#1e293b] dark:text-white text-sm">{rubric.name}</span>
                       {#if rubric.mode === 'per-manifest'}
-                        <span class="px-2 py-1 rounded text-xs font-bold uppercase tracking-wide bg-blue-100 text-blue-800 dark:bg-gray-700 dark:text-gray-200">
+                        <span class="badge uppercase tracking-wide bg-blue-100 text-blue-800 dark:bg-gray-700 dark:text-gray-200">
                           signals
                         </span>
                       {/if}
@@ -305,7 +301,7 @@
             </svg>
           </div>
           <div>
-            <h3 class="text-xl font-semibold text-gray-900 dark:text-white">Results</h3>
+            <h3 class="text-xl font-semibold text-[#1e293b] dark:text-white">Results</h3>
             <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
               {#if docResults.length > 0}
                 <span class="font-semibold {docPassCount === docResults.length ? 'text-green-700 dark:text-green-300' : 'text-red-700 dark:text-red-300'}">
@@ -351,11 +347,11 @@
                 {/if}
                 <div class="flex-1 min-w-0">
                   <div class="flex items-center gap-2 flex-wrap">
-                    <span class="font-semibold text-gray-900 dark:text-white">{r.rubricName}</span>
+                    <span class="font-semibold text-[#1e293b] dark:text-white">{r.rubricName}</span>
                     {#if r.rubricVersion}
                       <span class="text-xs text-gray-500 dark:text-gray-400 font-mono">v{r.rubricVersion}</span>
                     {/if}
-                    <span class="px-2 py-1 rounded-full text-xs font-bold uppercase tracking-wide {r.overallPassed
+                    <span class="badge uppercase tracking-wide {r.overallPassed
                       ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300'
                       : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300'}">
                       {r.overallPassed ? 'Pass' : 'Fail'}
@@ -441,11 +437,11 @@
                 </div>
                 <div class="flex-1 min-w-0">
                   <div class="flex items-center gap-2 flex-wrap">
-                    <span class="font-semibold text-gray-900 dark:text-white">{r.rubricName}</span>
+                    <span class="font-semibold text-[#1e293b] dark:text-white">{r.rubricName}</span>
                     {#if r.rubricVersion}
                       <span class="text-xs text-gray-500 dark:text-gray-400 font-mono">v{r.rubricVersion}</span>
                     {/if}
-                    <span class="px-2 py-1 rounded-full text-xs font-bold uppercase tracking-wide bg-blue-100 text-blue-800 dark:bg-gray-800 dark:text-gray-200">
+                    <span class="badge uppercase tracking-wide bg-blue-100 text-blue-800 dark:bg-gray-800 dark:text-gray-200">
                       Signals
                     </span>
                     <span class="text-xs text-gray-500 dark:text-gray-400">
@@ -461,7 +457,7 @@
                     <div class="flex items-center justify-between gap-4 flex-wrap mb-2">
                       <div class="flex items-center gap-2 flex-wrap">
                         <span class="font-mono text-xs text-gray-500 dark:text-gray-400">#{idx}</span>
-                        <span class="text-sm font-semibold text-gray-900 dark:text-white">{formatAssertedBy(m.assertedBy)}</span>
+                        <span class="text-sm font-semibold text-[#1e293b] dark:text-white">{formatAssertedBy(m.assertedBy)}</span>
                         {#if m.mimeType}
                           <span class="px-2 py-1 rounded text-xs font-mono bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300">{m.mimeType}</span>
                         {/if}

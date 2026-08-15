@@ -510,11 +510,11 @@
         <h3 class="text-xl font-semibold {isTrusted ? 'text-green-900 dark:text-green-300' : 'text-red-900 dark:text-red-300'} mb-1">
           {#if isTrusted}
             {#if usedITL}
-              Signature Trusted via ITL ✓
+              Signature Trusted via ITL
             {:else if actuallyUsedTestCert}
-              Signature Trusted via Test Certificate ✓
+              Signature Trusted via Test Certificate
             {:else}
-              Signature Trusted ✓
+              Signature Trusted
             {/if}
           {:else}
             {#if failures.length > 0}
@@ -587,7 +587,7 @@
 
   <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-6 gap-4">
     <div>
-      <h2 class="text-xl font-semibold text-gray-900 dark:text-white">{heading.title}</h2>
+      <h2 class="text-xl font-semibold text-[#1e293b] dark:text-white">{heading.title}</h2>
       <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">{heading.subtitle}</p>
     </div>
     <div class="flex flex-wrap items-center gap-2">
@@ -694,7 +694,7 @@
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
             </svg>
           </div>
-          <h3 class="text-xl font-semibold text-gray-900 dark:text-white">crJSON Report</h3>
+          <h3 class="text-xl font-semibold text-[#1e293b] dark:text-white">crJSON Report</h3>
         </div>
         <div class="flex items-center gap-2">
           <button
@@ -733,7 +733,7 @@
               <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M15 8h.01" /><path d="M3 6a3 3 0 0 1 3 -3h12a3 3 0 0 1 3 3v12a3 3 0 0 1 -3 3h-12a3 3 0 0 1 -3 -3v-12" /><path d="M3 16l5 -5c.928 -.893 2.072 -.893 3 0l5 5" /><path d="M14 14l1 -1c.928 -.893 2.072 -.893 3 0l3 3" /></svg>
             {/if}
           </div>
-          <h3 class="text-xl font-semibold text-gray-900 dark:text-white">
+          <h3 class="text-xl font-semibold text-[#1e293b] dark:text-white">
             {mediaType === 'sidecar' ? 'Sidecar File' : 'Media Preview'}
           </h3>
         </div>
@@ -743,17 +743,17 @@
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div class="bg-gray-50 dark:bg-gray-900 rounded-2xl p-4">
                 <div class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">Filename</div>
-                <p class="text-sm font-medium text-gray-900 dark:text-gray-100 truncate" title={file.name}>{file.name}</p>
+                <p class="text-sm font-medium text-[#1e293b] dark:text-gray-100 truncate" title={file.name}>{file.name}</p>
               </div>
               <div class="bg-gray-50 dark:bg-gray-900 rounded-2xl p-4">
                 <div class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">Type</div>
-                <p class="text-sm font-medium text-gray-900 dark:text-gray-100">
+                <p class="text-sm font-medium text-[#1e293b] dark:text-gray-100">
                   {mediaType === 'sidecar' ? 'application/c2pa (sidecar)' : (file.type || 'Unknown')}
                 </p>
               </div>
               <div class="bg-gray-50 dark:bg-gray-900 rounded-2xl p-4">
                 <div class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">Size</div>
-                <p class="text-sm font-medium text-gray-900 dark:text-gray-100">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
+                <p class="text-sm font-medium text-[#1e293b] dark:text-gray-100">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
               </div>
             </div>
 
@@ -798,7 +798,7 @@
                   <div class="w-20 h-20 mx-auto bg-gradient-to-br from-blue-500 to-blue-600 dark:from-gray-600 dark:to-gray-700 rounded-2xl flex items-center justify-center text-white mb-6 shadow-lg">
                     <svg class="w-10 h-10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M14 3v4a1 1 0 0 0 1 1h4" /><path d="M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2z" /><path d="M9 17h6" /><path d="M9 13h6" /></svg>
                   </div>
-                  <p class="text-gray-900 dark:text-gray-100 mb-2 text-lg font-semibold">Standalone manifest sidecar</p>
+                  <p class="text-[#1e293b] dark:text-gray-100 mb-2 text-lg font-semibold">Standalone manifest sidecar</p>
                   <p class="text-sm text-gray-600 dark:text-gray-400 leading-relaxed mb-4">
                     This is a <code class="font-mono text-xs bg-gray-200 dark:bg-gray-700 px-2 py-1 rounded">.c2pa</code> file &mdash; a
                     C2PA manifest store detached from its referenced asset. No embedded media to preview; the manifest&rsquo;s
@@ -861,17 +861,17 @@
             <div class="w-10 h-10 bg-gray-800 dark:bg-gray-700 rounded-lg flex items-center justify-center text-white shadow-sm">
               <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M11.46 20.846a12 12 0 0 1 -7.96 -14.846a12 12 0 0 0 8.5 -3a12 12 0 0 0 8.5 3a12 12 0 0 1 -.09 7.06" /><path d="M15 19l2 2l4 -4" /></svg>
             </div>
-            <h3 class="text-xl font-semibold text-gray-900 dark:text-white">Validation Status Details</h3>
+            <h3 class="text-xl font-semibold text-[#1e293b] dark:text-white">Validation Status Details</h3>
           </div>
           {#if validationGroups && validationGroups.length > 0}
             <div class="space-y-6">
               {#each validationGroups as group}
                 <div class="manifest-group-card border border-gray-200 dark:border-gray-700 rounded-2xl p-6 bg-gray-50/30 dark:bg-gray-900/10 shadow-sm">
-                  <h4 class="font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2 flex-wrap pb-4 border-b border-gray-100 dark:border-gray-800">
+                  <h4 class="font-bold text-[#1e293b] dark:text-white mb-4 flex items-center gap-2 flex-wrap pb-4 border-b border-gray-100 dark:border-gray-800">
                     {#if group.isActive}
-                      <span class="px-2 py-1 bg-blue-100 dark:bg-blue-900/50 text-blue-800 dark:text-blue-300 text-xs font-semibold rounded-full">Active Asset</span>
+                      <span class="badge bg-blue-100 dark:bg-blue-900/50 text-blue-800 dark:text-blue-300">Active Asset</span>
                     {:else}
-                      <span class="px-2 py-1 bg-blue-100 dark:bg-blue-900/50 text-blue-800 dark:text-blue-300 text-xs font-semibold rounded-full">Ingredient {group.index}</span>
+                      <span class="badge bg-blue-100 dark:bg-blue-900/50 text-blue-800 dark:text-blue-300">Ingredient {group.index}</span>
                     {/if}
                     <span class="text-xs font-mono text-gray-500 dark:text-gray-500 truncate max-w-xs md:max-w-md" title={group.label}>{group.label}</span>
                     {#if group.sigInfo?.common_name}
@@ -903,7 +903,7 @@
                            <div class="flex-1 text-left">
                              <span class="font-bold text-xs font-mono block sm:inline mb-1 sm:mb-0 mr-2">{status.code}</span>
                              {#if status.isInterim}
-                               <span class="ml-2 px-2 py-1 bg-blue-100 dark:bg-gray-700 text-blue-900 dark:text-gray-100 text-xs font-semibold rounded">ITL</span>
+                               <span class="ml-2 badge bg-blue-100 dark:bg-gray-700 text-blue-900 dark:text-gray-100">ITL</span>
                              {/if}
                              <p class="text-sm leading-relaxed mt-1 text-green-700 dark:text-green-400">{status.explanation}</p>
                            </div>
@@ -940,25 +940,25 @@
               <div class="w-10 h-10 bg-gray-800 dark:bg-gray-700 rounded-lg flex items-center justify-center text-white shadow-sm">
                 <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M5 7.2a2.2 2.2 0 0 1 2.2 -2.2h1a2.2 2.2 0 0 0 1.55 -.64l.7 -.7a2.2 2.2 0 0 1 3.12 0l.7 .7c.412 .41 .97 .64 1.55 .64h1a2.2 2.2 0 0 1 2.2 2.2v1c0 .58 .23 1.138 .64 1.55l.7 .7a2.2 2.2 0 0 1 0 3.12l-.7 .7a2.2 2.2 0 0 0 -.64 1.55v1a2.2 2.2 0 0 1 -2.2 2.2h-1a2.2 2.2 0 0 0 -1.55 .64l-.7 .7a2.2 2.2 0 0 1 -3.12 0l-.7 -.7a2.2 2.2 0 0 0 -1.55 -.64h-1a2.2 2.2 0 0 1 -2.2 -2.2v-1a2.2 2.2 0 0 0 -.64 -1.55l-.7 -.7a2.2 2.2 0 0 1 0 -3.12l.7 -.7a2.2 2.2 0 0 0 .64 -1.55v-1" /><path d="M9 12l2 2l4 -4" /></svg>
               </div>
-              <h3 class="text-xl font-semibold text-gray-900 dark:text-white">Signature Information</h3>
+              <h3 class="text-xl font-semibold text-[#1e293b] dark:text-white">Signature Information</h3>
             </div>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
               {#if signatureInfo.common_name}
                 <div class="bg-gray-50 dark:bg-gray-900 rounded-2xl p-4">
                   <div class="text-xs font-semibold text-gray-500 dark:text-gray-500 uppercase tracking-wide mb-2">Common Name</div>
-                  <p class="text-sm font-medium text-gray-900 dark:text-gray-100 break-all">{signatureInfo.common_name}</p>
+                  <p class="text-sm font-medium text-[#1e293b] dark:text-gray-100 break-all">{signatureInfo.common_name}</p>
                 </div>
               {/if}
               {#if signatureInfo.issuer}
                 <div class="bg-gray-50 dark:bg-gray-900 rounded-2xl p-4">
                   <div class="text-xs font-semibold text-gray-500 dark:text-gray-500 uppercase tracking-wide mb-2">Issuer</div>
-                  <p class="text-sm font-medium text-gray-900 dark:text-gray-100 break-all">{signatureInfo.issuer}</p>
+                  <p class="text-sm font-medium text-[#1e293b] dark:text-gray-100 break-all">{signatureInfo.issuer}</p>
                 </div>
               {/if}
               {#if signatureInfo.time}
                 <div class="bg-gray-50 dark:bg-gray-900 rounded-2xl p-4">
                   <div class="text-xs font-semibold text-gray-500 dark:text-gray-500 uppercase tracking-wide mb-2">Signed</div>
-                  <p class="text-sm font-medium text-gray-900 dark:text-gray-100">{signatureInfo.time}</p>
+                  <p class="text-sm font-medium text-[#1e293b] dark:text-gray-100">{signatureInfo.time}</p>
                 </div>
               {/if}
               <!-- Certificate Validity -->
@@ -1015,12 +1015,12 @@
             <div class="w-10 h-10 bg-gray-800 dark:bg-gray-700 rounded-lg flex items-center justify-center text-white shadow-sm">
               <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M14 3v4a1 1 0 0 0 1 1h4" /><path d="M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2" /><path d="M9 9l1 0" /><path d="M9 13l6 0" /><path d="M9 17l6 0" /></svg>
             </div>
-            <h3 class="text-xl font-semibold text-gray-900 dark:text-white">Active Manifest</h3>
+            <h3 class="text-xl font-semibold text-[#1e293b] dark:text-white">Active Manifest</h3>
           </div>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div class="bg-gray-50 dark:bg-gray-900 rounded-2xl p-4">
               <div class="text-xs font-semibold text-gray-500 dark:text-gray-500 uppercase tracking-wide mb-2">Claim Generator</div>
-              <p class="text-sm font-medium text-gray-900 dark:text-gray-100">
+              <p class="text-sm font-medium text-[#1e293b] dark:text-gray-100">
                 {#if claimInfo?.claim_generator_info?.[0]?.name}
                   {claimInfo.claim_generator_info[0].name}
                   {#if claimInfo.claim_generator_info[0].version}
@@ -1043,7 +1043,7 @@
                 <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M9 5h-2a2 2 0 0 0 -2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-12a2 2 0 0 0 -2 -2h-2" /><path d="M9 5a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2a2 2 0 0 1 -2 2h-2a2 2 0 0 1 -2 -2" /><path d="M9 14l2 2l4 -4" /></svg>
               </div>
               <div class="flex-1">
-                <h3 class="text-xl font-semibold text-gray-900 dark:text-white">Assertions</h3>
+                <h3 class="text-xl font-semibold text-[#1e293b] dark:text-white">Assertions</h3>
               </div>
               <div class="flex items-center gap-2">
                 <button
@@ -1075,7 +1075,7 @@
                       {index + 1}
                     </div>
                     <div class="flex-1">
-                      <p class="font-bold text-gray-900 dark:text-gray-100 text-lg">{assertion.label || 'Unknown'}</p>
+                      <p class="font-bold text-[#1e293b] dark:text-gray-100 text-lg">{assertion.label || 'Unknown'}</p>
                       {#if assertion.data}
                         <button
                           on:click={() => toggleAssertion(index)}
@@ -1103,7 +1103,7 @@
                                     <div class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">
                                       {item.key}
                                     </div>
-                                    <div class="text-sm font-medium text-gray-900 dark:text-gray-100">
+                                    <div class="text-sm font-medium text-[#1e293b] dark:text-gray-100">
                                       {item.actionName}
                                     </div>
                                   </div>
@@ -1129,7 +1129,7 @@
                                       <div class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">
                                         Description
                                       </div>
-                                      <div class="text-sm font-medium text-gray-900 dark:text-gray-100 break-words">
+                                      <div class="text-sm font-medium text-[#1e293b] dark:text-gray-100 break-words">
                                         {item.description}
                                       </div>
                                     </div>
@@ -1140,7 +1140,7 @@
                                 <div class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">
                                   {item.key}
                                 </div>
-                                <div class="text-sm font-medium text-gray-900 dark:text-gray-100 break-words">
+                                <div class="text-sm font-medium text-[#1e293b] dark:text-gray-100 break-words">
                                   {formatValue(item.value)}
                                 </div>
                               {/if}

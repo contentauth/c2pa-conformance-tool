@@ -334,15 +334,11 @@
               <div class="flex items-start gap-4 mb-4">
                 {#if r.overallPassed}
                   <div class="flex-shrink-0 w-8 h-8 bg-green-500 dark:bg-green-700 rounded-full flex items-center justify-center text-white">
-                    <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-                      <path d="M5 12l5 5l10 -10" />
-                    </svg>
+                    <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M5 12l5 5l10 -10" /></svg>
                   </div>
                 {:else}
                   <div class="flex-shrink-0 w-8 h-8 bg-red-500 dark:bg-red-700 rounded-full flex items-center justify-center text-white">
-                    <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-                      <path d="M18 6l-12 12" /><path d="M6 6l12 12" />
-                    </svg>
+                    <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M18 6l-12 12" /><path d="M6 6l12 12" /></svg>
                   </div>
                 {/if}
                 <div class="flex-1 min-w-0">
@@ -370,9 +366,7 @@
                   <ul class="space-y-2">
                     {#each grouped.failed as s (s.id)}
                       <li class="flex items-start gap-2 text-sm">
-                        <svg class="w-4 h-4 text-red-600 dark:text-red-300 flex-shrink-0 mt-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                          <path d="M18 6l-12 12" /><path d="M6 6l12 12" />
-                        </svg>
+                        <svg class="w-4 h-4 text-red-600 dark:text-red-300 flex-shrink-0 mt-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M18 6l-12 12" /><path d="M6 6l12 12" /></svg>
                         <div class="flex-1 min-w-0">
                           <p class="text-gray-700 dark:text-gray-300">{s.message || s.description || s.id}</p>
                           <p class="text-xs text-gray-500 dark:text-gray-400 font-mono mt-1">{s.id}</p>
@@ -389,9 +383,7 @@
                   <ul class="space-y-2">
                     {#each grouped.errored as s (s.id)}
                       <li class="flex items-start gap-2 text-sm">
-                        <svg class="w-4 h-4 text-amber-600 dark:text-amber-300 flex-shrink-0 mt-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                          <path d="M12 9v4" /><path d="M10.363 3.591l-8.106 13.534a1.914 1.914 0 0 0 1.636 2.871h16.214a1.914 1.914 0 0 0 1.636 -2.87l-8.106 -13.536a1.914 1.914 0 0 0 -3.274 0z" /><path d="M12 16h.01" />
-                        </svg>
+                        <svg class="w-4 h-4 text-amber-600 dark:text-amber-300 flex-shrink-0 mt-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 9v4" /><path d="M10.363 3.591l-8.106 13.534a1.914 1.914 0 0 0 1.636 2.871h16.214a1.914 1.914 0 0 0 1.636 -2.87l-8.106 -13.536a1.914 1.914 0 0 0 -3.274 0z" /><path d="M12 16h.01" /></svg>
                         <div class="flex-1 min-w-0">
                           <p class="text-gray-700 dark:text-gray-300">{s.message || s.description || s.id}</p>
                           <p class="text-xs text-gray-500 dark:text-gray-400 font-mono mt-1">{s.id}</p>
@@ -410,9 +402,7 @@
                   <ul class="space-y-2 mt-2">
                     {#each grouped.passed as s (s.id)}
                       <li class="flex items-start gap-2 text-sm">
-                        <svg class="w-4 h-4 text-green-600 dark:text-green-300 flex-shrink-0 mt-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                          <path d="M5 12l5 5l10 -10" />
-                        </svg>
+                        <svg class="w-4 h-4 text-green-600 dark:text-green-300 flex-shrink-0 mt-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M5 12l5 5l10 -10" /></svg>
                         <div class="flex-1 min-w-0">
                           <p class="text-gray-700 dark:text-gray-300">{s.message || s.description || s.id}</p>
                           <p class="text-xs text-gray-500 dark:text-gray-400 font-mono mt-1">{s.id}</p>
@@ -481,9 +471,7 @@
                         <ul class="space-y-2">
                           {#each m.localInceptions as sig (sig.trait)}
                             <li class="flex items-start gap-2 text-sm">
-                              <svg class="w-4 h-4 text-blue-600 dark:text-gray-400 flex-shrink-0 mt-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-                              </svg>
+                              <svg class="w-4 h-4 text-blue-600 dark:text-gray-400 flex-shrink-0 mt-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 17.75l-6.172 3.245l1.179 -6.873l-5 -4.867l6.9 -1.002l3.086 -6.253l3.086 6.253l6.9 1.002l-5 4.867l1.179 6.873z" /></svg>
                               <div class="flex-1 min-w-0">
                                 <p class="text-gray-700 dark:text-gray-300">
                                   {sig.reportText}
@@ -507,10 +495,7 @@
                         <ul class="space-y-2">
                           {#each m.localTransformations as sig (sig.trait)}
                             <li class="flex items-start gap-2 text-sm">
-                              <svg class="w-4 h-4 text-amber-600 dark:text-amber-300 flex-shrink-0 mt-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M4 4v5h5" /><path d="M20 20v-5h-5" />
-                                <path d="M5.63 9A9 9 0 0 1 20 12" /><path d="M18.37 15A9 9 0 0 1 4 12" />
-                              </svg>
+                              <svg class="w-4 h-4 text-amber-600 dark:text-amber-300 flex-shrink-0 mt-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M20 11a8.1 8.1 0 0 0 -15.5 -2m-.5 -4v4h4" /><path d="M4 13a8.1 8.1 0 0 0 15.5 2m.5 4v-4h-4" /></svg>
                               <div class="flex-1 min-w-0">
                                 <p class="text-gray-700 dark:text-gray-300">
                                   {sig.reportText}

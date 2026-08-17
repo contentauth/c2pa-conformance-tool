@@ -330,9 +330,7 @@ MCZvLxXCtwIgCxkR0Gbdwef8k0bf1tC3dz+4NDe0S8wdCx5ZgeRPkq4=
     <div class="p-4 bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 rounded-2xl">
       <div class="flex items-start gap-4 mb-4">
         <div class="flex-shrink-0 w-8 h-8 bg-gray-800 dark:bg-gray-700 rounded-lg flex items-center justify-center">
-          <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
-          </svg>
+          <svg class="w-5 h-5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M9 3l6 0" /><path d="M10 9l4 0" /><path d="M10 3v6l-4 11a.7 .7 0 0 0 .5 1h11a.7 .7 0 0 0 .5 -1l-4 -11v-6" /></svg>
         </div>
         <div class="flex-1">
           <h4 class="font-bold text-[#1e293b] dark:text-white text-lg mb-1">
@@ -415,14 +413,7 @@ MCZvLxXCtwIgCxkR0Gbdwef8k0bf1tC3dz+4NDe0S8wdCx5ZgeRPkq4=
                     </span>
                   {/if}
                 </div>
-                <svg
-                  class="w-5 h-5 text-gray-400 dark:text-gray-500 transition-transform flex-shrink-0 {expandedCerts.has(index) ? 'rotate-180' : ''}"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                </svg>
+                <svg class="w-5 h-5 text-gray-400 dark:text-gray-500 transition-transform flex-shrink-0 {expandedCerts.has(index) ? 'rotate-180' : ''}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M6 9l6 6l6 -6" /></svg>
               </button>
               <button
                 class="flex items-center justify-center w-8 h-8 text-gray-400 dark:text-gray-500 hover:text-white hover:bg-red-600 dark:hover:bg-red-700 rounded-lg transition-all duration-200 opacity-0 group-hover:opacity-100 ml-2 flex-shrink-0"

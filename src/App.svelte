@@ -371,11 +371,11 @@
     <div class="fixed inset-0 z-50 flex items-center justify-center bg-gradient-to-br from-blue-100 to-blue-100 dark:from-gray-700 dark:to-gray-800 bg-opacity-98 backdrop-blur-md transition-all duration-100">
       <div class="text-center text-blue-900 dark:text-white">
         <div class="mb-8 animate-bounce">
-          <div class="inline-flex items-center justify-center w-32 h-32 bg-blue-900 dark:bg-gray-600 rounded-3xl shadow-2xl">
+          <div class="inline-flex items-center justify-center w-32 h-32 bg-blue-900 dark:bg-gray-600 rounded-2xl shadow-lg">
             <svg class="w-20 h-20 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M7 18a4.6 4.4 0 0 1 0 -9a5 4.5 0 0 1 11 2h1a3.5 3.5 0 0 1 0 7h-1" /><path d="M9 15l3 -3l3 3" /><path d="M12 12l0 9" /></svg>
           </div>
         </div>
-        <p class="text-3xl font-bold mb-3">Drop file to analyze</p>
+        <p class="text-3xl font-bold mb-4">Drop file to analyze</p>
         <p class="text-xl opacity-90">We'll validate it instantly</p>
       </div>
     </div>
@@ -385,15 +385,8 @@
   <nav class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 shadow-sm sticky top-0 z-40 backdrop-blur-sm bg-white/95 dark:bg-gray-800/95">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div class="flex items-center justify-between h-16 gap-4">
-        <!-- Left: Content Credentials Logo -->
-        <div class="flex items-center justify-start gap-3">
-          <a href="https://contentcredentials.org" target="_blank" rel="noopener noreferrer" aria-label="Visit Content Credentials website">
-            <img src="{import.meta.env.BASE_URL}content_credentials_icon.svg" alt="Content Credentials" class="h-8 w-auto transition-transform hover:scale-105 dark:brightness-0 dark:invert" />
-          </a>
-        </div>
-
-        <!-- Center: Title (clickable to return home) -->
-        <div class="flex items-center justify-center flex-1">
+        <!-- Left: Title (clickable to return home) -->
+        <div class="flex items-center justify-start flex-1">
           {#if report || processing || currentPage !== 'main'}
             <button
               on:click={resetToHome}
@@ -401,47 +394,45 @@
               aria-label="Return to home"
             >
               C2PA Verify
-              <span class="text-xs font-semibold tracking-wide uppercase px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700 dark:bg-indigo-900/60 dark:text-indigo-300">Beta</span>
+              <span class="badge tracking-wide bg-gray-200 text-gray-700 dark:bg-blue-900/60 dark:text-blue-300">Beta</span>
             </button>
           {:else}
             <h1 class="flex items-center gap-2 text-xl font-bold text-gray-900 dark:text-white">
               C2PA Verify
-              <span class="text-xs font-semibold tracking-wide uppercase px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700 dark:bg-indigo-900/60 dark:text-indigo-300">Beta</span>
+              <span class="badge tracking-wide bg-gray-200 text-gray-700 dark:bg-blue-900/60 dark:text-blue-300">Beta</span>
             </h1>
           {/if}
         </div>
 
         <!-- Right: Test Mode Badge + Dark mode toggle + C2PA Logo + Hamburger -->
-        <div class="flex items-center justify-end gap-3">
+        <div class="flex items-center justify-end gap-4">
           {#if testModeEnabled}
             <button
               on:click={() => navigateTo('test-certificates')}
-              class="inline-flex items-center gap-2 px-3 py-1.5 bg-amber-600 dark:bg-gray-600 text-white rounded-lg hover:bg-amber-700 dark:hover:bg-gray-500 transition-colors text-sm font-semibold shadow-sm"
+              class="btn btn-warning"
               title="Test mode active - click to manage certificates"
             >
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
-              </svg>
-              TEST MODE ({testCertificates.length})
+              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M9 3l6 0" /><path d="M10 9l4 0" /><path d="M10 3v6l-4 11a.7 .7 0 0 0 .5 1h11a.7 .7 0 0 0 .5 -1l-4 -11v-6" /></svg>
+              Test Mode ({testCertificates.length})
             </button>
           {/if}
           <button
             on:click={toggleDarkMode}
-            class="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-all duration-200 group"
+            class="btn-icon group"
             aria-label="Toggle dark mode"
             title={darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
           >
             {#if darkMode}
-              <svg class="w-5 h-5 text-yellow-500 group-hover:text-yellow-400 transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454l0 .008" /></svg>
+              <svg class="w-5 h-5 text-blue-500 group-hover:text-blue-400 transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454l0 .008" /></svg>
             {:else}
-              <svg class="w-5 h-5 text-gray-700 dark:text-gray-300 group-hover:text-gray-900 dark:group-hover:text-white transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454l0 .008" /></svg>
+              <svg class="w-5 h-5 text-gray-700 dark:text-gray-300 group-hover:text-[#1e293b] dark:group-hover:text-white transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454l0 .008" /></svg>
             {/if}
           </button>
           <!-- Hamburger menu -->
           <div class="relative">
             <button
               on:click={() => menuOpen = !menuOpen}
-              class="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-all duration-200"
+              class="btn-icon"
               aria-label="Open menu"
               aria-expanded={menuOpen}
             >
@@ -464,18 +455,18 @@
               ></button>
 
               <!-- Dropdown panel -->
-              <div class="absolute right-0 mt-2 w-56 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-lg z-50 py-1 animate-fade-in">
-                <div class="px-3 py-2 text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">
+              <div class="absolute right-0 mt-2 w-56 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-lg z-50 py-1 animate-fade-in">
+                <div class="px-4 py-2 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   Advanced
                 </div>
                 <button
                   on:click={() => navigateTo('test-certificates')}
-                  class="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-left"
+                  class="w-full flex items-center gap-4 px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-left"
                 >
                   <svg class="w-4 h-4 text-amber-600 dark:text-gray-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M9 3l6 0" /><path d="M10 9l4 0" /><path d="M10 3v6l-4 11a.7 .7 0 0 0 .5 1h11a.7 .7 0 0 0 .5 -1l-4 -11v-6" /></svg>
                   <span>Test Certificates</span>
                   {#if testCertificates.length > 0}
-                    <span class="ml-auto px-1.5 py-0.5 bg-amber-600 dark:bg-gray-600 text-white rounded-full text-xs font-bold">{testCertificates.length}</span>
+                    <span class="ml-auto badge bg-amber-700 dark:bg-gray-600 text-white">{testCertificates.length}</span>
                   {/if}
                 </button>
               </div>
@@ -493,16 +484,14 @@
       <div class="mb-8">
         <button
           on:click={() => navigateTo('main')}
-          class="inline-flex items-center gap-2 text-sm font-semibold text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
+          class="btn-ghost"
         >
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
-          </svg>
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M15 6l-6 6l6 6" /></svg>
           Back to main view
         </button>
-        <h2 class="mt-4 text-2xl font-bold text-gray-900 dark:text-white">Test Certificates</h2>
+        <h2 class="mt-4 text-2xl font-bold text-[#1e293b] dark:text-white">Test Certificates</h2>
         <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">
-          Load custom certificates to validate files signed outside the official C2PA Trust List.
+          Load custom certificates to validate files signed outside the official C2PA Trust List. Test certificates are session-only and clearly marked in results.
         </p>
       </div>
       <CertificateManager
@@ -518,11 +507,11 @@
   {:else}
     {#if !report && !processing}
       <!-- Hero Section -->
-      <div class="w-full max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center mb-12 mt-10">
+      <div class="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center mb-12 mt-10">
         <div class="mb-10">
-          <h2 class="text-[34px] sm:text-[48px] font-bold text-[#444] dark:text-white mb-4 tracking-wide leading-tight">
+          <h2 class="text-3xl sm:text-5xl font-bold text-gray-900 dark:text-white mb-4 tracking-wide leading-tight">
              Content Credentials<br />
-            <span class="text-[#444] dark:text-white">
+            <span class="text-gray-900 dark:text-white">
               Validator & Testing Tool
             </span>
           </h2>
@@ -539,39 +528,37 @@
           >
             <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0" /><path d="M12 9h.01" /><path d="M11 12h1v4h1" /></svg>
             What is this all about?
-            <svg class="w-4 h-4 transition-transform {infoSectionExpanded ? 'rotate-180' : ''}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-            </svg>
+            <svg class="w-4 h-4 transition-transform {infoSectionExpanded ? 'rotate-180' : ''}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M6 9l6 6l6 -6" /></svg>
           </button>
 
           {#if infoSectionExpanded}
-            <div class="bg-blue-50 dark:bg-gray-900 border-2 border-blue-400 dark:border-gray-700 rounded-2xl p-8 mt-4 text-left shadow-sm">
+            <div class="bg-blue-100 dark:bg-gray-900 border-2 border-blue-400 dark:border-gray-700 rounded-2xl p-8 mt-4 text-left shadow-sm">
               <p class="text-gray-700 dark:text-gray-300 mb-4 leading-relaxed">
-                Content Credentials from The Coalition for Content Provenance and Authenticity (C2PA) is the technical standard for digital provenance. It provides verifiable assertions about the origin and history of digital content including images, video, audio, and documents.
+                <a href="https://contentcredentials.org/" target="_blank" rel="noopener noreferrer" class="underline">Content Credentials</a> from the <a href="https://c2pa.org" target="_blank" rel="noopener noreferrer" class="underline">Coalition for Content Provenance and Authenticity (C2PA)</a> is the technical standard for digital provenance. It provides verifiable assertions about the origin and history of digital content including images, video, audio, and documents.
               </p>
               <div class="grid sm:grid-cols-3 gap-4">
-                <div class="bg-white dark:bg-gray-800 rounded-xl p-4 backdrop-blur-sm">
+                <div class="bg-white dark:bg-gray-800 rounded-2xl p-4 backdrop-blur-sm">
                   <div class="text-3xl mb-2">
                     <!-- photo-search / inspect icon -->
                     <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M15 8h.01" /><path d="M11 20h-4a3 3 0 0 1 -3 -3v-10a3 3 0 0 1 3 -3h10a3 3 0 0 1 3 3v4" /><path d="M4 15l4 -4c.928 -.893 2.072 -.893 3 0l3 3" /><path d="M14 14l1 -1c.617 -.593 1.328 -.793 2.009 -.598" /><path d="M18 18m-3 0a3 3 0 1 0 6 0a3 3 0 1 0 -6 0" /><path d="M20.2 20.2l1.8 1.8" /></svg>
                   </div>
-                  <h4 class="font-semibold text-[#444] dark:text-white mb-1">Explore media manifests</h4>
+                  <h4 class="font-semibold text-gray-900 dark:text-white mb-1">Explore media manifests</h4>
                   <p class="text-sm text-gray-600 dark:text-gray-400">Inspect assertions, actions, ingredients, and provenance history in any C2PA-signed file</p>
                 </div>
-                <div class="bg-white dark:bg-gray-800 rounded-xl p-4 backdrop-blur-sm">
+                <div class="bg-white dark:bg-gray-800 rounded-2xl p-4 backdrop-blur-sm">
                   <div class="text-3xl mb-2">
                     <!-- clipboard-check icon -->
                     <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M9 5h-2a2 2 0 0 0 -2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-12a2 2 0 0 0 -2 -2h-2" /><path d="M9 3m0 2a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v0a2 2 0 0 1 -2 2h-2a2 2 0 0 1 -2 -2z" /><path d="M9 14l2 2l4 -4" /></svg>
                   </div>
-                  <h4 class="font-semibold text-[#444] dark:text-white mb-1">Test & prepare for Conformance</h4>
+                  <h4 class="font-semibold text-gray-900 dark:text-white mb-1">Test & prepare for Conformance</h4>
                   <p class="text-sm text-gray-600 dark:text-gray-400">Run structured rubric checks against C2PA spec versions before submitting to the <a href="https://c2pa.org/conformance" target="_blank" rel="noopener noreferrer" class="underline hover:text-gray-800 dark:hover:text-gray-200 transition-colors">Conformance Program</a></p>
                 </div>
-                <div class="bg-white dark:bg-gray-800 rounded-xl p-4 backdrop-blur-sm">
+                <div class="bg-white dark:bg-gray-800 rounded-2xl p-4 backdrop-blur-sm">
                   <div class="text-3xl mb-2">
                     <!-- shield-check / trust icon -->
                     <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M11.46 20.846a12 12 0 0 1 -7.96 -14.846a12 12 0 0 0 8.5 -3a12 12 0 0 0 8.5 3a12 12 0 0 1 -.09 7.06" /><path d="M15 19l2 2l4 -4" /></svg>
                   </div>
-                  <h4 class="font-semibold text-[#444] dark:text-white mb-1">Validate signatures & trust</h4>
+                  <h4 class="font-semibold text-gray-900 dark:text-white mb-1">Validate signatures & trust</h4>
                   <p class="text-sm text-gray-600 dark:text-gray-400">Check signing chains against the official C2PA Trust List, Interim Trust List, and custom test certificates</p>
                 </div>
               </div>
@@ -582,15 +569,15 @@
         {#if noManifest}
           <div class="bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-2xl p-8 mb-10 shadow-sm text-left">
             <div class="flex items-start gap-4">
-              <div class="flex-shrink-0 w-12 h-12 bg-gray-400 dark:bg-gray-500 rounded-full flex items-center justify-center text-white text-2xl">
-                🔍
+              <div class="flex-shrink-0 w-12 h-12 bg-gray-400 dark:bg-gray-500 rounded-full flex items-center justify-center text-white">
+                <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M10 10m-7 0a7 7 0 1 0 14 0a7 7 0 1 0 -14 0" /><path d="M21 21l-6 -6" /></svg>
               </div>
               <div class="flex-1">
-                <h2 class="text-2xl font-bold text-gray-700 dark:text-gray-200 mb-3">No C2PA Content Credentials Found</h2>
+                <h2 class="text-2xl font-bold text-gray-700 dark:text-gray-200 mb-4">No C2PA Content Credentials Found</h2>
                 <p class="text-gray-600 dark:text-gray-300 leading-relaxed mb-4">This file doesn't appear to contain C2PA Content Credentials.</p>
                 <button
                   on:click={resetToHome}
-                  class="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white text-sm font-semibold rounded-lg transition-colors"
+                  class="btn btn-secondary"
                 >
                   Try Another File
                 </button>
@@ -602,15 +589,15 @@
         {#if error}
           <div class="bg-red-50 dark:bg-gray-900 border border-red-200 dark:border-gray-700 rounded-2xl p-8 mb-10 shadow-sm text-left">
             <div class="flex items-start gap-4">
-              <div class="flex-shrink-0 w-12 h-12 bg-red-600 dark:bg-gray-600 rounded-full flex items-center justify-center text-white text-2xl">
-                ⚠
+              <div class="flex-shrink-0 w-12 h-12 bg-red-600 dark:bg-gray-600 rounded-full flex items-center justify-center text-white">
+                <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 9v4" /><path d="M10.363 3.591l-8.106 13.534a1.914 1.914 0 0 0 1.636 2.871h16.214a1.914 1.914 0 0 0 1.636 -2.87l-8.106 -13.536a1.914 1.914 0 0 0 -3.274 0z" /><path d="M12 16h.01" /></svg>
               </div>
               <div class="flex-1">
-                <h2 class="text-2xl font-bold text-red-700 dark:text-gray-300 mb-3">Error Processing File</h2>
-                <p class="text-red-600 dark:text-gray-300 leading-relaxed mb-4">{error}</p>
+                <h2 class="text-2xl font-bold text-red-700 dark:text-gray-300 mb-4">Error Processing File</h2>
+                <p class="text-red-700 dark:text-gray-300 leading-relaxed mb-4">{error}</p>
                 <button
                   on:click={resetToHome}
-                  class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-semibold rounded-lg transition-colors"
+                  class="btn btn-danger"
                 >
                   Try Another File
                 </button>
@@ -621,7 +608,7 @@
 
         {#if pendingSidecar}
           <!-- Pending sidecar: waiting for the matching asset to be dropped -->
-          <div class="bg-blue-50 dark:bg-gray-900 border-2 border-blue-400 dark:border-gray-600 border-dashed rounded-2xl p-8 mb-6 text-left shadow-sm">
+          <div class="bg-blue-100 dark:bg-gray-900 border-2 border-blue-400 dark:border-gray-600 border-dashed rounded-2xl p-8 mb-6 text-left shadow-sm">
             <div class="flex items-start gap-4">
               <div class="flex-shrink-0 w-12 h-12 bg-blue-600 dark:bg-gray-600 rounded-full flex items-center justify-center text-white">
                 <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M15 13l-3.5 3.5a1.5 1.5 0 0 1 -2 0l-.5 -.5a1.5 1.5 0 0 1 0 -2l3.5 -3.5" /><path d="M9 11l-1.5 -1.5a1.5 1.5 0 0 1 0 -2l.5 -.5a1.5 1.5 0 0 1 2 0l1.5 1.5" /><path d="M13 11l1 1" /><path d="M11 13l1 1" /><path d="M14 4l-2 2" /><path d="M5 13l-1 1" /><path d="M4 14l-1 2l1 3l3 1l2 -1" /><path d="M14 20l2 1l3 -1l1 -3l-1 -2" /><path d="M20 10l1 -2l-1 -3l-3 -1l-2 1" /></svg>
@@ -634,17 +621,17 @@
                 <p class="text-sm text-blue-600 dark:text-gray-400 mb-4">
                   Drop or select the asset file this sidecar belongs to. The asset will be shown alongside the manifest for context.
                 </p>
-                <div class="flex flex-wrap gap-3">
+                <div class="flex flex-wrap gap-4">
                   <FileUpload on:fileselect={(e) => handleFilesDropped([e.detail])} compact={true} />
                   <button
                     on:click={inspectSidecarWithoutAsset}
-                    class="inline-flex items-center gap-2 px-4 py-2 bg-white dark:bg-gray-700 border border-blue-300 dark:border-gray-500 text-blue-700 dark:text-gray-200 text-sm font-semibold rounded-lg hover:bg-blue-50 dark:hover:bg-gray-600 transition-colors"
+                    class="btn-outline"
                   >
                     Inspect sidecar only (no asset)
                   </button>
                   <button
                     on:click={cancelPendingSidecar}
-                    class="inline-flex items-center gap-2 px-4 py-2 text-gray-500 dark:text-gray-400 text-sm font-semibold hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
+                    class="btn-ghost px-4 py-2"
                   >
                     Cancel
                   </button>
@@ -684,7 +671,7 @@
             <div class="w-20 h-20 border-4 border-blue-600 dark:border-gray-400 border-t-transparent rounded-full animate-spin absolute top-0 left-0"></div>
           </div>
           <div class="text-center">
-            <p class="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">{processingStatus}</p>
+            <p class="text-xl font-semibold text-[#1e293b] dark:text-gray-100 mb-2">{processingStatus}</p>
             <p class="text-sm text-gray-600 dark:text-gray-400">Please wait while we validate your file</p>
           </div>
         </div>
@@ -704,12 +691,17 @@
   </div><!-- end flex-1 content -->
 
   <!-- Footer (always shown) -->
-  <footer class="border-t border-gray-200 dark:border-gray-700">
-    <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between">
-      <span class="text-xs text-gray-400 dark:text-gray-500">Built with ❤️ by the C2PA Conformance community</span>
-      <a href="https://c2pa.org" target="_blank" rel="noopener noreferrer" aria-label="Visit C2PA website">
-        <img src="{import.meta.env.BASE_URL}c2pa_icon.svg" alt="C2PA" class="h-6 w-auto opacity-60 hover:opacity-100 transition-opacity dark:brightness-0 dark:invert" />
-      </a>
+  <footer class="bg-[#f3f4f6] dark:bg-gray-900">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
+      <span class="text-xs text-gray-500 dark:text-gray-400">Built with ❤️ by the C2PA Conformance community</span>
+      <div class="flex items-center gap-4">
+        <a href="https://contentcredentials.org" target="_blank" rel="noopener noreferrer" aria-label="Visit Content Credentials website">
+          <img src="{import.meta.env.BASE_URL}content_credentials_icon.svg" alt="Content Credentials" class="h-6 w-auto opacity-60 hover:opacity-100 transition-opacity dark:brightness-0 dark:invert" />
+        </a>
+        <a href="https://c2pa.org" target="_blank" rel="noopener noreferrer" aria-label="Visit C2PA website">
+          <img src="{import.meta.env.BASE_URL}c2pa_icon.svg" alt="C2PA" class="h-6 w-auto opacity-60 hover:opacity-100 transition-opacity dark:brightness-0 dark:invert" />
+        </a>
+      </div>
     </div>
   </footer>
 </main>

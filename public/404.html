@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <title>Page not found · C2PA Verify</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --bg: #f3f4f6;
+        --card: #ffffff;
+        --border: #e5e5e5;
+        --ink: #171717;
+        --body: #1e293b;
+        --muted: #737373;
+        --primary: #2563eb;
+        --primary-hover: #1d4ed8;
+      }
+      * { box-sizing: border-box; }
+      html, body { height: 100%; margin: 0; }
+      body {
+        font-family: "Inter", system-ui, Avenir, Helvetica, Arial, sans-serif;
+        background: var(--bg);
+        color: var(--body);
+        -webkit-font-smoothing: antialiased;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 24px;
+      }
+      .card {
+        background: var(--card);
+        border: 2px solid var(--border);
+        border-radius: 16px;
+        box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+        padding: 48px 40px;
+        max-width: 480px;
+        width: 100%;
+        text-align: center;
+      }
+      .logo { width: 48px; height: 48px; margin: 0 auto 24px; display: block; }
+      .code {
+        font-size: 64px;
+        font-weight: 900;
+        line-height: 1;
+        letter-spacing: -0.02em;
+        color: var(--ink);
+        margin: 0;
+      }
+      h1 {
+        font-size: 20px;
+        font-weight: 700;
+        color: var(--ink);
+        margin: 16px 0 8px;
+      }
+      p {
+        font-size: 14px;
+        color: var(--muted);
+        line-height: 1.5;
+        margin: 0 0 32px;
+      }
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        padding: 8px 16px;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 700;
+        color: #fff;
+        background: var(--primary);
+        text-decoration: none;
+        box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+        transition: background-color 0.15s ease;
+      }
+      .btn:hover { background: var(--primary-hover); }
+      .btn svg { width: 16px; height: 16px; }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #171717;
+          --card: #262626;
+          --border: #404040;
+          --ink: #ffffff;
+          --body: #e5e5e5;
+          --muted: #a3a3a3;
+        }
+        .logo { filter: brightness(0) invert(1); }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="card">
+      <img class="logo" src="/favicon.svg" alt="Content Credentials" />
+      <p class="code">404</p>
+      <h1>Page not found</h1>
+      <p>
+        The page you're looking for doesn't exist or has moved. Let's get you
+        back to validating Content Credentials.
+      </p>
+      <a class="btn" href="/">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+          <path d="M5 12l14 0" />
+          <path d="M5 12l6 6" />
+          <path d="M5 12l6 -6" />
+        </svg>
+        Back to C2PA Verify
+      </a>
+    </main>
+  </body>
+</html>

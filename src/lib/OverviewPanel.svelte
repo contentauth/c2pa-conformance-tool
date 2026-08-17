@@ -449,7 +449,7 @@
     bind:clientWidth={containerWidth}
     use:touchAction
     class="relative w-full flex-1 overflow-hidden rounded-2xl"
-    style="cursor: {isDragging ? 'grabbing' : 'grab'}; background-color: var(--canvas-bg, #f8f9fb);"
+    style="cursor: {isDragging ? 'grabbing' : 'grab'}; background-color: var(--canvas-bg, #fafafa);"
     role="application"
     aria-label="Provenance tree — drag to pan, scroll to zoom"
     on:mousedown={onMouseDown}
@@ -481,7 +481,7 @@
     <div class="absolute bottom-3 right-3 flex flex-col gap-1 z-10 select-none">
       <button
         on:click|stopPropagation={() => stepZoom(1)}
-        class="w-8 h-8 rounded-lg bg-white/90 dark:bg-gray-800/90 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center justify-center shadow-sm backdrop-blur-sm transition-colors text-xl font-light leading-none"
+        class="w-8 h-8 rounded-lg bg-white/90 dark:bg-gray-800/90 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center justify-center shadow-sm backdrop-blur-sm transition-colors text-xl font-medium leading-none"
         title="Zoom in (scroll up)"
       >+</button>
       <button
@@ -489,14 +489,11 @@
         class="w-8 h-8 rounded-lg bg-white/90 dark:bg-gray-800/90 border border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center justify-center shadow-sm backdrop-blur-sm transition-colors"
         title="Reset view"
       >
-        <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
-          <path d="M3 3v5h5"/>
-        </svg>
+        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M20 11a8.1 8.1 0 0 0 -15.5 -2m-.5 -4v4h4" /><path d="M4 13a8.1 8.1 0 0 0 15.5 2m.5 4v-4h-4" /></svg>
       </button>
       <button
         on:click|stopPropagation={() => stepZoom(-1)}
-        class="w-8 h-8 rounded-lg bg-white/90 dark:bg-gray-800/90 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center justify-center shadow-sm backdrop-blur-sm transition-colors text-xl font-light leading-none"
+        class="w-8 h-8 rounded-lg bg-white/90 dark:bg-gray-800/90 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center justify-center shadow-sm backdrop-blur-sm transition-colors text-xl font-medium leading-none"
         title="Zoom out (scroll down)"
       >−</button>
     </div>

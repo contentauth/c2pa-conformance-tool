@@ -311,7 +311,7 @@ export const SIDECAR_MIME = 'application/c2pa'
 export function isSidecarFile(file: File): boolean {
   if (file.type === SIDECAR_MIME) return true
   const ext = file.name.split('.').pop()?.toLowerCase() ?? ''
-  return ext === 'c2pa' || ext === 'json'
+  return ext === 'c2pa'
 }
 
 export function resolveMimeType(file: File): string {
@@ -536,19 +536,9 @@ async function runTrustValidationFlow(
 // ── Public API ────────────────────────────────────────────────────────────────
 
 async function extractCrJsonWithMetadata(file: File, testCertificates: string[] = []): Promise<ExtractedCrJsonResult> {
-  // JSON sidecars are crJSON reports — parse them directly without the SDK.
   const ext = file.name.split('.').pop()?.toLowerCase() ?? ''
   if (ext === 'json' || file.type === 'application/json') {
-    let parsed: unknown
-    try {
-      parsed = JSON.parse(await file.text())
-    } catch {
-      throw new Error('This file is not valid JSON.')
-    }
-    if (!isCrJson(parsed)) {
-      throw new Error('No C2PA manifest found in this file.')
-    }
-    return { crJson: parsed, usedITL: false, usedTestCerts: false }
+    throw new Error('JSON files are not supported. Uploading a raw crJSON report would let its contents (including trust/validation status) be displayed without any cryptographic verification.')
   }
 
   const mimeType = resolveMimeType(file)

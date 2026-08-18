@@ -135,8 +135,7 @@
 
     // Case 2: Single sidecar, no asset yet → park it and prompt for the asset.
     // We do this regardless of sidecarSupported so that even the packaged-SDK
-    // fallback path (no local WASM) shows the pairing prompt. JSON sidecars are
-    // parsed directly as crJSON reports so they never need the local WASM.
+    // fallback path (no local WASM) shows the pairing prompt.
     if (isSidecarFile(file) && !pendingSidecar) {
       pendingSidecar = file
       selectedFile = file

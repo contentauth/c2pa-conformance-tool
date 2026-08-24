@@ -324,6 +324,20 @@
     return parts[parts.length - 1] || url
   }
 
+  // digitalSourceType is signer-controlled free text (not validated by the spec), so
+  // it must not be linkified unconditionally — only the official IPTC registry host
+  // is a destination we can vouch for. Anything else is shown as plain text.
+  const TRUSTED_DIGITAL_SOURCE_TYPE_HOST = 'cv.iptc.org'
+
+  function isTrustedDigitalSourceTypeUrl(value: string): boolean {
+    try {
+      const url = new URL(value)
+      return (url.protocol === 'http:' || url.protocol === 'https:') && url.hostname === TRUSTED_DIGITAL_SOURCE_TYPE_HOST
+    } catch {
+      return false
+    }
+  }
+
   // Extract key-value pairs from assertion data for display
   function extractAssertionSummary(data: unknown): AssertionSummaryItem[] {
     if (!data || typeof data !== 'object') {
@@ -1096,14 +1110,20 @@
                                       <div class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">
                                         Digital Source Type
                                       </div>
-                                      <a
-                                        href={item.digitalSourceType}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        class="text-sm font-medium text-blue-600 dark:text-gray-400 hover:text-blue-700 dark:hover:text-gray-300 underline"
-                                      >
-                                        {getAbbreviatedSourceType(item.digitalSourceType)}
-                                      </a>
+                                      {#if isTrustedDigitalSourceTypeUrl(item.digitalSourceType)}
+                                        <a
+                                          href={item.digitalSourceType}
+                                          target="_blank"
+                                          rel="noopener noreferrer"
+                                          class="text-sm font-medium text-blue-600 dark:text-gray-400 hover:text-blue-700 dark:hover:text-gray-300 underline"
+                                        >
+                                          {getAbbreviatedSourceType(item.digitalSourceType)}
+                                        </a>
+                                      {:else}
+                                        <div class="text-sm font-medium text-[#1e293b] dark:text-gray-100 break-words">
+                                          {item.digitalSourceType}
+                                        </div>
+                                      {/if}
                                     </div>
                                   {/if}
 

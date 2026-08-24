@@ -1,5 +1,8 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { processFile, getVersion, isSidecarFile, resolveMimeType, SIDECAR_MIME, _setLocalModuleForTesting } from './c2pa'
+import {
+  processFile, getVersion, isSidecarFile, resolveMimeType, SIDECAR_MIME,
+  _setLocalModuleForTesting, _fetchSoftBindingAlgorithmsForTesting, _resetSoftBindingCacheForTesting,
+} from './c2pa'
 import type { ConformanceReport } from './types'
 
 // ── Shared crJSON factory ─────────────────────────────────────────────────────
@@ -91,6 +94,7 @@ describe('c2pa utilities', () => {
 
   afterEach(() => {
     _setLocalModuleForTesting(null)
+    _resetSoftBindingCacheForTesting()
     vi.restoreAllMocks()
   })
 
@@ -227,6 +231,36 @@ describe('c2pa utilities', () => {
         [testCert],
       )
       expect(result.usedTestCerts).toBe(true)
+    })
+  })
+
+  // ── Soft binding registry fallback ──────────────────────────────────────────
+
+  describe('soft binding registry fallback', () => {
+    it('falls back to the raw.githubusercontent.com URL when sbal.c2pa.org is CORS-blocked', async () => {
+      global.fetch = vi.fn((input: RequestInfo | URL) => {
+        const url = typeof input === 'string' ? input : input.toString()
+        if (url === 'https://sbal.c2pa.org/') {
+          return Promise.reject(new TypeError('Failed to fetch'))
+        }
+        if (url.includes('raw.githubusercontent.com') && url.includes('softbinding-algorithm-list.json')) {
+          return Promise.resolve({
+            ok: true, status: 200, statusText: 'OK',
+            json: () => Promise.resolve([{ alg: 'c2pa.hash.bmff.v3' }, { alg: 'c2pa.hash.data' }]),
+          } as Response)
+        }
+        return Promise.reject(new Error(`unexpected fetch: ${url}`))
+      }) as ReturnType<typeof vi.fn>
+
+      const algs = await _fetchSoftBindingAlgorithmsForTesting()
+      expect(algs).toEqual(['c2pa.hash.bmff.v3', 'c2pa.hash.data'])
+    })
+
+    it('returns an empty list without throwing when every source fails', async () => {
+      global.fetch = vi.fn(() => Promise.reject(new TypeError('Failed to fetch'))) as ReturnType<typeof vi.fn>
+
+      const algs = await _fetchSoftBindingAlgorithmsForTesting()
+      expect(algs).toEqual([])
     })
   })
 })

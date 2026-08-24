@@ -46,8 +46,14 @@ let softBindingAlgorithms: string[] | null = null
 // Official C2PA trust list URLs
 const TRUST_LIST_URL = 'https://raw.githubusercontent.com/c2pa-org/conformance-public/main/trust-list/C2PA-TRUST-LIST.pem'
 const TSA_TRUST_LIST_URL = 'https://raw.githubusercontent.com/c2pa-org/conformance-public/main/trust-list/C2PA-TSA-TRUST-LIST.pem'
-// C2PA soft binding algorithm registry (canonical URL, redirects to latest JSON)
+// C2PA soft binding algorithm registry (canonical URL, redirects to latest JSON).
+// Its 301 response doesn't send Access-Control-Allow-Origin, so browsers block the
+// redirect before it ever reaches GitHub (see #48) — the correct fix is for the
+// sbal.c2pa.org hosting platform to add CORS headers to that redirect response.
+// Until that's fixed upstream, fall back to fetching the redirect target directly.
 const SOFT_BINDING_REGISTRY_URL = 'https://sbal.c2pa.org/'
+const SOFT_BINDING_REGISTRY_FALLBACK_URL =
+  'https://raw.githubusercontent.com/c2pa-org/specifications/main/supplemental-ui/softbinding-alg-list/softbinding-algorithm-list.json'
 // ITL (Interim Trust List) - stored locally; use base URL for deployed (e.g. GitHub Pages)
 const base = typeof import.meta.env?.BASE_URL === 'string' ? import.meta.env.BASE_URL : '/'
 const ITL_ALLOWED_URL = `${base}trust/allowed.pem`   // leaf certificates
@@ -270,19 +276,29 @@ async function fetchSoftBindingAlgorithms(): Promise<string[]> {
     return softBindingAlgorithms
   }
 
-  try {
-    const response = await fetch(SOFT_BINDING_REGISTRY_URL)
-    if (!response.ok) {
-      throw new Error(`Failed to fetch soft binding registry: ${response.status} ${response.statusText}`)
+  for (const url of [SOFT_BINDING_REGISTRY_URL, SOFT_BINDING_REGISTRY_FALLBACK_URL]) {
+    try {
+      const response = await fetch(url)
+      if (!response.ok) {
+        throw new Error(`Failed to fetch soft binding registry: ${response.status} ${response.statusText}`)
+      }
+      const entries = await response.json() as Array<{ alg?: string }>
+      softBindingAlgorithms = entries.flatMap((e) => (e.alg ? [e.alg] : []))
+      console.log(`✅ Loaded soft binding registry from ${url} (${softBindingAlgorithms.length} algorithms)`)
+      return softBindingAlgorithms
+    } catch (error) {
+      console.warn(`Failed to fetch soft binding registry from ${url}:`, error)
     }
-    const entries = await response.json() as Array<{ alg?: string }>
-    softBindingAlgorithms = entries.flatMap((e) => (e.alg ? [e.alg] : []))
-    console.log(`✅ Loaded soft binding registry (${softBindingAlgorithms.length} algorithms)`)
-    return softBindingAlgorithms
-  } catch (error) {
-    console.warn('Failed to fetch soft binding registry; soft binding validation may report unsupported algorithms:', error)
-    return []
   }
+
+  console.warn('Failed to fetch soft binding registry from all sources; soft binding validation may report unsupported algorithms')
+  return []
+}
+
+export const _fetchSoftBindingAlgorithmsForTesting = fetchSoftBindingAlgorithms
+
+export function _resetSoftBindingCacheForTesting(): void {
+  softBindingAlgorithms = null
 }
 
 // ── MIME / file type helpers ──────────────────────────────────────────────────

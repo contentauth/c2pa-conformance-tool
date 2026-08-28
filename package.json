@@ -17,7 +17,6 @@
     "postinstall": "echo 'No postinstall steps'"
   },
   "devDependencies": {
-    "@netlify/functions": "^6.0.0",
     "@sveltejs/vite-plugin-svelte": "^6.2.4",
     "@tailwindcss/forms": "^0.5.11",
     "@testing-library/jest-dom": "^6.9.1",
@@ -35,14 +34,15 @@
     "tslib": "^2.6.2",
     "typescript": "^5.3.3",
     "vite": "^6.4.1",
-    "vitest": "^4.1.10",
-    "wasm-pack": "^0.15.0"
+    "vitest": "^4.1.10"
   },
   "dependencies": {
     "@adobe/json-formula": "^2.0.0",
+    "@netlify/functions": "^2.8.2",
     "@peculiar/asn1-ocsp": "^2.9.4",
     "@peculiar/x509": "^1.14.3",
     "highlight.js": "^11.11.1",
+    "wasm-pack": "^0.15.0",
     "yaml": "^2.8.3"
   }
 }

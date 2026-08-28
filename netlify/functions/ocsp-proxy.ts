@@ -52,5 +52,5 @@ export default async (req: Request, _context: Context): Promise<Response> => {
 }
 
 export const config: Config = {
-  path: ['/api/ocsp-proxy', '/.netlify/functions/ocsp-proxy']
+  path: '/api/ocsp-proxy'
 }

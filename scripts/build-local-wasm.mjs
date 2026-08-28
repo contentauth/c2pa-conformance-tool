@@ -48,7 +48,7 @@ const result = spawnSync(
     cwd: repoRoot,
     env: {
       ...process.env,
-      CARGO_HOME: cargoHome,
+      CARGO_HOME: process.env.CARGO_HOME || cargoHome,
       TMPDIR: '/tmp',
     },
     stdio: 'inherit'

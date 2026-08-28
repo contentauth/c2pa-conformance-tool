@@ -1,15 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-export PATH="${RUSTUP_HOME:-$HOME/.rustup}/bin:${CARGO_HOME:-$HOME/.cargo}/bin:$HOME/.cargo/bin:$PATH"
+export PATH="${CARGO_HOME:-$HOME/.cargo}/bin:${RUSTUP_HOME:-$HOME/.rustup}/bin:$HOME/.cargo/bin:$PATH"
 
-# Netlify's build image ships rustup but with no default toolchain configured.
-# Install stable toolchain and target for wasm32
-if command -v rustup &>/dev/null; then
-  rustup toolchain install stable
-  rustup default stable
-else
-  echo "Installing Rust..."
+# Install Rust toolchain directly into CARGO_HOME if not already present
+if [ ! -x "${CARGO_HOME:-$HOME/.cargo}/bin/rustup" ]; then
+  echo "Installing Rust into ${CARGO_HOME:-$HOME/.cargo}..."
   curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain stable --no-modify-path
 fi
 

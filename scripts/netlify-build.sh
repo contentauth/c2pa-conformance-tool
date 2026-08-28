@@ -15,14 +15,6 @@ fi
 
 rustup target add wasm32-unknown-unknown
 
-# Install wasm-pack if not cached.
-if ! command -v wasm-pack &>/dev/null; then
-  echo "Installing wasm-pack..."
-  curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
-fi
-
-export PATH="$HOME/.cargo/bin:${CARGO_HOME:-$HOME/.cargo}/bin:$PATH"
-
 # Ensure submodules are checked out (for fork PRs where Netlify git clone may not recurse)
 if [ ! -f "c2pa-rs/sdk/Cargo.toml" ]; then
   echo "Initializing git submodules..."

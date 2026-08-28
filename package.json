@@ -35,7 +35,8 @@
     "tslib": "^2.6.2",
     "typescript": "^5.3.3",
     "vite": "^6.4.1",
-    "vitest": "^4.1.10"
+    "vitest": "^4.1.10",
+    "wasm-pack": "^0.15.0"
   },
   "dependencies": {
     "@adobe/json-formula": "^2.0.0",

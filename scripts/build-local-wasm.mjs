@@ -28,8 +28,11 @@ rmSync(outDir, { recursive: true, force: true })
 mkdirSync(outDir, { recursive: true })
 mkdirSync(cargoHome, { recursive: true })
 
+const wasmPackBin = resolve(repoRoot, 'node_modules/.bin/wasm-pack')
+const wasmPackCmd = existsSync(wasmPackBin) ? wasmPackBin : 'wasm-pack'
+
 const result = spawnSync(
-  'wasm-pack',
+  wasmPackCmd,
   [
     'build',
     wasmDir,
@@ -52,7 +55,13 @@ const result = spawnSync(
   }
 )
 
+if (result.error) {
+  console.error('Failed to spawn wasm-pack:', result.error)
+  process.exit(1)
+}
+
 if (result.status !== 0) {
+  console.error(`wasm-pack exited with status ${result.status}`)
   process.exit(result.status ?? 1)
 }
 

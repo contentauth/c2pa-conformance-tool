@@ -1,4 +1,6 @@
-export default async (req: Request): Promise<Response> => {
+import type { Config, Context } from '@netlify/functions'
+
+export default async (req: Request, _context: Context): Promise<Response> => {
   const corsHeaders = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Headers': 'Content-Type, X-OCSP-Responder-URL',
@@ -47,4 +49,8 @@ export default async (req: Request): Promise<Response> => {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
   }
+}
+
+export const config: Config = {
+  path: ['/api/ocsp-proxy', '/.netlify/functions/ocsp-proxy']
 }

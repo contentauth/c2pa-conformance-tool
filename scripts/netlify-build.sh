@@ -4,9 +4,9 @@ set -euo pipefail
 export PATH="${RUSTUP_HOME:-$HOME/.rustup}/bin:${CARGO_HOME:-$HOME/.cargo}/bin:$HOME/.cargo/bin:$PATH"
 
 # Netlify's build image ships rustup but with no default toolchain configured.
-# `rustup default stable` is idempotent: it installs the toolchain if absent,
-# or just sets it as the default if it's already cached.
+# Install stable toolchain and target for wasm32
 if command -v rustup &>/dev/null; then
+  rustup toolchain install stable
   rustup default stable
 else
   echo "Installing Rust..."

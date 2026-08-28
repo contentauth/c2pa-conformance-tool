@@ -23,6 +23,12 @@ fi
 
 export PATH="$HOME/.cargo/bin:${CARGO_HOME:-$HOME/.cargo}/bin:$PATH"
 
+# Ensure submodules are checked out (for fork PRs where Netlify git clone may not recurse)
+if [ ! -f "c2pa-rs/sdk/Cargo.toml" ]; then
+  echo "Initializing git submodules..."
+  git submodule update --init --recursive
+fi
+
 # Build c2pa-rs WASM from the submodule.
 node scripts/generate-version.js
 npm run build:local-wasm

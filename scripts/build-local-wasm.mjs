@@ -10,7 +10,16 @@ const c2paRsDir = resolve(repoRoot, 'c2pa-rs')
 const outDir = resolve(repoRoot, 'public/local-c2pa')
 const cargoHome = resolve(repoRoot, '.cargo-home')
 
-if (!existsSync(c2paRsDir)) {
+const c2paSdkCargoToml = resolve(repoRoot, 'c2pa-rs/sdk/Cargo.toml')
+if (!existsSync(c2paSdkCargoToml)) {
+  console.log('Submodule c2pa-rs not checked out. Initializing git submodules...')
+  spawnSync('git', ['submodule', 'update', '--init', '--recursive'], {
+    cwd: repoRoot,
+    stdio: 'inherit'
+  })
+}
+
+if (!existsSync(c2paSdkCargoToml)) {
   console.error(`Expected local c2pa-rs checkout at ${c2paRsDir}`)
   process.exit(1)
 }

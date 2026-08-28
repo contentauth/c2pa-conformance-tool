@@ -1,6 +1,23 @@
 use c2pa::{Context, Reader};
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 use std::io::Cursor;
 use wasm_bindgen::prelude::*;
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct ManifestCertificateData {
+    pub label: String,
+    pub is_active: bool,
+    pub cert_chain_pem: Option<String>,
+    pub issuer_org: Option<String>,
+    pub common_name: Option<String>,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct ExtractedCertificatesResult {
+    pub active_manifest: Option<String>,
+    pub manifests: HashMap<String, ManifestCertificateData>,
+}
 
 #[wasm_bindgen]
 pub fn init() {
@@ -30,6 +47,49 @@ pub async fn read_manifest_store(
         .map_err(|e| JsValue::from_str(&format!("Failed to read C2PA data: {e}")))?;
 
     Ok(reader.crjson())
+}
+
+#[wasm_bindgen]
+pub async fn extract_manifest_certificates(
+    file_bytes: Vec<u8>,
+    format: String,
+    settings_json: Option<String>,
+) -> Result<String, JsValue> {
+    let context = build_context(settings_json)?;
+
+    let reader = Reader::from_context(context)
+        .with_stream_async(&format, Cursor::new(file_bytes))
+        .await
+        .map_err(|e| JsValue::from_str(&format!("Failed to read C2PA data: {e}")))?;
+
+    let active_label = reader.active_label().map(|s| s.to_string());
+    let mut manifests_map = HashMap::new();
+
+    for (label, manifest) in reader.manifests() {
+        let cert_chain_pem = manifest.signature_info().map(|s| s.cert_chain().to_string());
+        let issuer_org = manifest.signature_info().and_then(|s| s.issuer.clone());
+        let common_name = manifest.signature_info().and_then(|s| s.common_name.clone());
+        let is_active = active_label.as_deref() == Some(label.as_str());
+
+        manifests_map.insert(
+            label.clone(),
+            ManifestCertificateData {
+                label: label.clone(),
+                is_active,
+                cert_chain_pem,
+                issuer_org,
+                common_name,
+            },
+        );
+    }
+
+    let result = ExtractedCertificatesResult {
+        active_manifest: active_label,
+        manifests: manifests_map,
+    };
+
+    serde_json::to_string(&result)
+        .map_err(|e| JsValue::from_str(&format!("Failed to serialize certificates result: {e}")))
 }
 
 /// Validate a detached (`.c2pa`) manifest store against its referenced asset.
@@ -67,6 +127,56 @@ pub async fn read_sidecar_manifest_store(
         })?;
 
     Ok(reader.crjson())
+}
+
+#[wasm_bindgen]
+pub async fn extract_sidecar_manifest_certificates(
+    manifest_bytes: Vec<u8>,
+    asset_bytes: Vec<u8>,
+    asset_format: String,
+    settings_json: Option<String>,
+) -> Result<String, JsValue> {
+    let context = build_context(settings_json)?;
+
+    let reader = Reader::from_context(context)
+        .with_manifest_data_and_stream_async(
+            &manifest_bytes,
+            &asset_format,
+            Cursor::new(asset_bytes),
+        )
+        .await
+        .map_err(|e| {
+            JsValue::from_str(&format!("Failed to read sidecar C2PA data: {e}"))
+        })?;
+
+    let active_label = reader.active_label().map(|s| s.to_string());
+    let mut manifests_map = HashMap::new();
+
+    for (label, manifest) in reader.manifests() {
+        let cert_chain_pem = manifest.signature_info().map(|s| s.cert_chain().to_string());
+        let issuer_org = manifest.signature_info().and_then(|s| s.issuer.clone());
+        let common_name = manifest.signature_info().and_then(|s| s.common_name.clone());
+        let is_active = active_label.as_deref() == Some(label.as_str());
+
+        manifests_map.insert(
+            label.clone(),
+            ManifestCertificateData {
+                label: label.clone(),
+                is_active,
+                cert_chain_pem,
+                issuer_org,
+                common_name,
+            },
+        );
+    }
+
+    let result = ExtractedCertificatesResult {
+        active_manifest: active_label,
+        manifests: manifests_map,
+    };
+
+    serde_json::to_string(&result)
+        .map_err(|e| JsValue::from_str(&format!("Failed to serialize certificates result: {e}")))
 }
 
 /// Resolve a JUMBF resource URI (e.g. a thumbnail identifier) to its raw bytes.

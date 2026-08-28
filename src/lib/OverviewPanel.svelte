@@ -6,9 +6,11 @@
   import { getClaimInfo, getSignatureInfo } from './crjson'
   import { evaluateReportSignals } from './summarySignals'
   import { getSignerName } from './generateSummary'
+  import type { OcspResponseData } from './types'
 
   export let report: ConformanceReport
   export let file: File | null = null
+  export let ocspStatusMap: Map<string, OcspResponseData> = new Map()
 
   // Object URL for the opened file — revoked when file changes or component is destroyed
   let fileSrc: string | undefined
@@ -474,6 +476,7 @@
         isRoot={true}
         fileSrc={fileSrc}
         fileMimeType={file?.type}
+        {ocspStatusMap}
       />
     </div>
 

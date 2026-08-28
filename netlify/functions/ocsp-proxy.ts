@@ -1,58 +1,50 @@
-import type { Handler } from '@netlify/functions'
-
-export const handler: Handler = async (event) => {
+export default async (req: Request): Promise<Response> => {
   const corsHeaders = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Headers': 'Content-Type, X-OCSP-Responder-URL',
     'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
   }
 
-  if (event.httpMethod === 'OPTIONS') {
-    return { statusCode: 200, headers: corsHeaders, body: '' }
+  if (req.method === 'OPTIONS') {
+    return new Response(null, { status: 200, headers: corsHeaders })
   }
 
-  const responderUrl = event.queryStringParameters?.url || event.headers['x-ocsp-responder-url']
+  const urlObj = new URL(req.url)
+  const responderUrl = urlObj.searchParams.get('url') || req.headers.get('x-ocsp-responder-url')
   if (!responderUrl) {
-    return {
-      statusCode: 400,
-      headers: corsHeaders,
-      body: JSON.stringify({ error: 'Missing responder URL parameter (?url=...)' }),
-    }
+    return new Response(JSON.stringify({ error: 'Missing responder URL parameter (?url=...)' }), {
+      status: 400,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    })
   }
 
   try {
-    const isBase64 = event.isBase64Encoded
-    const requestBytes = event.body
-      ? (isBase64 ? Buffer.from(event.body, 'base64') : Buffer.from(event.body, 'binary'))
-      : Buffer.alloc(0)
+    const requestBytes = req.method === 'GET' ? undefined : await req.arrayBuffer()
 
     const response = await fetch(responderUrl, {
-      method: event.httpMethod === 'GET' ? 'GET' : 'POST',
+      method: req.method === 'GET' ? 'GET' : 'POST',
       headers: {
         'Content-Type': 'application/ocsp-request',
         'User-Agent': 'C2PA-Conformance-Tool/1.0',
       },
-      body: event.httpMethod === 'GET' ? undefined : requestBytes,
+      body: requestBytes,
     })
 
-    const arrayBuffer = await response.arrayBuffer()
-    const base64Body = Buffer.from(arrayBuffer).toString('base64')
+    const responseBody = await response.arrayBuffer()
+    const contentType = response.headers.get('content-type') || 'application/ocsp-response'
 
-    return {
-      statusCode: response.status,
+    return new Response(responseBody, {
+      status: response.status,
       headers: {
         ...corsHeaders,
-        'Content-Type': response.headers.get('content-type') || 'application/ocsp-response',
+        'Content-Type': contentType,
       },
-      isBase64Encoded: true,
-      body: base64Body,
-    }
+    })
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err)
-    return {
-      statusCode: 502,
-      headers: corsHeaders,
-      body: JSON.stringify({ error: `Failed to proxy OCSP request: ${msg}` }),
-    }
+    return new Response(JSON.stringify({ error: `Failed to proxy OCSP request: ${msg}` }), {
+      status: 502,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    })
   }
 }

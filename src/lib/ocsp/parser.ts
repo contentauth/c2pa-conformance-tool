@@ -7,7 +7,7 @@ import {
   OCSPResponse,
   BasicOCSPResponse,
 } from '@peculiar/asn1-ocsp'
-import { AlgorithmIdentifier, TBSCertificate, SubjectPublicKeyInfo } from '@peculiar/asn1-x509'
+import { AlgorithmIdentifier, TBSCertificate, SubjectPublicKeyInfo, Certificate } from '@peculiar/asn1-x509'
 import { X509Certificate, AuthorityInfoAccessExtension } from '@peculiar/x509'
 import type { ParsedCertificateItem, OcspResponseData, OcspCertStatus } from './types'
 
@@ -146,8 +146,10 @@ export async function buildOcspRequestDer(
   issuerCert: X509Certificate,
   useSha1 = false
 ): Promise<Uint8Array> {
-  const targetTbs = AsnParser.parse(targetCert.tbs, TBSCertificate)
-  const issuerTbs = AsnParser.parse(issuerCert.tbs, TBSCertificate)
+  const targetCertObj = AsnParser.parse(targetCert.rawData, Certificate)
+  const issuerCertObj = AsnParser.parse(issuerCert.rawData, Certificate)
+  const targetTbs = targetCertObj.tbsCertificate
+  const issuerTbs = issuerCertObj.tbsCertificate
 
   const hashAlgorithmOid = useSha1 ? OID_SHA1 : OID_SHA256
   const hashAlgName = useSha1 ? 'SHA-1' : 'SHA-256'
@@ -268,7 +270,7 @@ export function parseOcspResponseDer(derBytes: Uint8Array): OcspResponseData {
       if (revInfo.revocationTime) {
         revokedAt = revInfo.revocationTime.toISOString()
       }
-      if (revInfo.crlReason !== undefined) {
+      if (revInfo.revocationReason !== undefined) {
         const reasonMap: Record<number, string> = {
           0: 'unspecified',
           1: 'keyCompromise',
@@ -281,7 +283,8 @@ export function parseOcspResponseDer(derBytes: Uint8Array): OcspResponseData {
           9: 'privilegeWithdrawn',
           10: 'aACompromise',
         }
-        revocationReason = reasonMap[revInfo.crlReason] || `Reason ${revInfo.crlReason}`
+        const val = Number(revInfo.revocationReason)
+        revocationReason = reasonMap[val] || `Reason ${val}`
       }
     } else if (firstResp.certStatus.unknown !== undefined) {
       status = 'unknown'

@@ -23,7 +23,8 @@
 
   $: certGroups = report.extractedCertificates || []
   $: allCerts = report.allCertificates || certGroups.flatMap(g => g.certificates)
-  $: batchSummary = computeOcspBatchSummary(allCerts, ocspStatusMap, isCheckingAll)
+  $: isAnyChecking = isCheckingAll || Array.from(ocspStatusMap.values()).some(v => v.status === 'checking')
+  $: batchSummary = computeOcspBatchSummary(allCerts, ocspStatusMap, isAnyChecking)
 
   function togglePem(id: string) {
     if (expandedPems.has(id)) {
@@ -139,12 +140,14 @@
         <div class="text-xs font-semibold px-3 py-1.5 rounded-lg border flex items-center gap-2
           {batchSummary.revokedCount > 0
             ? 'bg-red-50 dark:bg-red-900/30 border-red-200 dark:border-red-800 text-red-700 dark:text-red-300'
-            : batchSummary.checkedCount === batchSummary.withOcspResponder && batchSummary.goodCount === batchSummary.withOcspResponder
-              ? 'bg-green-50 dark:bg-green-900/30 border-green-200 dark:border-green-800 text-green-700 dark:text-green-300'
-              : 'bg-gray-100 dark:bg-gray-700/50 border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-300'}">
-          {#if isCheckingAll}
+            : isAnyChecking
+              ? 'bg-blue-50 dark:bg-blue-900/30 border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-300'
+              : batchSummary.checkedCount === batchSummary.withOcspResponder && batchSummary.goodCount === batchSummary.withOcspResponder
+                ? 'bg-green-50 dark:bg-green-900/30 border-green-200 dark:border-green-800 text-green-700 dark:text-green-300'
+                : 'bg-gray-100 dark:bg-gray-700/50 border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-300'}">
+          {#if isAnyChecking}
             <span class="inline-block w-2 h-2 rounded-full bg-blue-600 animate-ping"></span>
-            <span>Checking OCSP ({checkProgress.completed}/{checkProgress.total})...</span>
+            <span>Checking OCSP ({batchSummary.checkedCount}/{batchSummary.withOcspResponder})...</span>
           {:else if batchSummary.revokedCount > 0}
             <span>🔴 {batchSummary.revokedCount} Revoked · {batchSummary.goodCount} Good</span>
           {:else if batchSummary.checkedCount > 0}
@@ -157,10 +160,10 @@
         <button
           class="btn btn-primary text-xs px-3 py-2 flex items-center gap-1.5 disabled:opacity-50"
           on:click={handleCheckAllOcsp}
-          disabled={isCheckingAll}
+          disabled={isAnyChecking}
           title="Query OCSP responders for all certificates across all manifests"
         >
-          {#if isCheckingAll}
+          {#if isAnyChecking}
             <svg class="animate-spin w-3.5 h-3.5 text-white" viewBox="0 0 24 24" fill="none">
               <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
               <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
@@ -171,7 +174,7 @@
               <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
               <path d="M13 3l0 7l6 0l-8 11l0 -7l-6 0z" />
             </svg>
-            <span>Check All OCSP</span>
+            <span>Re-check OCSP</span>
           {/if}
         </button>
       {/if}

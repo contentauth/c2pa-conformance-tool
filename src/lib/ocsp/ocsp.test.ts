@@ -192,5 +192,9 @@ describe('OCSP Client Caching & Batch Summaries', () => {
     expect(summary.revokedCount).toBe(1)
     expect(summary.unknownCount).toBe(0)
     expect(summary.errorCount).toBe(0)
+    expect(summary.isChecking).toBe(false)
+
+    const checkingSummary = computeOcspBatchSummary(mockItems, statusMap, true)
+    expect(checkingSummary.isChecking).toBe(true)
   })
 })

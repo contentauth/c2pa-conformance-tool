@@ -43,6 +43,20 @@ function getAbbreviatedSourceType(url: string): string {
   return match ? match[1] : ''
 }
 
+// Utility function: isTrustedDigitalSourceTypeUrl
+// digitalSourceType is signer-controlled free text; only linkify values that
+// resolve to the official IPTC registry host.
+const TRUSTED_DIGITAL_SOURCE_TYPE_HOST = 'cv.iptc.org'
+
+function isTrustedDigitalSourceTypeUrl(value: string): boolean {
+  try {
+    const url = new URL(value)
+    return (url.protocol === 'http:' || url.protocol === 'https:') && url.hostname === TRUSTED_DIGITAL_SOURCE_TYPE_HOST
+  } catch {
+    return false
+  }
+}
+
 function formatValue(value: unknown): string {
   if (value === null || value === undefined) return 'N/A'
   if (typeof value === 'boolean') return value ? 'Yes' : 'No'
@@ -146,6 +160,30 @@ describe('ReportViewer utility functions', () => {
 
     it('should handle empty string', () => {
       expect(getAbbreviatedSourceType('')).toBe('')
+    })
+  })
+
+  describe('isTrustedDigitalSourceTypeUrl', () => {
+    it('should trust http(s) URLs on the IPTC registry host', () => {
+      expect(isTrustedDigitalSourceTypeUrl('https://cv.iptc.org/newscodes/digitalsourcetype/trainedAlgorithmicMedia')).toBe(true)
+      expect(isTrustedDigitalSourceTypeUrl('http://cv.iptc.org/newscodes/digitalsourcetype/humanEdits')).toBe(true)
+    })
+
+    it('should reject values on other hosts, even if they are valid URLs', () => {
+      expect(isTrustedDigitalSourceTypeUrl('https://google.com')).toBe(false)
+      expect(isTrustedDigitalSourceTypeUrl('https://evil.example/cv.iptc.org')).toBe(false)
+      expect(isTrustedDigitalSourceTypeUrl('https://cv.iptc.org.evil.example/phish')).toBe(false)
+    })
+
+    it('should reject non-http(s) schemes even on a trusted-looking host', () => {
+      expect(isTrustedDigitalSourceTypeUrl('javascript:alert(1)')).toBe(false)
+      expect(isTrustedDigitalSourceTypeUrl('data:text/html,<script>alert(1)</script>')).toBe(false)
+    })
+
+    it('should reject non-URL free text', () => {
+      expect(isTrustedDigitalSourceTypeUrl('trainedAlgorithmicMedia')).toBe(false)
+      expect(isTrustedDigitalSourceTypeUrl('cv.iptc.org')).toBe(false)
+      expect(isTrustedDigitalSourceTypeUrl('')).toBe(false)
     })
   })
 

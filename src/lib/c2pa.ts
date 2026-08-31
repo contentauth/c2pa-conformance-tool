@@ -2,6 +2,9 @@ import { VERSION_INFO } from './version'
 import type { ConformanceReport } from './types'
 import { VALIDATION_STATUS } from './constants'
 import { isCrJson, legacyToCrJson, getActiveManifestValidationStatus, type CrJson } from './crjson'
+import { splitPemCertificates, createParsedCertificateItem } from './ocsp/parser'
+import type { ManifestCertificateGroup, ParsedCertificateItem } from './ocsp/types'
+import { X509Certificate } from '@peculiar/x509'
 
 // Trust/verify settings passed to the local WASM read functions.
 type Settings = {
@@ -14,7 +17,14 @@ type LocalC2paModule = {
   default: () => Promise<unknown>
   get_version: () => string
   read_manifest_store: (fileBytes: Uint8Array, format: string, settingsJson?: string) => Promise<string>
+  extract_manifest_certificates?: (fileBytes: Uint8Array, format: string, settingsJson?: string) => Promise<string>
   read_sidecar_manifest_store?: (
+    manifestBytes: Uint8Array,
+    assetBytes: Uint8Array,
+    assetFormat: string,
+    settingsJson?: string,
+  ) => Promise<string>
+  extract_sidecar_manifest_certificates?: (
     manifestBytes: Uint8Array,
     assetBytes: Uint8Array,
     assetFormat: string,
@@ -32,6 +42,8 @@ type ExtractedCrJsonResult = {
   crJson: CrJson
   usedITL: boolean
   usedTestCerts: boolean
+  extractedCertificates?: ManifestCertificateGroup[]
+  allCertificates?: ParsedCertificateItem[]
 }
 
 const importModule = new Function('modulePath', 'return import(modulePath)') as (modulePath: string) => Promise<LocalC2paModule>
@@ -312,6 +324,10 @@ const MIME_TYPE_MAP: Record<string, string> = {
 }
 
 const EXTENSION_MIME_MAP: Record<string, string> = {
+  'heic': 'image/heic',
+  'heif': 'image/heif',
+  'avci': 'image/avci',
+  'avcs': 'image/avcs',
   'dng': 'image/x-adobe-dng',
   'arw': 'image/x-sony-arw',
   'cr2': 'image/x-canon-cr2',
@@ -549,6 +565,92 @@ async function runTrustValidationFlow(
   }
 }
 
+type RawWasmCertsResult = {
+  active_manifest?: string
+  manifests: Record<
+    string,
+    {
+      label: string
+      is_active: boolean
+      cert_chain_pem?: string
+      issuer_org?: string
+      common_name?: string
+    }
+  >
+}
+
+async function extractCertificatesViaWasm(
+  fileBytes: Uint8Array,
+  mimeType: string,
+  localModule: LocalC2paModule,
+  isSidecar = false,
+  assetBytes?: Uint8Array,
+): Promise<{ extractedGroups: ManifestCertificateGroup[]; allCertificates: ParsedCertificateItem[] }> {
+  try {
+    let rawJson: string | undefined
+    if (isSidecar && assetBytes && localModule.extract_sidecar_manifest_certificates) {
+      rawJson = await localModule.extract_sidecar_manifest_certificates(fileBytes, assetBytes, mimeType)
+    } else if (localModule.extract_manifest_certificates) {
+      rawJson = await localModule.extract_manifest_certificates(fileBytes, mimeType)
+    }
+
+    if (!rawJson) return { extractedGroups: [], allCertificates: [] }
+
+    const data = JSON.parse(rawJson) as RawWasmCertsResult
+    const extractedGroups: ManifestCertificateGroup[] = []
+    const allCertificates: ParsedCertificateItem[] = []
+
+    const manifestEntries = Object.values(data.manifests || {})
+    manifestEntries.sort((a, b) => (b.is_active ? 1 : 0) - (a.is_active ? 1 : 0))
+
+    let manifestIndex = 0
+    for (const entry of manifestEntries) {
+      const isRootActive = entry.is_active || entry.label === data.active_manifest
+      const manifestRole: 'active' | 'ingredient' = isRootActive ? 'active' : 'ingredient'
+      const groupCerts: ParsedCertificateItem[] = []
+
+      if (entry.cert_chain_pem) {
+        const pemList = splitPemCertificates(entry.cert_chain_pem)
+        if (pemList.length > 0) {
+          const targetX509 = new X509Certificate(pemList[0])
+          const issuerX509 = pemList.length > 1 ? new X509Certificate(pemList[1]) : undefined
+
+          const certItem = await createParsedCertificateItem({
+            id: `${entry.label}-signer`,
+            manifestLabel: entry.label,
+            manifestIndex,
+            manifestRole,
+            manifestTitle: entry.common_name,
+            certificateRole: 'claim_signer',
+            targetCert: targetX509,
+            issuerCert: issuerX509,
+          })
+
+          groupCerts.push(certItem)
+          allCertificates.push(certItem)
+        }
+      }
+
+      extractedGroups.push({
+        manifestLabel: entry.label,
+        manifestIndex,
+        manifestRole,
+        manifestTitle: entry.common_name,
+        signerCommonName: entry.common_name,
+        signerOrg: entry.issuer_org,
+        certificates: groupCerts,
+      })
+
+      manifestIndex++
+    }
+
+    return { extractedGroups, allCertificates }
+  } catch (err) {
+    console.warn('⚠️ Could not extract certificate chains via WASM:', err)
+    return { extractedGroups: [], allCertificates: [] }
+  }
+}
+
 // ── Public API ────────────────────────────────────────────────────────────────
 
 async function extractCrJsonWithMetadata(file: File, testCertificates: string[] = []): Promise<ExtractedCrJsonResult> {
@@ -564,6 +666,9 @@ async function extractCrJsonWithMetadata(file: File, testCertificates: string[] 
   const c2pa = await initC2pa()
   console.log('✅ C2PA SDK initialized')
 
+  let extractedGroups: ManifestCertificateGroup[] = []
+  let allCertificates: ParsedCertificateItem[] = []
+
   const readManifestStore: ReadManifestStore = async (settings) => {
     const reader = await c2pa.reader.fromBlob(mimeType, file, settings)
     if (!reader) return null
@@ -571,6 +676,11 @@ async function extractCrJsonWithMetadata(file: File, testCertificates: string[] 
       const crJson = await reader.manifestStore()
       const fileBytes = new Uint8Array(await file.arrayBuffer())
       await enrichThumbnailsViaWasm(crJson, fileBytes, mimeType, c2pa.module)
+
+      const certsResult = await extractCertificatesViaWasm(fileBytes, mimeType, c2pa.module)
+      extractedGroups = certsResult.extractedGroups
+      allCertificates = certsResult.allCertificates
+
       return crJson
     } finally {
       await reader.free()
@@ -578,13 +688,18 @@ async function extractCrJsonWithMetadata(file: File, testCertificates: string[] 
   }
 
   try {
-    return await runTrustValidationFlow(
+    const validationResult = await runTrustValidationFlow(
       readManifestStore,
       testCertificates,
       mimeType === SIDECAR_MIME
         ? 'No C2PA manifest could be read from this sidecar. It may be corrupted or not a valid .c2pa file.'
         : 'No C2PA manifest found in this file',
     )
+    return {
+      ...validationResult,
+      extractedCertificates: extractedGroups,
+      allCertificates,
+    }
   } catch (error) {
     console.error('❌ Error in processFile:', error)
     const msg = error instanceof Error ? error.message : String(error)
@@ -611,6 +726,8 @@ function buildConformanceReport(extracted: ExtractedCrJsonResult): ConformanceRe
     ...extracted.crJson,
     usedITL: extracted.usedITL,
     usedTestCerts: extracted.usedTestCerts,
+    extractedCertificates: extracted.extractedCertificates,
+    allCertificates: extracted.allCertificates,
     _conformanceToolVersion: {
       commit: VERSION_INFO.sha,
       shortCommit: VERSION_INFO.shortSha,
@@ -639,6 +756,9 @@ async function extractSidecarWithAssetCrJsonWithMetadata(
   const assetMimeType = resolveMimeType(asset)
   const sidecarBytes = new Uint8Array(await sidecar.arrayBuffer())
 
+  let extractedGroups: ManifestCertificateGroup[] = []
+  let allCertificates: ParsedCertificateItem[] = []
+
   const readManifestStore: ReadManifestStore = async (settings) => {
     const reader = await fromSidecarAndBlob(sidecarBytes, assetMimeType, asset, settings)
     if (!reader) return null
@@ -646,6 +766,11 @@ async function extractSidecarWithAssetCrJsonWithMetadata(
       const crJson = await reader.manifestStore()
       const assetBytes = new Uint8Array(await asset.arrayBuffer())
       await enrichThumbnailsViaWasm(crJson, assetBytes, assetMimeType, c2pa.module)
+
+      const certsResult = await extractCertificatesViaWasm(sidecarBytes, assetMimeType, c2pa.module, true, assetBytes)
+      extractedGroups = certsResult.extractedGroups
+      allCertificates = certsResult.allCertificates
+
       return crJson
     } finally {
       await reader.free()
@@ -653,11 +778,16 @@ async function extractSidecarWithAssetCrJsonWithMetadata(
   }
 
   try {
-    return await runTrustValidationFlow(
+    const validationResult = await runTrustValidationFlow(
       readManifestStore,
       testCertificates,
       `No C2PA manifest could be read from sidecar "${sidecar.name}" paired with "${asset.name}".`,
     )
+    return {
+      ...validationResult,
+      extractedCertificates: extractedGroups,
+      allCertificates,
+    }
   } catch (error) {
     const msg = error instanceof Error ? error.message : String(error)
     if (msg.includes('HashMismatch') || msg.includes('dataHash') || msg.includes('bmffHash')) {

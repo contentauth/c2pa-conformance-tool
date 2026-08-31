@@ -38,8 +38,11 @@
   },
   "dependencies": {
     "@adobe/json-formula": "^2.0.0",
+    "@netlify/functions": "^2.8.2",
+    "@peculiar/asn1-ocsp": "^2.9.4",
     "@peculiar/x509": "^1.14.3",
     "highlight.js": "^11.11.1",
+    "wasm-pack": "^0.15.0",
     "yaml": "^2.8.3"
   }
 }

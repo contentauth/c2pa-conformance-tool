@@ -4,7 +4,9 @@
   import RubricsPanel from './RubricsPanel.svelte'
   import OverviewPanel from './OverviewPanel.svelte'
   import JsonViewer from './JsonViewer.svelte'
-  import type { ConformanceReport, ValidationStatusItem, AssertionSummaryItem, CrJsonManifestEntry, ManifestValidationGroup } from './types'
+  import CertificateSection from './CertificateSection.svelte'
+  import { checkAllCertificatesOcsp } from './ocsp/client'
+  import type { ConformanceReport, ValidationStatusItem, AssertionSummaryItem, CrJsonManifestEntry, ManifestValidationGroup, OcspResponseData } from './types'
   import type { ManifestSignalsResult } from './rubrics/types'
   import {
     getAssertionsList,
@@ -50,6 +52,8 @@
   let expandedIngredients: Set<number> = new Set()
   let expandedAssertions: Set<number> = new Set()
   let showBackToTop = false
+  let ocspStatusMap: Map<string, OcspResponseData> = new Map()
+  let lastCheckedReport: ConformanceReport | null = null
 
   // Track scroll position for back to top button
   function handleScroll() {
@@ -145,16 +149,79 @@
     }
   }
 
+  // Certificate list & AIA OCSP responders across all active & ingredient manifests
+  $: allReportCerts = report?.allCertificates || report?.extractedCertificates?.flatMap(g => g.certificates) || []
+  $: eligibleOcspCerts = allReportCerts.filter(c => !!c.ocspResponderUrl)
+
+  // Auto-trigger OCSP revocation checking whenever an asset report is loaded or updated
+  $: {
+    if (report && report !== lastCheckedReport) {
+      lastCheckedReport = report
+      if (eligibleOcspCerts.length > 0) {
+        const initialMap = new Map<string, OcspResponseData>()
+        for (const c of eligibleOcspCerts) {
+          initialMap.set(c.id, {
+            status: 'checking',
+            queriedAt: new Date().toISOString(),
+          })
+        }
+        ocspStatusMap = initialMap
+
+        const currentReport = report
+        void checkAllCertificatesOcsp(allReportCerts, { forceRefresh: false }).then(results => {
+          if (report === currentReport) {
+            ocspStatusMap = new Map(results)
+          }
+        })
+      } else {
+        ocspStatusMap = new Map()
+      }
+    }
+  }
+
+  // Real-time checking & revocation states
+  $: isOcspChecking = eligibleOcspCerts.length > 0 && (
+    Array.from(ocspStatusMap.values()).some(v => v.status === 'checking') ||
+    eligibleOcspCerts.some(c => !ocspStatusMap.has(c.id))
+  )
+  $: revokedCerts = allReportCerts.filter(c => ocspStatusMap.get(c.id)?.status === 'revoked')
+  $: hasRevokedCert = revokedCerts.length > 0
+  $: checkedOcspCount = eligibleOcspCerts.filter(c => {
+    const s = ocspStatusMap.get(c.id)?.status
+    return s && s !== 'pending' && s !== 'checking'
+  }).length
+
   // Get validation results from crJSON (document-level or per-manifest from c2pa-rs)
   $: validationResults = getActiveManifestValidationStatus(report)
 
   // Get all validation failures from the report (including active and ingredients)
   $: failures = report ? getAllValidationFailures(report) : []
 
-  // Check if trusted from crJSON validationResults (must have trusted code AND no failures)
-  $: isTrusted = (validationResults?.success?.some((status) =>
+  // Check if cryptographically trusted from crJSON validationResults
+  $: isCryptographicallyTrusted = (validationResults?.success?.some((status) =>
     status.code === VALIDATION_STATUS.SIGNING_CREDENTIAL_TRUSTED
   ) ?? false) && failures.length === 0
+
+  // Final verdict of "trusted": strictly requires cryptographic validity AND no revoked certs anywhere AND not currently checking
+  $: isTrusted = isCryptographicallyTrusted && !hasRevokedCert && !isOcspChecking
+
+  function formatDate(isoStr?: string): string {
+    if (!isoStr) return 'N/A'
+    try {
+      const d = new Date(isoStr)
+      return d.toLocaleString(undefined, {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        timeZoneName: 'short',
+      })
+    } catch {
+      return isoStr
+    }
+  }
 
   function getFailureDescription(code: string, explanation?: string): string {
     return VALIDATION_FAILURE_DESCRIPTIONS[code] ?? explanation ?? `Validation failed (Code: ${code})`
@@ -495,18 +562,32 @@
 
   <div class="text-left mt-8 animate-fade-in flex-1 flex flex-col min-h-0 {activeTab !== 'summary' ? 'mb-8' : ''}">
   <!-- Prominent Validation Status Banner -->
-  <div class="mb-8 bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 rounded-2xl p-6 shadow-sm">
+  <div class="mb-8 bg-white dark:bg-gray-800 border-2 {hasRevokedCert || (!isCryptographicallyTrusted && !isOcspChecking) ? 'border-red-200 dark:border-red-800' : isOcspChecking ? 'border-blue-200 dark:border-blue-800' : 'border-green-200 dark:border-green-800'} rounded-2xl p-6 shadow-sm">
     <div class="flex items-center gap-4">
-      <div class={`flex-shrink-0 w-16 h-16 rounded-full flex items-center justify-center ${isTrusted ? 'bg-green-100 dark:bg-green-900/30' : 'bg-red-100 dark:bg-red-900/30'}`}>
-        {#if isTrusted}
+      <div class={`flex-shrink-0 w-16 h-16 rounded-full flex items-center justify-center ${hasRevokedCert || (!isCryptographicallyTrusted && !isOcspChecking) ? 'bg-red-100 dark:bg-red-900/30' : isOcspChecking ? 'bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400' : 'bg-green-100 dark:bg-green-900/30'}`}>
+        {#if isOcspChecking}
+          <div class="relative flex items-center justify-center">
+            <svg class="w-9 h-9 animate-spin text-blue-600 dark:text-blue-400" viewBox="0 0 24 24" fill="none">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <div class="absolute w-3 h-3 rounded-full bg-blue-600 animate-ping opacity-75"></div>
+          </div>
+        {:else if hasRevokedCert}
+          <svg class="w-10 h-10 text-red-600 dark:text-red-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0" /><path d="M10 10l4 4m0 -4l-4 4" /></svg>
+        {:else if isTrusted}
           <svg class="w-10 h-10 text-green-600 dark:text-green-300" viewBox="0 0 24 24" fill="currentColor"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M11.998 2l.118 .007l.059 .008l.061 .013l.111 .034a.993 .993 0 0 1 .217 .112l.104 .082l.255 .218a11 11 0 0 0 7.189 2.537l.342 -.01a1 1 0 0 1 1.005 .717a13 13 0 0 1 -9.208 16.25a1 1 0 0 1 -.502 0a13 13 0 0 1 -9.209 -16.25a1 1 0 0 1 1.005 -.717a11 11 0 0 0 7.531 -2.527l.263 -.225l.096 -.075a.993 .993 0 0 1 .217 -.112l.112 -.034a.97 .97 0 0 1 .119 -.021l.115 -.007zm3.71 7.293a1 1 0 0 0 -1.415 0l-3.293 3.292l-1.293 -1.292l-.094 -.083a1 1 0 0 0 -1.32 1.497l2 2l.094 .083a1 1 0 0 0 1.32 -.083l4 -4l.083 -.094a1 1 0 0 0 -.083 -1.32z" /></svg>
         {:else}
           <svg class="w-10 h-10 text-red-600 dark:text-red-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0" /><path d="M10 10l4 4m0 -4l-4 4" /></svg>
         {/if}
       </div>
       <div class="flex-1">
-        <h3 class="text-xl font-semibold {isTrusted ? 'text-green-900 dark:text-green-300' : 'text-red-900 dark:text-red-300'} mb-1">
-          {#if isTrusted}
+        <h3 class="text-xl font-semibold {hasRevokedCert || (!isCryptographicallyTrusted && !isOcspChecking) ? 'text-red-900 dark:text-red-300' : isOcspChecking ? 'text-blue-900 dark:text-blue-300' : 'text-green-900 dark:text-green-300'} mb-1">
+          {#if isOcspChecking}
+            Checking Certificate Revocation (OCSP)...
+          {:else if hasRevokedCert}
+            Signature Not Trusted — Certificate Revoked ✕
+          {:else if isTrusted}
             {#if usedITL}
               Signature Trusted via ITL
             {:else if actuallyUsedTestCert}
@@ -522,9 +603,37 @@
             {/if}
           {/if}
         </h3>
-        <div class="text-sm {isTrusted ? 'text-green-700 dark:text-gray-300' : 'text-red-700 dark:text-gray-300'}">
-          {#if usedITL && isTrusted}
-            Validated using Interim Trust List 
+        <div class="text-sm {hasRevokedCert || (!isCryptographicallyTrusted && !isOcspChecking) ? 'text-red-700 dark:text-gray-300' : isOcspChecking ? 'text-blue-700 dark:text-blue-300' : 'text-green-700 dark:text-gray-300'}">
+          {#if isOcspChecking}
+            <div class="flex items-center gap-2 mt-1">
+              <span class="inline-block w-2 h-2 rounded-full bg-blue-600 animate-ping"></span>
+              <span>Querying online OCSP responders ({checkedOcspCount}/{eligibleOcspCerts.length} checked)...</span>
+            </div>
+          {:else if hasRevokedCert}
+            <span class="font-semibold text-red-700 dark:text-red-300">
+              One or more signing certificates in the manifest store have been revoked according to the Authority Information Access (AIA) OCSP responder:
+            </span>
+            <div class="mt-2 space-y-2 text-xs font-mono bg-red-50/50 dark:bg-gray-900/50 p-4 rounded-lg border border-red-200 dark:border-red-800 w-full">
+              {#each revokedCerts as cert}
+                {@const ocspData = ocspStatusMap.get(cert.id)}
+                <div class="flex items-start gap-2">
+                  <span class="text-red-500 font-bold mt-0.5">✕</span>
+                  <div class="flex-1 text-left">
+                    <div class="font-bold text-red-900 dark:text-red-200">
+                      {cert.subjectCommonName || cert.subject} <span class="text-xs font-normal text-gray-500 dark:text-gray-400">({cert.manifestRole === 'active' ? 'Active Manifest' : `Ingredient ${cert.manifestIndex}`})</span>
+                    </div>
+                    <div class="text-red-700 dark:text-red-300 mt-0.5">
+                      Revocation recorded: {formatDate(ocspData?.revokedAt)}{ocspData?.crlReason ? ` · Reason: ${ocspData.crlReason}` : ''}
+                    </div>
+                    <div class="text-gray-500 dark:text-gray-400 text-[11px] mt-0.5">
+                      Responder: {cert.ocspResponderUrl} · Serial: {cert.serialNumber}
+                    </div>
+                  </div>
+                </div>
+              {/each}
+            </div>
+          {:else if usedITL && isTrusted}
+            Validated using Interim Trust List and verified active (not revoked) via OCSP
             <a
               href="https://c2pa.org/conformance/"
               target="_blank"
@@ -538,7 +647,7 @@
           {:else if actuallyUsedTestCert && isTrusted}
             Validated using custom test certificates - not validated against official C2PA trust lists
           {:else if isTrusted}
-            Validated against official C2PA Trust List
+            Validated against official C2PA Trust List and verified active (not revoked) via OCSP
           {:else}
             {#if failures.length > 0}
               <span class="font-semibold">Validation failed with the following errors:</span>
@@ -558,19 +667,26 @@
             {/if}
           {/if}
         </div>
-        {#if usedITL && isTrusted}
+        {#if !isOcspChecking && !hasRevokedCert && isTrusted}
           <div class="mt-2 flex items-center gap-2 flex-wrap">
-            <span class="inline-flex items-center gap-2 px-4 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 rounded-full text-xs font-semibold">
-              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0" /><path d="M12 9h.01" /><path d="M11 12h1v4h1" /></svg>
-              ITL Validated
-            </span>
-          </div>
-        {:else if actuallyUsedTestCert && isTrusted}
-          <div class="mt-2">
-            <span class="inline-flex items-center gap-2 px-4 py-1 bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-300 rounded-full text-xs font-semibold">
-              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 9v4" /><path d="M10.363 3.591l-8.106 13.534a1.914 1.914 0 0 0 1.636 2.871h16.214a1.914 1.914 0 0 0 1.636 -2.87l-8.106 -13.536a1.914 1.914 0 0 0 -3.274 0z" /><path d="M12 16h.01" /></svg>
-              Test Mode
-            </span>
+            {#if usedITL}
+              <span class="inline-flex items-center gap-2 px-4 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 rounded-full text-xs font-semibold">
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0" /><path d="M12 9h.01" /><path d="M11 12h1v4h1" /></svg>
+                ITL Validated
+              </span>
+            {/if}
+            {#if actuallyUsedTestCert}
+              <span class="inline-flex items-center gap-2 px-4 py-1 bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-300 rounded-full text-xs font-semibold">
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 9v4" /><path d="M10.363 3.591l-8.106 13.534a1.914 1.914 0 0 0 1.636 2.871h16.214a1.914 1.914 0 0 0 1.636 -2.87l-8.106 -13.536a1.914 1.914 0 0 0 -3.274 0z" /><path d="M12 16h.01" /></svg>
+                Test Mode
+              </span>
+            {/if}
+            {#if eligibleOcspCerts.length > 0}
+              <span class="inline-flex items-center gap-1.5 px-3 py-1 bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 rounded-full text-xs font-semibold">
+                <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12l5 5l10 -10"/></svg>
+                OCSP Verified (Not Revoked)
+              </span>
+            {/if}
           </div>
         {/if}
       </div>
@@ -675,7 +791,7 @@
 
   {#if activeTab === 'summary'}
     <div class="bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 rounded-2xl shadow-sm overflow-hidden flex-1 flex flex-col min-h-0 mb-6">
-      <OverviewPanel {report} {file} />
+      <OverviewPanel {report} {file} {ocspStatusMap} />
     </div>
   {:else if activeTab === 'crjson'}
     <div class="bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 rounded-2xl p-8 shadow-sm">
@@ -922,81 +1038,8 @@
           {/if}
         </section>
 
-        {#if signatureInfo}
-          <section class="bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 rounded-2xl p-8 shadow-sm" id="signature-info">
-            <div class="flex items-center gap-4 mb-6">
-              <div class="w-10 h-10 bg-gray-800 dark:bg-gray-700 rounded-lg flex items-center justify-center text-white shadow-sm">
-                <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M5 7.2a2.2 2.2 0 0 1 2.2 -2.2h1a2.2 2.2 0 0 0 1.55 -.64l.7 -.7a2.2 2.2 0 0 1 3.12 0l.7 .7c.412 .41 .97 .64 1.55 .64h1a2.2 2.2 0 0 1 2.2 2.2v1c0 .58 .23 1.138 .64 1.55l.7 .7a2.2 2.2 0 0 1 0 3.12l-.7 .7a2.2 2.2 0 0 0 -.64 1.55v1a2.2 2.2 0 0 1 -2.2 2.2h-1a2.2 2.2 0 0 0 -1.55 .64l-.7 .7a2.2 2.2 0 0 1 -3.12 0l-.7 -.7a2.2 2.2 0 0 0 -1.55 -.64h-1a2.2 2.2 0 0 1 -2.2 -2.2v-1a2.2 2.2 0 0 0 -.64 -1.55l-.7 -.7a2.2 2.2 0 0 1 0 -3.12l.7 -.7a2.2 2.2 0 0 0 .64 -1.55v-1" /><path d="M9 12l2 2l4 -4" /></svg>
-              </div>
-              <h3 class="text-xl font-semibold text-[#1e293b] dark:text-white">Signature Information</h3>
-            </div>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {#if signatureInfo.common_name}
-                <div class="bg-gray-50 dark:bg-gray-900 rounded-2xl p-4">
-                  <div class="text-xs font-semibold text-gray-500 dark:text-gray-500 uppercase tracking-wide mb-2">Common Name</div>
-                  <p class="text-sm font-medium text-[#1e293b] dark:text-gray-100 break-all">{signatureInfo.common_name}</p>
-                </div>
-              {/if}
-              {#if signatureInfo.issuer}
-                <div class="bg-gray-50 dark:bg-gray-900 rounded-2xl p-4">
-                  <div class="text-xs font-semibold text-gray-500 dark:text-gray-500 uppercase tracking-wide mb-2">Issuer</div>
-                  <p class="text-sm font-medium text-[#1e293b] dark:text-gray-100 break-all">{signatureInfo.issuer}</p>
-                </div>
-              {/if}
-              {#if signatureInfo.time}
-                <div class="bg-gray-50 dark:bg-gray-900 rounded-2xl p-4">
-                  <div class="text-xs font-semibold text-gray-500 dark:text-gray-500 uppercase tracking-wide mb-2">Signed</div>
-                  <p class="text-sm font-medium text-[#1e293b] dark:text-gray-100">{signatureInfo.time}</p>
-                </div>
-              {/if}
-              <!-- Certificate Validity -->
-              {#if certValidityStatus !== 'unknown'}
-                <div class="bg-gray-50 dark:bg-gray-900 rounded-2xl p-4">
-                  <div class="text-xs font-semibold text-gray-500 dark:text-gray-500 uppercase tracking-wide mb-2">Certificate Validity</div>
-                  {#if certValidityStatus === 'valid'}
-                    <div class="flex items-center gap-2">
-                      <svg class="w-4 h-4 text-green-600 dark:text-green-300 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0" /><path d="M9 12l2 2l4 -4" /></svg>
-                      <span class="text-sm font-medium text-green-700 dark:text-green-300">Valid at time of signing</span>
-                    </div>
-                  {:else if certValidityStatus === 'expired'}
-                    <div class="flex items-center gap-2">
-                      <svg class="w-4 h-4 text-red-600 dark:text-red-300 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0" /><path d="M10 10l4 4m0 -4l-4 4" /></svg>
-                      <span class="text-sm font-medium text-red-700 dark:text-red-300">Expired at time of signing</span>
-                    </div>
-                  {/if}
-                </div>
-              {/if}
-
-              <!-- OCSP Revocation Status -->
-              {#if ocspStatus !== 'unknown'}
-                <div class="bg-gray-50 dark:bg-gray-900 rounded-2xl p-4">
-                  <div class="text-xs font-semibold text-gray-500 dark:text-gray-500 uppercase tracking-wide mb-2">OCSP Revocation</div>
-                  {#if ocspStatus === 'not_revoked'}
-                    <div class="flex items-center gap-2">
-                      <svg class="w-4 h-4 text-green-600 dark:text-green-300 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0" /><path d="M9 12l2 2l4 -4" /></svg>
-                      <span class="text-sm font-medium text-green-700 dark:text-green-300">Not revoked</span>
-                    </div>
-                  {:else if ocspStatus === 'revoked'}
-                    <div class="flex items-center gap-2">
-                      <svg class="w-4 h-4 text-red-600 dark:text-red-300 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0" /><path d="M10 10l4 4m0 -4l-4 4" /></svg>
-                      <span class="text-sm font-medium text-red-700 dark:text-red-300">Revoked</span>
-                    </div>
-                  {:else if ocspStatus === 'no_staple'}
-                    <div class="flex items-center gap-2">
-                      <svg class="w-4 h-4 text-amber-500 dark:text-amber-300 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 9v4" /><path d="M10.363 3.591l-8.106 13.534a1.914 1.914 0 0 0 1.636 2.871h16.214a1.914 1.914 0 0 0 1.636 -2.87l-8.106 -13.536a1.914 1.914 0 0 0 -3.274 0z" /><path d="M12 16h.01" /></svg>
-                      <span class="text-sm font-medium text-amber-700 dark:text-amber-300">No OCSP staple present</span>
-                    </div>
-                  {:else if ocspStatus === 'inaccessible'}
-                    <div class="flex items-center gap-2">
-                      <svg class="w-4 h-4 text-amber-500 dark:text-amber-300 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 9v4" /><path d="M10.363 3.591l-8.106 13.534a1.914 1.914 0 0 0 1.636 2.871h16.214a1.914 1.914 0 0 0 1.636 -2.87l-8.106 -13.536a1.914 1.914 0 0 0 -3.274 0z" /><path d="M12 16h.01" /></svg>
-                      <span class="text-sm font-medium text-amber-700 dark:text-amber-300">OCSP server inaccessible</span>
-                    </div>
-                  {/if}
-                </div>
-              {/if}
-            </div>
-          </section>
-        {/if}
+        <!-- Signatures & Certificate Validation -->
+        <CertificateSection {report} bind:ocspStatusMap />
 
         <section class="bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 rounded-2xl p-8 shadow-sm" id="manifest-details">
           <div class="flex items-center gap-4 mb-6">

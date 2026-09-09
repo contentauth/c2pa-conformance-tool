@@ -19,6 +19,8 @@ export type {
 export interface ConformanceReport extends CrJson {
   usedITL?: boolean
   usedTestCerts?: boolean
+  fetchedRemoteManifest?: boolean
+  remoteManifestUrl?: string
   _conformanceToolVersion?: {
     commit: string
     shortCommit: string

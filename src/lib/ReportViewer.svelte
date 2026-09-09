@@ -170,6 +170,17 @@
   // This is determined by validating twice in processFile - once with official TL, once with test certs
   $: actuallyUsedTestCert = report.usedTestCerts === true
 
+  // Disclose when this report required fetching a remote manifest, and from where
+  $: fetchedRemoteManifest = report.fetchedRemoteManifest === true
+  $: remoteManifestHost = (() => {
+    if (!report.remoteManifestUrl) return null
+    try {
+      return new URL(report.remoteManifestUrl).host
+    } catch {
+      return report.remoteManifestUrl
+    }
+  })()
+
   // Build validation status array - show all failures first (active & ingredients), then key successes
   // Build validation status grouped by manifest
   $: validationGroups = (() => {
@@ -626,6 +637,22 @@
     accept="image/*,video/*,audio/*,.pdf,.dng,.arw,.cr2,.cr3,.nef,.orf,.rw2"
     class="hidden"
   />
+
+  {#if fetchedRemoteManifest}
+    <div class="mb-8 bg-blue-50 dark:bg-blue-900/30 border border-blue-300 dark:border-blue-700 rounded-2xl p-6 shadow-sm">
+      <div class="flex items-start gap-4">
+        <div class="flex-shrink-0 w-12 h-12 bg-blue-600 dark:bg-blue-700 rounded-full flex items-center justify-center text-white shadow-sm">
+          <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0" /><path d="M12 3a9 9 0 0 0 0 18" /><path d="M12 3a9 9 0 0 1 0 18" /><path d="M3 12h18" /></svg>
+        </div>
+        <div class="flex-1">
+          <h3 class="font-bold text-blue-900 dark:text-blue-300 text-lg mb-2">Remote Manifest Fetched</h3>
+          <p class="text-sm text-blue-800 dark:text-blue-300 leading-relaxed">
+            This file had no embedded manifest — its manifest was fetched from <span class="font-mono">{remoteManifestHost}</span> with your consent and validated against this asset.
+          </p>
+        </div>
+      </div>
+    </div>
+  {/if}
 
   {#if usedTestCertificates}
     <div class="mb-8 bg-amber-50 dark:bg-amber-900/30 border border-amber-300 dark:border-amber-700 rounded-2xl p-6 shadow-sm">

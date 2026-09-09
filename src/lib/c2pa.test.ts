@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import {
   processFile, getVersion, isSidecarFile, resolveMimeType, SIDECAR_MIME,
+  processRemoteManifest, revalidateRemoteManifest,
   _setLocalModuleForTesting, _fetchSoftBindingAlgorithmsForTesting, _resetSoftBindingCacheForTesting,
 } from './c2pa'
 import type { ConformanceReport } from './types'
@@ -42,11 +43,17 @@ const recordedTrustAnchors: string[] = []
 function makeLocalModule(opts: {
   // Call index → overrides; unmatched calls use defaults.
   calls?: Array<{ trusted?: boolean; untrusted?: boolean }>
+  // Override read_manifest_store entirely, e.g. to simulate a rejection.
+  readManifestStore?: (fileBytes: Uint8Array, format: string, settingsJson?: string) => Promise<string>
+  // Present only when the test needs sidecar/remote-manifest validation.
+  readSidecarManifestStore?: (
+    manifestBytes: Uint8Array, assetBytes: Uint8Array, assetFormat: string, settingsJson?: string,
+  ) => Promise<string>
 } = {}): Parameters<typeof _setLocalModuleForTesting>[0] {
   return {
     default: vi.fn(() => Promise.resolve()),
     get_version: vi.fn(() => 'c2pa-local-wasm v0.1.0 using c2pa-rs 0.99.0'),
-    read_manifest_store: vi.fn((_bytes, _format, settingsJson) => {
+    read_manifest_store: opts.readManifestStore ?? vi.fn((_bytes, _format, settingsJson) => {
       const idx = readCallCount++
       if (settingsJson) {
         try {
@@ -61,6 +68,7 @@ function makeLocalModule(opts: {
           : makeCrJson({ trusted: true })
       )
     }),
+    ...(opts.readSidecarManifestStore ? { read_sidecar_manifest_store: opts.readSidecarManifestStore } : {}),
   }
 }
 
@@ -261,6 +269,103 @@ describe('c2pa utilities', () => {
 
       const algs = await _fetchSoftBindingAlgorithmsForTesting()
       expect(algs).toEqual([])
+    })
+  })
+
+  // ── Remote manifest handling ────────────────────────────────────────────────
+
+  function mockFetchWithRemoteManifest(remoteManifestUrl: string, manifestBytes: Uint8Array) {
+    global.fetch = vi.fn((input: RequestInfo | URL) => {
+      const url = typeof input === 'string' ? input : input.toString()
+      if (url === remoteManifestUrl) {
+        return Promise.resolve({
+          ok: true, status: 200, statusText: 'OK',
+          arrayBuffer: () => Promise.resolve(manifestBytes.buffer),
+        } as Response)
+      }
+      let content = '-----BEGIN CERTIFICATE-----\nMockCertificate\n-----END CERTIFICATE-----'
+      if (url.includes('allowed.pem')) content = '-----BEGIN CERTIFICATE-----\nITLAllowedCert\n-----END CERTIFICATE-----'
+      else if (url.includes('anchors.pem')) content = '-----BEGIN CERTIFICATE-----\nITLAnchorCert\n-----END CERTIFICATE-----'
+      return Promise.resolve({
+        ok: true, status: 200, statusText: 'OK',
+        text: () => Promise.resolve(content),
+        json: () => Promise.reject(new Error('not json')),
+        headers: new Headers({ 'content-type': 'text/plain' }),
+      } as unknown as Response)
+    }) as ReturnType<typeof vi.fn>
+  }
+
+  describe('remote manifest handling', () => {
+    it('processFile surfaces the remote-manifest URL as a real Error, even though wasm rejects with a bare string', async () => {
+      // wasm-bindgen turns Err(JsValue::from_str(...)) into a promise rejected with a
+      // plain string, not an Error instance — reproduce that exactly here so this test
+      // would have caught the bug where downstream `instanceof Error` checks silently
+      // fell back to a generic message and dropped the URL.
+      _setLocalModuleForTesting(makeLocalModule({
+        readManifestStore: () =>
+          Promise.reject('Remote manifest reference: https://example.com/manifest.c2pa'),
+      }))
+
+      const rejection = await processFile(new File(['test'], 'test.jpg', { type: 'image/jpeg' })).catch((e) => e)
+      expect(rejection).toBeInstanceOf(Error)
+      expect((rejection as Error).message).toBe('Remote manifest reference: https://example.com/manifest.c2pa')
+    })
+
+    it('processRemoteManifest fetches the manifest, validates it, and flags the report', async () => {
+      const remoteManifestUrl = 'https://example.com/manifest.c2pa'
+      const manifestBytes = new Uint8Array([1, 2, 3])
+      mockFetchWithRemoteManifest(remoteManifestUrl, manifestBytes)
+
+      _setLocalModuleForTesting(makeLocalModule({
+        readSidecarManifestStore: () => Promise.resolve(makeCrJson({ trusted: true })),
+      }))
+
+      const { report, manifestBytes: returnedBytes } = await processRemoteManifest(
+        new File(['test'], 'test.jpg', { type: 'image/jpeg' }),
+        remoteManifestUrl,
+      )
+
+      expect(report.fetchedRemoteManifest).toBe(true)
+      expect(report.remoteManifestUrl).toBe(remoteManifestUrl)
+      expect(returnedBytes).toEqual(manifestBytes)
+    })
+
+    it('processRemoteManifest throws when the fetch itself fails', async () => {
+      global.fetch = vi.fn(() =>
+        Promise.resolve({ ok: false, status: 404, statusText: 'Not Found' } as Response)
+      ) as ReturnType<typeof vi.fn>
+
+      await expect(
+        processRemoteManifest(new File(['test'], 'test.jpg', { type: 'image/jpeg' }), 'https://example.com/gone.c2pa')
+      ).rejects.toThrow(/Failed to fetch remote manifest/)
+    })
+
+    it('revalidateRemoteManifest validates already-fetched bytes without a network call', async () => {
+      const remoteManifestUrl = 'https://example.com/manifest.c2pa'
+      const manifestBytes = new Uint8Array([1, 2, 3])
+
+      const readSidecarSpy = vi.fn(() => Promise.resolve(makeCrJson({ trusted: true })))
+      _setLocalModuleForTesting(makeLocalModule({ readSidecarManifestStore: readSidecarSpy }))
+
+      const fetchedUrls: string[] = []
+      global.fetch = vi.fn((input: RequestInfo | URL) => {
+        const url = typeof input === 'string' ? input : input.toString()
+        fetchedUrls.push(url)
+        // Soft binding registry lookups are non-fatal if they fail; everything
+        // else (trust list, ITL) should already be cached from earlier tests.
+        return Promise.reject(new Error(`unexpected fetch: ${url}`))
+      }) as ReturnType<typeof vi.fn>
+
+      const report = await revalidateRemoteManifest(
+        new File(['test'], 'test.jpg', { type: 'image/jpeg' }),
+        manifestBytes,
+        remoteManifestUrl,
+      )
+
+      expect(report.fetchedRemoteManifest).toBe(true)
+      expect(report.remoteManifestUrl).toBe(remoteManifestUrl)
+      expect(readSidecarSpy).toHaveBeenCalled()
+      expect(fetchedUrls).not.toContain(remoteManifestUrl)
     })
   })
 })

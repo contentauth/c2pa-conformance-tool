@@ -68,6 +68,12 @@ function toLocalSettingsJson(settings?: Settings): string | undefined {
     verify: {
       verify_after_reading: settings.verify?.verifyAfterReading ?? true,
       verify_trust: settings.verify?.verifyTrust ?? true,
+      // Never let c2pa-rs auto-fetch remote manifests: doing so would silently reveal
+      // the validating user's IP address and the fact they're inspecting this file to
+      // a third-party host, with no consent. We surface remote references instead and
+      // fetch them ourselves only after the user explicitly opts in (see
+      // processRemoteManifest).
+      remote_manifest_fetch: false,
     },
     trust: (settings.trust?.trustAnchors || settings.trust?.allowedList)
       ? {
@@ -353,8 +359,11 @@ async function enrichThumbnailsViaWasm(
 ): Promise<void> {
   if (typeof localModule.get_resource_bytes !== 'function') return
 
+  // Pass explicit settings (not undefined) so the wasm side doesn't fall back to
+  // c2pa-rs's own defaults, which have remote_manifest_fetch: true — resolving a
+  // thumbnail must never silently fetch a remote manifest.
   const resourceToBytes = async (uri: string): Promise<Uint8Array> => {
-    return localModule.get_resource_bytes!(fileBytes, format, uri, undefined)
+    return localModule.get_resource_bytes!(fileBytes, format, uri, toLocalSettingsJson({}))
   }
 
   await enrichThumbnails(crJson, resourceToBytes)
@@ -588,6 +597,14 @@ async function extractCrJsonWithMetadata(file: File, testCertificates: string[] 
   } catch (error) {
     console.error('❌ Error in processFile:', error)
     const msg = error instanceof Error ? error.message : String(error)
+    if (msg.startsWith('Remote manifest reference: ')) {
+      // Not a failure — the asset only references a manifest hosted elsewhere.
+      // Wrap in a real Error (the caught value may be a bare string from the wasm
+      // boundary) so `instanceof Error` checks downstream see the message intact;
+      // App.svelte matches this exact text to offer a consent prompt instead of
+      // the generic error banner.
+      throw new Error(msg)
+    }
     if (msg.includes('UnsupportedFormatError') || msg.includes('Unsupported format')) {
       throw new Error(`Unsupported file format (${mimeType}). Supported formats include JPEG, PNG, WebP, AVIF, MP4, MOV, MP3, WAV, and PDF.`)
     }
@@ -678,6 +695,81 @@ export async function processSidecarWithAsset(
   return buildConformanceReport(
     await extractSidecarWithAssetCrJsonWithMetadata(sidecar, asset, testCertificates),
   )
+}
+
+async function extractRemoteManifestCrJsonWithMetadata(
+  file: File,
+  manifestBytes: Uint8Array,
+  remoteManifestUrl: string,
+  testCertificates: string[] = [],
+): Promise<ExtractedCrJsonResult> {
+  const c2pa = await initC2pa()
+  const fromSidecarAndBlob = c2pa.reader.fromSidecarAndBlob
+  if (!fromSidecarAndBlob) {
+    throw new Error('read_sidecar_manifest_store is not available in the local WASM build.')
+  }
+
+  const assetMimeType = resolveMimeType(file)
+
+  const readManifestStore: ReadManifestStore = async (settings) => {
+    const reader = await fromSidecarAndBlob(manifestBytes, assetMimeType, file, settings)
+    if (!reader) return null
+    try {
+      const crJson = await reader.manifestStore()
+      const assetBytes = new Uint8Array(await file.arrayBuffer())
+      await enrichThumbnailsViaWasm(crJson, assetBytes, assetMimeType, c2pa.module)
+      return crJson
+    } finally {
+      await reader.free()
+    }
+  }
+
+  return runTrustValidationFlow(
+    readManifestStore,
+    testCertificates,
+    `No C2PA manifest could be read from the remote manifest at ${remoteManifestUrl}.`,
+  )
+}
+
+/**
+ * Validate a manifest already fetched from a remote manifest URL — no network call.
+ * Used to re-run validation (e.g. when test certificates or trust settings change)
+ * without re-fetching or re-prompting for consent for the same URL.
+ */
+export async function revalidateRemoteManifest(
+  file: File,
+  manifestBytes: Uint8Array,
+  remoteManifestUrl: string,
+  testCertificates: string[] = [],
+): Promise<ConformanceReport> {
+  const extracted = await extractRemoteManifestCrJsonWithMetadata(
+    file, manifestBytes, remoteManifestUrl, testCertificates,
+  )
+  return {
+    ...buildConformanceReport(extracted),
+    fetchedRemoteManifest: true,
+    remoteManifestUrl,
+  }
+}
+
+/**
+ * Fetch a remote manifest the user has explicitly consented to retrieve, and
+ * validate it against `file`. Returns the manifest bytes alongside the report so the
+ * caller can cache them and re-validate later via revalidateRemoteManifest without a
+ * second fetch or consent prompt.
+ */
+export async function processRemoteManifest(
+  file: File,
+  remoteManifestUrl: string,
+  testCertificates: string[] = [],
+): Promise<{ report: ConformanceReport; manifestBytes: Uint8Array }> {
+  const response = await fetch(remoteManifestUrl)
+  if (!response.ok) {
+    throw new Error(`Failed to fetch remote manifest: ${response.status} ${response.statusText}`)
+  }
+  const manifestBytes = new Uint8Array(await response.arrayBuffer())
+  const report = await revalidateRemoteManifest(file, manifestBytes, remoteManifestUrl, testCertificates)
+  return { report, manifestBytes }
 }
 
 export async function getVersion(): Promise<string> {

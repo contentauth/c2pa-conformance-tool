@@ -9,7 +9,7 @@
   import FileUpload from './lib/FileUpload.svelte'
   import ReportViewer from './lib/ReportViewer.svelte'
   import CertificateManager from './lib/CertificateManager.svelte'
-  import { processFile, processSidecarWithAsset, isSidecarFile } from './lib/c2pa'
+  import { processFile, processSidecarWithAsset, isSidecarFile, processRemoteManifest, revalidateRemoteManifest } from './lib/c2pa'
   import { testTrustListFetch } from './lib/trustListTest'
   import type { ConformanceReport } from './lib/types'
 
@@ -31,6 +31,9 @@
   let selectedFile: File | null = null
   let sidecarFile: File | null = null       // companion file when we processed a sidecar+asset pair
   let pendingSidecar: File | null = null    // sidecar dropped, waiting for user to supply the asset
+  let pendingRemoteManifestUrl: string | null = null  // asset has no embedded manifest, only a remote reference — awaiting consent to fetch
+  let remoteManifestBytes: Uint8Array | null = null   // cached bytes once fetched, so reprocessing doesn't re-fetch or re-prompt
+  let remoteManifestUrl: string | null = null          // URL the cached bytes above came from
   let validationMode: ValidationMode = 'embedded'
   let darkMode = false
   let infoSectionExpanded = false
@@ -169,6 +172,9 @@
     selectedFile = file
     sidecarFile = null
     pendingSidecar = null
+    pendingRemoteManifestUrl = null
+    remoteManifestBytes = null
+    remoteManifestUrl = null
     validationMode = isSidecarFile(file) ? 'sidecar-only' : 'embedded'
     usedTestCertificates = testCertificates.length > 0
 
@@ -193,7 +199,10 @@
       console.log('✅ File processed successfully:', report)
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'An error occurred processing the file'
-      if (msg.includes('No C2PA manifest')) {
+      const remoteManifestMatch = msg.match(/^Remote manifest reference: (.+)$/)
+      if (remoteManifestMatch) {
+        pendingRemoteManifestUrl = remoteManifestMatch[1]
+      } else if (msg.includes('No C2PA manifest')) {
         noManifest = true
       } else {
         error = msg
@@ -219,6 +228,9 @@
     selectedFile = asset
     sidecarFile = sidecar
     pendingSidecar = null
+    pendingRemoteManifestUrl = null
+    remoteManifestBytes = null
+    remoteManifestUrl = null
     validationMode = 'sidecar+asset'
     usedTestCertificates = testCertificates.length > 0
 
@@ -247,6 +259,33 @@
     selectedFile = null
   }
 
+  function declineRemoteManifest() {
+    pendingRemoteManifestUrl = null
+    selectedFile = null
+  }
+
+  async function fetchRemoteManifest() {
+    if (!selectedFile || !pendingRemoteManifestUrl) return
+    const url = pendingRemoteManifestUrl
+    pendingRemoteManifestUrl = null
+    processing = true
+    error = null
+    processingStatus = 'Fetching remote manifest...'
+    try {
+      const { report: fetchedReport, manifestBytes } = await processRemoteManifest(selectedFile, url, testCertificates)
+      report = fetchedReport
+      remoteManifestBytes = manifestBytes
+      remoteManifestUrl = url
+      console.log('✅ Remote manifest fetched and validated:', url)
+    } catch (err) {
+      error = err instanceof Error ? err.message : 'An error occurred fetching the remote manifest'
+      console.error('❌ Error fetching remote manifest:', err)
+    } finally {
+      processing = false
+      processingStatus = 'Processing file...'
+    }
+  }
+
   function inspectSidecarWithoutAsset() {
     if (!pendingSidecar) return
     const sidecar = pendingSidecar
@@ -263,7 +302,9 @@
     usedTestCertificates = testCertificates.length > 0
     try {
       await new Promise(resolve => setTimeout(resolve, 0))
-      if (sidecarFile) {
+      if (remoteManifestBytes && remoteManifestUrl) {
+        report = await revalidateRemoteManifest(selectedFile, remoteManifestBytes, remoteManifestUrl, testCertificates)
+      } else if (sidecarFile) {
         report = await processSidecarWithAsset(sidecarFile, selectedFile, testCertificates)
       } else {
         report = await processFile(selectedFile, testCertificates)
@@ -332,6 +373,9 @@
     noManifest = false
     processing = false
     selectedFile = null
+    pendingRemoteManifestUrl = null
+    remoteManifestBytes = null
+    remoteManifestUrl = null
     currentPage = 'main'
     menuOpen = false
   }
@@ -600,6 +644,45 @@
                 >
                   Try Another File
                 </button>
+              </div>
+            </div>
+          </div>
+        {/if}
+
+        {#if pendingRemoteManifestUrl}
+          <!-- Asset has no embedded manifest, only a reference to one hosted remotely.
+               Never fetched automatically — fetching would reveal the user's IP address
+               and that this specific file is being validated to a third-party host. -->
+          <div class="bg-blue-100 dark:bg-gray-900 border-2 border-blue-400 dark:border-gray-600 border-dashed rounded-2xl p-8 mb-6 text-left shadow-sm">
+            <div class="flex items-start gap-4">
+              <div class="flex-shrink-0 w-12 h-12 bg-blue-600 dark:bg-gray-600 rounded-full flex items-center justify-center text-white">
+                <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0" /><path d="M12 3a9 9 0 0 0 0 18" /><path d="M12 3a9 9 0 0 1 0 18" /><path d="M3 12h18" /></svg>
+              </div>
+              <div class="flex-1 min-w-0">
+                <h3 class="text-lg font-bold text-blue-900 dark:text-white mb-1">This file's manifest is hosted remotely</h3>
+                <p class="text-sm text-blue-700 dark:text-gray-300 mb-1">
+                  No manifest is embedded in this file — it only references one hosted at:
+                </p>
+                <p class="text-sm font-mono text-blue-900 dark:text-gray-200 bg-blue-50 dark:bg-gray-800 rounded-lg px-3 py-2 mb-4 break-all select-all">
+                  {pendingRemoteManifestUrl}
+                </p>
+                <p class="text-sm text-blue-600 dark:text-gray-400 mb-4">
+                  Fetching it will send a request to that host, which will be able to see your IP address and that this file is being validated. No request has been made yet.
+                </p>
+                <div class="flex flex-wrap gap-4">
+                  <button
+                    on:click={fetchRemoteManifest}
+                    class="btn btn-primary"
+                  >
+                    Fetch &amp; Validate
+                  </button>
+                  <button
+                    on:click={declineRemoteManifest}
+                    class="btn-ghost px-4 py-2"
+                  >
+                    Don't Fetch
+                  </button>
+                </div>
               </div>
             </div>
           </div>

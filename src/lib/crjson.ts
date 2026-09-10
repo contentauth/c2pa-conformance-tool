@@ -178,30 +178,58 @@ export function getAssertionDataByLabel(m: CrJsonManifestEntry, label: string): 
 }
 
 /**
- * Get validation status for the active manifest from crJSON.
+ * True if a validation status is scoped to a specific embedded assertion (its `url`
+ * points into `c2pa.assertions/...`, e.g. a `cawg.identity` assertion's own X.509
+ * credential) rather than to the manifest's own claim signature.
+ *
+ * c2pa-rs reuses the same status codes (e.g. `signingCredential.untrusted`) for both
+ * the manifest's claim signature and any per-assertion credential — the `url` is the
+ * only way to tell them apart. Conflating the two makes an untrusted CAWG identity
+ * credential look like the file's own C2PA signature is untrusted, which it isn't.
+ */
+export function isAssertionScopedStatus(status: CrJsonValidationStatus): boolean {
+  return status.url?.includes('/c2pa.assertions/') ?? false
+}
+
+function excludeAssertionScoped(status: CrJsonActiveManifestStatus): CrJsonActiveManifestStatus {
+  return {
+    success: status.success?.filter((s) => !isAssertionScopedStatus(s)),
+    informational: status.informational?.filter((s) => !isAssertionScopedStatus(s)),
+    failure: status.failure?.filter((s) => !isAssertionScopedStatus(s)),
+  }
+}
+
+/**
+ * Get validation status for the manifest's own claim signature from crJSON —
+ * excludes statuses scoped to an embedded assertion (see `isAssertionScopedStatus`).
  * - Document-level (legacy/SDK): report.validationResults.activeManifest
  * - Per-manifest (c2pa-rs crJSON): report.manifests[0].validationResults (status codes directly)
  */
 export function getActiveManifestValidationStatus(report: CrJson): CrJsonActiveManifestStatus | undefined {
   const docLevel = report.validationResults?.activeManifest
   if (docLevel && (docLevel.success?.length ?? 0) + (docLevel.failure?.length ?? 0) + (docLevel.informational?.length ?? 0) > 0) {
-    return docLevel
+    return excludeAssertionScoped(docLevel)
   }
   const firstManifest = report.manifests?.[0]
   const perManifest = firstManifest?.validationResults as CrJsonValidationResults | undefined
   if (perManifest && (perManifest.success?.length ?? 0) + (perManifest.failure?.length ?? 0) + (perManifest.informational?.length ?? 0) > 0) {
-    return {
+    return excludeAssertionScoped({
       success: perManifest.success,
       informational: perManifest.informational,
       failure: perManifest.failure
-    }
+    })
   }
-  return docLevel ?? (perManifest ? { success: perManifest.success, informational: perManifest.informational, failure: perManifest.failure } : undefined)
+  return docLevel
+    ? excludeAssertionScoped(docLevel)
+    : (perManifest ? excludeAssertionScoped({ success: perManifest.success, informational: perManifest.informational, failure: perManifest.failure }) : undefined)
 }
 
 /**
- * Get all validation failures from the report, including document-level,
- * active manifest, and all ingredient manifests.
+ * Get all validation failures relevant to trust for the report — including
+ * document-level, active manifest, and all ingredient manifests — excluding
+ * failures scoped to an embedded assertion's own credential (see
+ * `isAssertionScopedStatus`), which don't indicate the manifest's own signature
+ * is untrusted.
  */
 export function getAllValidationFailures(report: CrJson): CrJsonValidationStatus[] {
   const failures: CrJsonValidationStatus[] = []
@@ -224,10 +252,12 @@ export function getAllValidationFailures(report: CrJson): CrJsonValidationStatus
     }
   }
 
-  // De-duplicate by code
+  // De-duplicate by code, excluding failures scoped to an embedded assertion's own
+  // credential rather than the manifest's own claim signature.
   const uniqueFailures: CrJsonValidationStatus[] = []
   const seenCodes = new Set<string>()
   for (const f of failures) {
+    if (isAssertionScopedStatus(f)) continue
     if (!seenCodes.has(f.code)) {
       seenCodes.add(f.code)
       uniqueFailures.push(f)

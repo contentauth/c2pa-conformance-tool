@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { getAllValidationFailures, type CrJson } from './crjson'
+import { getAllValidationFailures, getActiveManifestValidationStatus, isAssertionScopedStatus, type CrJson } from './crjson'
 
 describe('crjson utilities', () => {
   describe('getAllValidationFailures', () => {
@@ -107,6 +107,98 @@ describe('crjson utilities', () => {
       expect(getAllValidationFailures(report)).toEqual([
         { code: 'signingCredential.untrusted', explanation: '1' }
       ])
+    })
+
+    // Regression: a CAWG identity assertion's own X.509 credential can be untrusted
+    // even though the manifest's own C2PA claim signature is fully trusted. c2pa-rs
+    // reuses the same `signingCredential.untrusted` code for both, distinguishable
+    // only by `url` (this shape is taken from a real signed video that reproduced the
+    // bug). getAllValidationFailures must not let the assertion-scoped failure make
+    // the whole report look untrusted.
+    it('excludes a signingCredential.untrusted failure scoped to an embedded assertion', () => {
+      const claimUrl = 'self#jumbf=/c2pa/urn:c2pa:test/c2pa.signature'
+      const cawgUrl = 'self#jumbf=/c2pa/urn:c2pa:test/c2pa.assertions/cawg.identity'
+      const report: CrJson = {
+        manifests: [
+          {
+            label: 'active',
+            assertions: {},
+            validationResults: {
+              success: [{ code: 'signingCredential.trusted', url: claimUrl }],
+              failure: [{ code: 'signingCredential.untrusted', url: cawgUrl, explanation: 'signing certificate untrusted' }]
+            }
+          }
+        ]
+      }
+      expect(getAllValidationFailures(report)).toEqual([])
+    })
+
+    it('still includes a signingCredential.untrusted failure that is scoped to the claim signature itself', () => {
+      const claimUrl = 'self#jumbf=/c2pa/urn:c2pa:test/c2pa.signature'
+      const report: CrJson = {
+        manifests: [
+          {
+            label: 'active',
+            assertions: {},
+            validationResults: {
+              failure: [{ code: 'signingCredential.untrusted', url: claimUrl }]
+            }
+          }
+        ]
+      }
+      expect(getAllValidationFailures(report)).toEqual([
+        { code: 'signingCredential.untrusted', url: claimUrl }
+      ])
+    })
+  })
+
+  describe('isAssertionScopedStatus', () => {
+    it('is true for a status scoped to an embedded assertion', () => {
+      expect(isAssertionScopedStatus({
+        code: 'signingCredential.untrusted',
+        url: 'self#jumbf=/c2pa/urn:c2pa:test/c2pa.assertions/cawg.identity'
+      })).toBe(true)
+    })
+
+    it('is false for a status scoped to the claim signature', () => {
+      expect(isAssertionScopedStatus({
+        code: 'signingCredential.trusted',
+        url: 'self#jumbf=/c2pa/urn:c2pa:test/c2pa.signature'
+      })).toBe(false)
+    })
+
+    it('is false when there is no url', () => {
+      expect(isAssertionScopedStatus({ code: 'signingCredential.trusted' })).toBe(false)
+    })
+  })
+
+  describe('getActiveManifestValidationStatus', () => {
+    it('excludes assertion-scoped entries but keeps claim-signature-scoped ones', () => {
+      const claimUrl = 'self#jumbf=/c2pa/urn:c2pa:test/c2pa.signature'
+      const cawgUrl = 'self#jumbf=/c2pa/urn:c2pa:test/c2pa.assertions/cawg.identity'
+      const report: CrJson = {
+        manifests: [
+          {
+            label: 'active',
+            assertions: {},
+            validationResults: {
+              success: [
+                { code: 'signingCredential.trusted', url: claimUrl },
+                { code: 'timeStamp.validated', url: claimUrl },
+              ],
+              failure: [{ code: 'signingCredential.untrusted', url: cawgUrl }],
+              informational: [{ code: 'cawg.identity.well-formed', url: cawgUrl }],
+            }
+          }
+        ]
+      }
+      const status = getActiveManifestValidationStatus(report)
+      expect(status?.failure).toEqual([])
+      expect(status?.success).toEqual([
+        { code: 'signingCredential.trusted', url: claimUrl },
+        { code: 'timeStamp.validated', url: claimUrl },
+      ])
+      expect(status?.informational).toEqual([])
     })
   })
 })

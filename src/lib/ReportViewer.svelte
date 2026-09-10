@@ -13,7 +13,8 @@
     getClaimInfo,
     getActiveManifestValidationStatus,
     getAllValidationFailures,
-    getManifestValidationStatus
+    getManifestValidationStatus,
+    isAssertionScopedStatus
   } from './crjson'
   import { evaluateReportSignals } from './summarySignals'
   import { VALIDATION_STATUS, VALIDATION_FAILURE_DESCRIPTIONS } from './constants'
@@ -160,6 +161,15 @@
     return VALIDATION_FAILURE_DESCRIPTIONS[code] ?? explanation ?? `Validation failed (Code: ${code})`
   }
 
+  // c2pa-rs reuses the same status codes for the manifest's own claim signature and
+  // for a specific embedded assertion's own credential (e.g. a CAWG identity
+  // assertion's X.509 signer) — distinguishable only by `url`. Extracts the
+  // assertion's label from that url so a scoped status can say what it's actually about.
+  function extractAssertionLabel(url?: string): string | null {
+    const match = url?.match(/\/c2pa\.assertions\/([^/]+)$/)
+    return match ? match[1] : null
+  }
+
   // Gate for the Rubrics tab: trusted signature is enough.
   //
   // We deliberately do NOT require an empty failure array. The rubrics
@@ -181,10 +191,12 @@
       const status = getManifestValidationStatus(report, m, isActive)
 
       const success: ValidationStatusItem[] = status?.success?.filter((s) =>
-        s.code === VALIDATION_STATUS.SIGNING_CREDENTIAL_TRUSTED ||
-        s.code === VALIDATION_STATUS.TIMESTAMP_TRUSTED ||
-        s.code === VALIDATION_STATUS.CLAIM_SIGNATURE_VALIDATED ||
-        s.code === 'timeStamp.validated'
+        !isAssertionScopedStatus(s) && (
+          s.code === VALIDATION_STATUS.SIGNING_CREDENTIAL_TRUSTED ||
+          s.code === VALIDATION_STATUS.TIMESTAMP_TRUSTED ||
+          s.code === VALIDATION_STATUS.CLAIM_SIGNATURE_VALIDATED ||
+          s.code === 'timeStamp.validated'
+        )
       ).map((s) => {
         const isInterim = s.code === VALIDATION_STATUS.SIGNING_CREDENTIAL_TRUSTED && usedITL
         return {
@@ -195,12 +207,18 @@
         }
       }) ?? []
 
-      const failure: ValidationStatusItem[] = status?.failure?.map((f) => ({
-        code: f.code,
-        success: false,
-        isInterim: false,
-        explanation: getFailureDescription(f.code, f.explanation)
-      })) ?? []
+      const failure: ValidationStatusItem[] = status?.failure?.map((f) => {
+        const assertionLabel = extractAssertionLabel(f.url)
+        const base = getFailureDescription(f.code, f.explanation)
+        return {
+          code: f.code,
+          success: false,
+          isInterim: false,
+          explanation: assertionLabel
+            ? `${base} (this applies to the embedded "${assertionLabel}" assertion's own credential, not the manifest's own signature)`
+            : base
+        }
+      }) ?? []
 
       const informational: ValidationStatusItem[] = status?.informational?.map((inf) => ({
         code: inf.code,

@@ -39,6 +39,7 @@ let readCallCount = 0
 
 // Track trust settings per call so ITL tests can inspect them.
 const recordedTrustAnchors: string[] = []
+const recordedTrustConfigs: string[] = []
 
 function makeLocalModule(opts: {
   // Call index → overrides; unmatched calls use defaults.
@@ -59,6 +60,7 @@ function makeLocalModule(opts: {
         try {
           const s = JSON.parse(settingsJson)
           if (s?.trust?.trust_anchors) recordedTrustAnchors.push(s.trust.trust_anchors)
+          if (s?.trust?.trust_config) recordedTrustConfigs.push(s.trust.trust_config)
         } catch { /* ignore */ }
       }
       const override = opts.calls?.[idx]
@@ -78,6 +80,7 @@ describe('c2pa utilities', () => {
   beforeEach(() => {
     readCallCount = 0
     recordedTrustAnchors.length = 0
+    recordedTrustConfigs.length = 0
     vi.clearAllMocks()
 
     // Default: inject a mock local module that always returns a trusted result.
@@ -170,6 +173,28 @@ describe('c2pa utilities', () => {
         [testCert],
       )
       expect(result.manifests?.length).toBeGreaterThan(0)
+    })
+
+    it('includes the standard C2PA EKUs in every trust validation pass', async () => {
+      _setLocalModuleForTesting(makeLocalModule({
+        calls: [
+          { untrusted: true },  // main TL
+          { untrusted: true },  // test certificates
+          { trusted: true },    // ITL
+        ],
+      }))
+
+      const testCert = '-----BEGIN CERTIFICATE-----\nTestCert\n-----END CERTIFICATE-----'
+      await processFile(
+        new File(['test'], 'test.jpg', { type: 'image/jpeg' }),
+        [testCert],
+      )
+
+      expect(recordedTrustConfigs).toHaveLength(3)
+      for (const trustConfig of recordedTrustConfigs) {
+        expect(trustConfig).toContain('1.3.6.1.4.1.62558.2.1')
+        expect(trustConfig).toContain('1.3.6.1.5.5.7.3.36')
+      }
     })
   })
 

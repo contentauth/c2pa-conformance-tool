@@ -59,6 +59,18 @@ const base = typeof import.meta.env?.BASE_URL === 'string' ? import.meta.env.BAS
 const ITL_ALLOWED_URL = `${base}trust/allowed.pem`   // leaf certificates
 const ITL_ANCHORS_URL = `${base}trust/anchors.pem`   // root certificates
 
+// c2pa-rs clears its built-in EKU allow-list when constructing a Store from
+// custom context settings. Restore the SDK's standard C2PA EKUs whenever this
+// app supplies custom trust anchors.
+const DEFAULT_TRUST_CONFIG = [
+  '1.3.6.1.5.5.7.3.4',         // id-kp-emailProtection
+  '1.3.6.1.5.5.7.3.36',        // id-kp-documentSigning
+  '1.3.6.1.5.5.7.3.8',         // id-kp-timeStamping
+  '1.3.6.1.5.5.7.3.9',         // id-kp-OCSPSigning
+  '1.3.6.1.4.1.311.76.59.1.9', // Microsoft C2PA signing
+  '1.3.6.1.4.1.62558.2.1',     // C2PA claim signing
+].join('\n')
+
 function toLocalSettingsJson(settings?: Settings): string | undefined {
   if (!settings) {
     return undefined
@@ -79,6 +91,7 @@ function toLocalSettingsJson(settings?: Settings): string | undefined {
       ? {
           ...(settings.trust.trustAnchors ? { trust_anchors: settings.trust.trustAnchors } : {}),
           ...(settings.trust.allowedList ? { allowed_list: settings.trust.allowedList } : {}),
+          trust_config: DEFAULT_TRUST_CONFIG,
         }
       : undefined,
     ...(settings.softBindingAlgorithms?.length

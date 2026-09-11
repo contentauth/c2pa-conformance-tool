@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { OverviewNode } from './types'
+  import { isOcspRevokedCode } from './constants'
 
   export let node: OverviewNode
   export let onZoom: ((idx: number) => void) | undefined = undefined
@@ -15,6 +16,8 @@
   // Prefer the C2PA manifest's declared format (authoritative, read from file content)
   // over the browser-reported MIME type, which can be empty or generic.
   $: effectiveMimeType = node.mimeType || fileMimeType || null
+
+  $: isRevoked = node.isRevoked || (node.validationStatus?.failure?.some(f => isOcspRevokedCode(f.code)) ?? false)
 
   // Determines what to render in the card media area.
   // 'video-live'  — root video file, show <video controls>
@@ -70,9 +73,11 @@
     class="relative rounded-2xl overflow-hidden border-2 transition-all w-[300px] focus:outline-none
       {node.isStub
         ? 'border-dashed border-gray-300 dark:border-gray-600 cursor-default'
-        : isRoot || !onZoom
-          ? 'border-blue-500 shadow-lg cursor-default'
-          : 'border-gray-200 dark:border-gray-700 hover:border-gray-400 dark:hover:border-gray-500 hover:shadow-sm cursor-pointer'}"
+        : isRevoked
+          ? 'border-red-500 shadow-lg cursor-default ring-2 ring-red-500/20'
+          : isRoot || !onZoom
+            ? 'border-blue-500 shadow-lg cursor-default'
+            : 'border-gray-200 dark:border-gray-700 hover:border-gray-400 dark:hover:border-gray-500 hover:shadow-sm cursor-pointer'}"
     style="aspect-ratio: 4/3"
     on:click={() => onZoom && !isRoot && !node.isStub && onZoom(node.manifestIdx)}
   >
@@ -119,8 +124,28 @@
 
     <!-- Top-left C2PA badge — hidden for stub nodes -->
     {#if !node.isStub}
-      <div class="absolute top-2 left-2 flex items-center bg-white/90 dark:bg-gray-900/85 backdrop-blur-sm rounded-lg px-2 py-1 shadow-sm">
-        <img src="{import.meta.env.BASE_URL}content_credentials_icon.svg" alt="" class="w-3.5 h-3.5 flex-shrink-0 dark:brightness-0 dark:invert" />
+      <div class="absolute top-2 left-2 flex items-center gap-1.5 backdrop-blur-sm rounded-lg px-2 py-1 shadow-sm {isRevoked ? 'bg-red-600 text-white font-semibold text-xs shadow-md ring-1 ring-red-700/50' : 'bg-white/90 dark:bg-gray-900/85 text-gray-700 dark:text-gray-300'}">
+        <img src="{import.meta.env.BASE_URL}content_credentials_icon.svg" alt="Content Credentials" class="w-3.5 h-3.5 flex-shrink-0 {isRevoked ? 'brightness-0 invert' : 'dark:brightness-0 dark:invert'}" />
+        {#if isRevoked}
+          <span class="flex items-center gap-1">
+            <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6l-12 12"/><path d="M6 6l12 12"/></svg>
+            <span>Revoked</span>
+          </span>
+        {/if}
+      </div>
+    {/if}
+
+    <!-- Top-right OCSP Shield Badge — white shield icon on blue background -->
+    {#if !node.isStub && !isRevoked && (node.isFullChainOcsp ?? node.isOcspGood)}
+      <div
+        class="absolute top-2 right-2 flex items-center justify-center w-6 h-6 rounded-full bg-blue-600 dark:bg-blue-500 text-white shadow-md ring-2 ring-white/90 dark:ring-gray-900/90 backdrop-blur-sm z-10 transition-transform hover:scale-105"
+        title="All certificates in the chain passed live OCSP checks"
+        aria-label="All certificates in the chain passed live OCSP checks"
+      >
+        <svg class="w-3.5 h-3.5 text-white" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+          <path d="M11.998 2l.118 .007l.059 .008l.061 .013l.111 .034a.993 .993 0 0 1 .217 .112l.104 .082l.255 .218a11 11 0 0 0 7.189 2.537l.342 -.01a1 1 0 0 1 1.005 .717a13 13 0 0 1 -9.208 16.25a1 1 0 0 1 -.502 0a13 13 0 0 1 -9.209 -16.25a1 1 0 0 1 1.005 -.717a11 11 0 0 0 7.531 -2.527l.263 -.225l.096 -.075a.993 .993 0 0 1 .217 -.112l.112 -.034a.97 .97 0 0 1 .119 -.021l.115 -.007zm3.71 7.293a1 1 0 0 0 -1.415 0l-3.293 3.292l-1.293 -1.292l-.094 -.083a1 1 0 0 0 -1.32 1.497l2 2l.094 .083a1 1 0 0 0 1.32 -.083l4 -4l.083 -.094a1 1 0 0 0 -.083 -1.32z" />
+        </svg>
       </div>
     {/if}
 
@@ -157,9 +182,12 @@
         <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">{node.date}</p>
       {/if}
 
-      <!-- Actions -->
-      {#if node.inceptions.length > 0 || node.transformations.length > 0}
+      <!-- Actions & Status Badges -->
+      {#if node.inceptions.length > 0 || node.transformations.length > 0 || isRevoked}
         <div class="flex flex-wrap justify-center gap-1 mt-2">
+          {#if isRevoked}
+            <span class="badge bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 font-medium">Revoked</span>
+          {/if}
           {#each node.inceptions as s}
             <span class="badge bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300">{s}</span>
           {/each}

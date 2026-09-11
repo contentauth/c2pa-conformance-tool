@@ -1,11 +1,12 @@
 <script lang="ts">
   import { onDestroy, onMount, tick } from 'svelte'
   import TreeNode from './TreeNode.svelte'
-  import type { OverviewNode, ConformanceReport, CrJsonManifestEntry } from './types'
+  import type { OverviewNode, ConformanceReport, CrJsonManifestEntry, CrJsonValidationResults } from './types'
   import type { SignalsRubricResult } from './rubrics/types'
-  import { getClaimInfo, getSignatureInfo } from './crjson'
+  import { getClaimInfo, getSignatureInfo, getManifestValidationStatus, type CrJsonValidationStatus } from './crjson'
   import { evaluateReportSignals } from './summarySignals'
   import { getSignerName } from './generateSummary'
+  import { VALIDATION_STATUS, isOcspNotRevokedCode, isOcspRevokedCode } from './constants'
 
   export let report: ConformanceReport
   export let file: File | null = null
@@ -337,9 +338,9 @@
       const resolvedThumbnailSrc = ingredientThumbnailSrc(v, m)
       // v1: c2pa_manifest is an object { url, alg, hash }
       // v2: active_manifest is a direct string (manifest label)
-      const manifestRef = (v.c2pa_manifest ?? v.activeManifest) as Record<string, unknown> | undefined
-      const activeManifestStr = v['active_manifest'] as string | undefined
-      const url = (manifestRef?.url as string | undefined) ?? (typeof activeManifestStr === 'string' ? activeManifestStr : undefined)
+      const manifestRef = (typeof v.activeManifest === 'object' ? v.activeManifest : v.c2pa_manifest) as Record<string, unknown> | undefined
+      const activeManifestStr = typeof v['active_manifest'] === 'string' ? v['active_manifest'] : (typeof v['activeManifest'] === 'string' ? (v['activeManifest'] as string) : undefined)
+      const url = (manifestRef?.url as string | undefined) ?? activeManifestStr
       if (!url) {
         // No manifest reference — ingredient has no Content Credentials
         out.push({ childIdx: null, relationship, stubTitle, stubFormat, thumbnailSrc: resolvedThumbnailSrc })
@@ -423,6 +424,20 @@
     const rawDate = sigInfo?.time
     const date = rawDate ? new Date(rawDate).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }) : undefined
 
+    const vStatus = getManifestValidationStatus(r, manifest, rootIdx === 0)
+    const mvr = manifest.validationResults as CrJsonValidationResults | undefined
+    const icaInfo = r._icaOcsp?.[manifest.label]
+    const isIcaRevoked = icaInfo?.status === 'revoked'
+    const isIcaGood = icaInfo?.status === 'good'
+
+    const isRevoked = (mvr?.failure?.some((f: CrJsonValidationStatus) => isOcspRevokedCode(f.code)) ?? false) ||
+      (vStatus?.failure?.some((f: CrJsonValidationStatus) => isOcspRevokedCode(f.code)) ?? false) ||
+      isIcaRevoked
+    const isOcspGood = (mvr?.success?.some((s: CrJsonValidationStatus) => isOcspNotRevokedCode(s.code)) ?? false) ||
+      (mvr?.informational?.some((s: CrJsonValidationStatus) => isOcspNotRevokedCode(s.code)) ?? false) ||
+      (vStatus?.success?.some((s: CrJsonValidationStatus) => isOcspNotRevokedCode(s.code)) ?? false) ||
+      (vStatus?.informational?.some((s: CrJsonValidationStatus) => isOcspNotRevokedCode(s.code)) ?? false)
+
     return {
       manifestIdx: rootIdx,
       claimGenerator: claimInfo.claim_generator_info?.[0]?.name ?? claimInfo.claim_generator,
@@ -436,6 +451,14 @@
       relationship: undefined,
       isStub: false,
       children,
+      isRevoked,
+      isOcspGood,
+      isIcaOcspGood: isIcaGood,
+      isFullChainOcsp: isOcspGood && (icaInfo ? isIcaGood : true),
+      icaName: icaInfo?.icaSubjectCn,
+      leafOcspStatus: isRevoked ? 'revoked' : isOcspGood ? 'good' : undefined,
+      icaOcspStatus: icaInfo?.status,
+      validationStatus: (manifest.validationResults as CrJsonValidationResults | undefined) ?? (vStatus ? { success: vStatus.success, failure: vStatus.failure, informational: vStatus.informational } : undefined),
     }
   }
 </script>

@@ -4,7 +4,15 @@
   import RubricsPanel from './RubricsPanel.svelte'
   import OverviewPanel from './OverviewPanel.svelte'
   import JsonViewer from './JsonViewer.svelte'
-  import type { ConformanceReport, ValidationStatusItem, AssertionSummaryItem, CrJsonManifestEntry, ManifestValidationGroup } from './types'
+import type {
+    ConformanceReport,
+    ValidationStatusItem,
+    AssertionSummaryItem,
+    CrJsonManifestEntry,
+    ManifestValidationGroup,
+    CrJsonValidationResults,
+  } from './types'
+  import type { CrJsonValidationStatus } from './crjson'
   import type { ManifestSignalsResult } from './rubrics/types'
   import {
     getAssertionsList,
@@ -13,10 +21,14 @@
     getClaimInfo,
     getActiveManifestValidationStatus,
     getAllValidationFailures,
-    getManifestValidationStatus
+    getAllValidationSuccesses,
+    getAllValidationInformational,
+    getManifestValidationStatus,
+    isReportOcspVerified,
+    isReportOcspRevoked
   } from './crjson'
   import { evaluateReportSignals } from './summarySignals'
-  import { VALIDATION_STATUS, VALIDATION_FAILURE_DESCRIPTIONS } from './constants'
+  import { VALIDATION_STATUS, VALIDATION_FAILURE_DESCRIPTIONS, isOcspNotRevokedCode, isOcspRevokedCode } from './constants'
 
   export let report: ConformanceReport
   export let usedTestCertificates = false
@@ -151,10 +163,24 @@
   // Get all validation failures from the report (including active and ingredients)
   $: failures = report ? getAllValidationFailures(report) : []
 
-  // Check if trusted from crJSON validationResults (must have trusted code AND no failures)
+  // Check if any certificate in the manifest store has been revoked via OCSP (leaf or ICA)
+  $: hasRevokedCert = isReportOcspRevoked(report) || Object.values(report?._icaOcsp ?? {}).some((ica) => ica.status === 'revoked')
+
+  // Check if OCSP notRevoked status exists anywhere in the report (active or any manifest, success or informational)
+  $: isOcspVerified = isReportOcspVerified(report)
+
+  // Check if full-chain (leaf + ICA) OCSP is verified across the report
+  $: isFullChainOcspVerified = (() => {
+    if (!isOcspVerified) return false
+    if (!report?._icaOcsp || Object.keys(report._icaOcsp).length === 0) return false
+    const icas = Object.values(report._icaOcsp)
+    return icas.length > 0 && icas.every((ica) => ica.status === 'good')
+  })()
+
+  // Check if trusted from crJSON validationResults (must have trusted code AND no failures AND not revoked)
   $: isTrusted = (validationResults?.success?.some((status) =>
     status.code === VALIDATION_STATUS.SIGNING_CREDENTIAL_TRUSTED
-  ) ?? false) && failures.length === 0
+  ) ?? false) && failures.length === 0 && !hasRevokedCert
 
   function getFailureDescription(code: string, explanation?: string): string {
     return VALIDATION_FAILURE_DESCRIPTIONS[code] ?? explanation ?? `Validation failed (Code: ${code})`
@@ -180,18 +206,24 @@
       const sigInfo = getSignatureInfo(m)
       const status = getManifestValidationStatus(report, m, isActive)
 
-      const success: ValidationStatusItem[] = status?.success?.filter((s) =>
+      const rawSuccessList = [
+        ...(status?.success ?? []),
+        ...(status?.informational?.filter((inf) => isOcspNotRevokedCode(inf.code)) ?? [])
+      ]
+
+      const success: ValidationStatusItem[] = rawSuccessList.filter((s) =>
         s.code === VALIDATION_STATUS.SIGNING_CREDENTIAL_TRUSTED ||
         s.code === VALIDATION_STATUS.TIMESTAMP_TRUSTED ||
         s.code === VALIDATION_STATUS.CLAIM_SIGNATURE_VALIDATED ||
-        s.code === 'timeStamp.validated'
+        s.code === 'timeStamp.validated' ||
+        isOcspNotRevokedCode(s.code)
       ).map((s) => {
         const isInterim = s.code === VALIDATION_STATUS.SIGNING_CREDENTIAL_TRUSTED && usedITL
         return {
           code: s.code,
           success: true,
           isInterim,
-          explanation: s.explanation ?? 'Validation passed'
+          explanation: s.explanation ?? (isOcspNotRevokedCode(s.code) ? 'Certificate active (not revoked) via OCSP' : 'Validation passed')
         }
       }) ?? []
 
@@ -202,7 +234,7 @@
         explanation: getFailureDescription(f.code, f.explanation)
       })) ?? []
 
-      const informational: ValidationStatusItem[] = status?.informational?.map((inf) => ({
+      const informational: ValidationStatusItem[] = status?.informational?.filter((inf) => !isOcspNotRevokedCode(inf.code)).map((inf) => ({
         code: inf.code,
         success: true,
         isInformational: true,
@@ -241,9 +273,9 @@
     const failure = validationResults.failure ?? []
     const success = validationResults.success ?? []
     const info = validationResults.informational ?? []
-    if (failure.some((s) => s.code === VALIDATION_STATUS.SIGNING_CREDENTIAL_OCSP_REVOKED))
+    if (hasRevokedCert || failure.some((s) => isOcspRevokedCode(s.code)))
       return 'revoked' as const
-    if (success.some((s) => s.code === VALIDATION_STATUS.SIGNING_CREDENTIAL_OCSP_NOT_REVOKED))
+    if (isOcspVerified || success.some((s) => isOcspNotRevokedCode(s.code)) || info.some((s) => isOcspNotRevokedCode(s.code)))
       return 'not_revoked' as const
     if (info.some((s) => s.code === VALIDATION_STATUS.SIGNING_CREDENTIAL_OCSP_INACCESSIBLE))
       return 'inaccessible' as const
@@ -515,7 +547,9 @@
               Signature Trusted
             {/if}
           {:else}
-            {#if failures.length > 0}
+            {#if hasRevokedCert}
+              Signature Not Trusted — Certificate Revoked ✕
+            {:else if failures.length > 0}
               Validation Failed ✕
             {:else}
               Signature Not Trusted
@@ -524,7 +558,7 @@
         </h3>
         <div class="text-sm {isTrusted ? 'text-green-700 dark:text-gray-300' : 'text-red-700 dark:text-gray-300'}">
           {#if usedITL && isTrusted}
-            Validated using Interim Trust List 
+            Validated using Interim Trust List{#if isFullChainOcspVerified}{' '}and verified active (not revoked) via Full-Chain OCSP{:else if isOcspVerified}{' '}and verified active (not revoked) via OCSP{/if}
             <a
               href="https://c2pa.org/conformance/"
               target="_blank"
@@ -536,9 +570,9 @@
               What is the ITL?
             </a>
           {:else if actuallyUsedTestCert && isTrusted}
-            Validated using custom test certificates - not validated against official C2PA trust lists
+            Validated using custom test certificates{#if isFullChainOcspVerified}{' '}and verified active (not revoked) via Full-Chain OCSP{:else if isOcspVerified}{' '}and verified active (not revoked) via OCSP{/if} - not validated against official C2PA trust lists
           {:else if isTrusted}
-            Validated against official C2PA Trust List
+            Validated against official C2PA Trust List{#if isFullChainOcspVerified}{' '}and verified active (not revoked) via Full-Chain OCSP{:else if isOcspVerified}{' '}and verified active (not revoked) via OCSP{/if}
           {:else}
             {#if failures.length > 0}
               <span class="font-semibold">Validation failed with the following errors:</span>
@@ -558,19 +592,31 @@
             {/if}
           {/if}
         </div>
-        {#if usedITL && isTrusted}
+        {#if (usedITL || actuallyUsedTestCert || isOcspVerified) && isTrusted}
           <div class="mt-2 flex items-center gap-2 flex-wrap">
-            <span class="inline-flex items-center gap-2 px-4 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 rounded-full text-xs font-semibold">
-              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0" /><path d="M12 9h.01" /><path d="M11 12h1v4h1" /></svg>
-              ITL Validated
-            </span>
-          </div>
-        {:else if actuallyUsedTestCert && isTrusted}
-          <div class="mt-2">
-            <span class="inline-flex items-center gap-2 px-4 py-1 bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-300 rounded-full text-xs font-semibold">
-              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 9v4" /><path d="M10.363 3.591l-8.106 13.534a1.914 1.914 0 0 0 1.636 2.871h16.214a1.914 1.914 0 0 0 1.636 -2.87l-8.106 -13.536a1.914 1.914 0 0 0 -3.274 0z" /><path d="M12 16h.01" /></svg>
-              Test Mode
-            </span>
+            {#if usedITL}
+              <span class="inline-flex items-center gap-2 px-4 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 rounded-full text-xs font-semibold">
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0" /><path d="M12 9h.01" /><path d="M11 12h1v4h1" /></svg>
+                ITL Validated
+              </span>
+            {/if}
+            {#if actuallyUsedTestCert}
+              <span class="inline-flex items-center gap-2 px-4 py-1 bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-300 rounded-full text-xs font-semibold">
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 9v4" /><path d="M10.363 3.591l-8.106 13.534a1.914 1.914 0 0 0 1.636 2.871h16.214a1.914 1.914 0 0 0 1.636 -2.87l-8.106 -13.536a1.914 1.914 0 0 0 -3.274 0z" /><path d="M12 16h.01" /></svg>
+                Test Mode
+              </span>
+            {/if}
+            {#if isFullChainOcspVerified}
+              <span class="inline-flex items-center gap-1.5 px-3 py-1 bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-300 rounded-full text-xs font-semibold" title="Both leaf signer and issuing CA certificates verified active via live OCSP">
+                <svg class="w-3.5 h-3.5 text-green-600 dark:text-green-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M5 12l5 5l10 -10"/></svg>
+                Full-Chain OCSP Verified
+              </span>
+            {:else if isOcspVerified}
+              <span class="inline-flex items-center gap-1.5 px-3 py-1 bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-300 rounded-full text-xs font-semibold" title="Signer certificate verified active via live OCSP">
+                <svg class="w-3.5 h-3.5 text-green-600 dark:text-green-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M5 12l5 5l10 -10"/></svg>
+                OCSP Verified (Not Revoked)
+              </span>
+            {/if}
           </div>
         {/if}
       </div>
@@ -899,6 +945,42 @@
                       </div>
                     {/each}
 
+                    <!-- Issuing CA Live OCSP Status -->
+                    {#if report?._icaOcsp?.[group.label]}
+                      {@const icaInfo = report._icaOcsp[group.label]}
+                      {#if icaInfo.status === 'good'}
+                        <div class="rounded-2xl p-4 border bg-green-50/50 dark:bg-gray-900/30 border-green-100 dark:border-green-900/30 text-green-800 dark:text-green-300">
+                          <div class="flex items-start gap-4">
+                            <span class="flex-shrink-0 w-5 h-5 rounded-full bg-green-700 dark:bg-green-800 text-white flex items-center justify-center text-xs font-bold">✓</span>
+                            <div class="flex-1 text-left">
+                              <div class="flex items-center gap-2 flex-wrap">
+                                <span class="font-bold text-xs font-mono">issuingCA.ocsp.notRevoked</span>
+                                <span class="badge bg-green-100 dark:bg-green-900/50 text-green-800 dark:text-green-300 text-[10px]">Issuing CA</span>
+                              </div>
+                              <p class="text-sm leading-relaxed mt-1 text-green-700 dark:text-green-400">
+                                Issuing CA {icaInfo.icaSubjectCn ? `(${icaInfo.icaSubjectCn})` : ''} verified active (not revoked) via live OCSP{#if icaInfo.responderUrl} &mdash; responder: <span class="font-mono text-xs">{icaInfo.responderUrl}</span>{/if}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      {:else if icaInfo.status === 'revoked'}
+                        <div class="rounded-2xl p-4 border bg-red-50/50 dark:bg-gray-900/30 border-red-100 dark:border-red-900/30 text-red-800 dark:text-red-300">
+                          <div class="flex items-start gap-4">
+                            <span class="flex-shrink-0 w-5 h-5 rounded-full bg-red-600 dark:bg-red-800 text-white flex items-center justify-center text-xs font-bold">✕</span>
+                            <div class="flex-1 text-left">
+                              <div class="flex items-center gap-2 flex-wrap">
+                                <span class="font-bold text-xs font-mono">issuingCA.ocsp.revoked</span>
+                                <span class="badge bg-red-100 dark:bg-red-900/50 text-red-800 dark:text-red-300 text-[10px]">Issuing CA</span>
+                              </div>
+                              <p class="text-sm leading-relaxed mt-1 text-red-700 dark:text-red-400">
+                                Issuing CA {icaInfo.icaSubjectCn ? `(${icaInfo.icaSubjectCn})` : ''} has been REVOKED via live OCSP{#if icaInfo.revokedAt} (revoked at: {icaInfo.revokedAt}){/if}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      {/if}
+                    {/if}
+
                     <!-- Informationals -->
                     {#each group.informational as status}
                       <div class="rounded-2xl p-4 border bg-blue-100 dark:bg-gray-900/30 border-blue-100 dark:border-blue-900/30 text-blue-800 dark:text-blue-300">
@@ -967,14 +1049,14 @@
                 </div>
               {/if}
 
-              <!-- OCSP Revocation Status -->
+              <!-- Leaf Signer OCSP Revocation Status -->
               {#if ocspStatus !== 'unknown'}
                 <div class="bg-gray-50 dark:bg-gray-900 rounded-2xl p-4">
-                  <div class="text-xs font-semibold text-gray-500 dark:text-gray-500 uppercase tracking-wide mb-2">OCSP Revocation</div>
+                  <div class="text-xs font-semibold text-gray-500 dark:text-gray-500 uppercase tracking-wide mb-2">Leaf Signer Revocation (OCSP)</div>
                   {#if ocspStatus === 'not_revoked'}
                     <div class="flex items-center gap-2">
                       <svg class="w-4 h-4 text-green-600 dark:text-green-300 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0" /><path d="M9 12l2 2l4 -4" /></svg>
-                      <span class="text-sm font-medium text-green-700 dark:text-green-300">Not revoked</span>
+                      <span class="text-sm font-medium text-green-700 dark:text-green-300">Not revoked (live verified)</span>
                     </div>
                   {:else if ocspStatus === 'revoked'}
                     <div class="flex items-center gap-2">
@@ -993,6 +1075,47 @@
                     </div>
                   {/if}
                 </div>
+              {/if}
+
+              <!-- Issuing CA Information & OCSP Status -->
+              {#if activeManifest && report?._icaOcsp?.[activeManifest.label]}
+                {@const activeIca = report._icaOcsp[activeManifest.label]}
+                {#if activeIca.icaSubjectCn}
+                  <div class="bg-gray-50 dark:bg-gray-900 rounded-2xl p-4">
+                    <div class="text-xs font-semibold text-gray-500 dark:text-gray-500 uppercase tracking-wide mb-2">Issuing CA</div>
+                    <p class="text-sm font-medium text-[#1e293b] dark:text-gray-100 break-all">{activeIca.icaSubjectCn}</p>
+                  </div>
+                {/if}
+                {#if activeIca.status}
+                  <div class="bg-gray-50 dark:bg-gray-900 rounded-2xl p-4">
+                    <div class="text-xs font-semibold text-gray-500 dark:text-gray-500 uppercase tracking-wide mb-2">Issuing CA Revocation (OCSP)</div>
+                    {#if activeIca.status === 'good'}
+                      <div class="flex items-center gap-2">
+                        <svg class="w-4 h-4 text-green-600 dark:text-green-300 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0" /><path d="M9 12l2 2l4 -4" /></svg>
+                        <span class="text-sm font-medium text-green-700 dark:text-green-300">Not revoked (live verified)</span>
+                      </div>
+                      {#if activeIca.responderUrl || activeIca.responder_url}
+                        <p class="text-xs text-gray-400 font-mono truncate mt-1" title={activeIca.responderUrl || activeIca.responder_url}>
+                          {activeIca.responderUrl || activeIca.responder_url}
+                        </p>
+                      {/if}
+                    {:else if activeIca.status === 'revoked'}
+                      <div class="flex items-center gap-2">
+                        <svg class="w-4 h-4 text-red-600 dark:text-red-300 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0" /><path d="M10 10l4 4m0 -4l-4 4" /></svg>
+                        <span class="text-sm font-medium text-red-700 dark:text-red-300">Revoked</span>
+                      </div>
+                    {:else if activeIca.status === 'inaccessible'}
+                      <div class="flex items-center gap-2">
+                        <svg class="w-4 h-4 text-amber-500 dark:text-amber-300 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 9v4" /><path d="M10.363 3.591l-8.106 13.534a1.914 1.914 0 0 0 1.636 2.871h16.214a1.914 1.914 0 0 0 1.636 -2.87l-8.106 -13.536a1.914 1.914 0 0 0 -3.274 0z" /><path d="M12 16h.01" /></svg>
+                        <span class="text-sm font-medium text-amber-700 dark:text-amber-300">OCSP server inaccessible</span>
+                      </div>
+                    {:else}
+                      <div class="flex items-center gap-2">
+                        <span class="text-sm font-medium text-gray-600 dark:text-gray-400 capitalize">{activeIca.status}</span>
+                      </div>
+                    {/if}
+                  </div>
+                {/if}
               {/if}
             </div>
           </section>

@@ -4,6 +4,8 @@
  * Legacy (Reader.json()) format is converted to crJSON only when received from the packaged SDK.
  */
 
+import { isOcspNotRevokedCode, isOcspRevokedCode } from './constants'
+
 /** Validation status entry in crJSON (code, optional url, explanation) */
 export interface CrJsonValidationStatus {
   code: string
@@ -177,26 +179,43 @@ export function getAssertionDataByLabel(m: CrJsonManifestEntry, label: string): 
   return assertions[label]
 }
 
-/**
- * Get validation status for the active manifest from crJSON.
- * - Document-level (legacy/SDK): report.validationResults.activeManifest
- * - Per-manifest (c2pa-rs crJSON): report.manifests[0].validationResults (status codes directly)
- */
-export function getActiveManifestValidationStatus(report: CrJson): CrJsonActiveManifestStatus | undefined {
-  const docLevel = report.validationResults?.activeManifest
-  if (docLevel && (docLevel.success?.length ?? 0) + (docLevel.failure?.length ?? 0) + (docLevel.informational?.length ?? 0) > 0) {
-    return docLevel
-  }
-  const firstManifest = report.manifests?.[0]
-  const perManifest = firstManifest?.validationResults as CrJsonValidationResults | undefined
-  if (perManifest && (perManifest.success?.length ?? 0) + (perManifest.failure?.length ?? 0) + (perManifest.informational?.length ?? 0) > 0) {
-    return {
-      success: perManifest.success,
-      informational: perManifest.informational,
-      failure: perManifest.failure
+function mergeStatusLists(
+  ...lists: Array<CrJsonValidationStatus[] | undefined>
+): CrJsonValidationStatus[] {
+  const combined: CrJsonValidationStatus[] = []
+  const seen = new Set<string>()
+  for (const list of lists) {
+    if (!list) continue
+    for (const item of list) {
+      if (item && item.code && !seen.has(item.code)) {
+        seen.add(item.code)
+        combined.push(item)
+      }
     }
   }
-  return docLevel ?? (perManifest ? { success: perManifest.success, informational: perManifest.informational, failure: perManifest.failure } : undefined)
+  return combined
+}
+
+/**
+ * Get validation status for the active manifest from crJSON.
+ * Merges per-manifest status and document-level status, deduplicated by code.
+ */
+export function getActiveManifestValidationStatus(report: CrJson): CrJsonActiveManifestStatus | undefined {
+  const activeLabel = (report.active_manifest ?? report.activeManifest) as string | undefined
+  const activeManifest = (activeLabel ? report.manifests?.find(m => m.label === activeLabel) : undefined) ?? report.manifests?.[0]
+  const perManifest = activeManifest?.validationResults as CrJsonValidationResults | undefined
+  const docLevel = report.validationResults?.activeManifest
+  const flatLevel = report.validationResults
+
+  const success = mergeStatusLists(perManifest?.success, docLevel?.success, flatLevel?.success)
+  const failure = mergeStatusLists(perManifest?.failure, docLevel?.failure, flatLevel?.failure)
+  const informational = mergeStatusLists(perManifest?.informational, docLevel?.informational, flatLevel?.informational)
+
+  if (success.length + failure.length + informational.length === 0) {
+    return undefined
+  }
+
+  return { success, failure, informational }
 }
 
 /**
@@ -238,45 +257,164 @@ export function getAllValidationFailures(report: CrJson): CrJsonValidationStatus
 }
 
 /**
+ * Get all validation successes from the report, including document-level,
+ * active manifest, and all ingredient manifests.
+ */
+export function getAllValidationSuccesses(report: CrJson): CrJsonValidationStatus[] {
+  const successes: CrJsonValidationStatus[] = []
+
+  // 1. Document-level successes
+  if (report.validationResults?.success) {
+    successes.push(...report.validationResults.success)
+  }
+  if (report.validationResults?.activeManifest?.success) {
+    successes.push(...report.validationResults.activeManifest.success)
+  }
+
+  // 2. Per-manifest successes (active and ingredients)
+  if (report.manifests) {
+    for (const manifest of report.manifests) {
+      const perManifest = manifest.validationResults as CrJsonValidationResults | undefined
+      if (perManifest?.success) {
+        successes.push(...perManifest.success)
+      }
+    }
+  }
+
+  // De-duplicate by code
+  const uniqueSuccesses: CrJsonValidationStatus[] = []
+  const seenCodes = new Set<string>()
+  for (const s of successes) {
+    if (s?.code && !seenCodes.has(s.code)) {
+      seenCodes.add(s.code)
+      uniqueSuccesses.push(s)
+    }
+  }
+
+  return uniqueSuccesses
+}
+
+/**
  * Get validation status for a specific manifest from crJSON.
- * - Supports per-manifest results (native crJSON) on `m.validationResults`.
- * - Fallback to document-level results (legacy) for the active manifest (isFirst = true).
+ * Merges per-manifest status and document-level status (if active/first), deduplicated by code.
  */
 export function getManifestValidationStatus(
   report: CrJson,
   m: CrJsonManifestEntry,
   isFirst: boolean
 ): CrJsonActiveManifestStatus | undefined {
-  // 1. Try per-manifest status (c2pa-rs style crJSON)
   const perManifest = m.validationResults as CrJsonValidationResults | undefined
-  if (perManifest && (perManifest.success?.length ?? 0) + (perManifest.failure?.length ?? 0) + (perManifest.informational?.length ?? 0) > 0) {
-    return {
-      success: perManifest.success,
-      informational: perManifest.informational,
-      failure: perManifest.failure
+  const docLevel = isFirst ? report.validationResults?.activeManifest : undefined
+  const flatLevel = isFirst ? report.validationResults : undefined
+
+  const success = mergeStatusLists(perManifest?.success, docLevel?.success, flatLevel?.success)
+  const failure = mergeStatusLists(perManifest?.failure, docLevel?.failure, flatLevel?.failure)
+  const informational = mergeStatusLists(perManifest?.informational, docLevel?.informational, flatLevel?.informational)
+
+  if (success.length + failure.length + informational.length === 0) {
+    return undefined
+  }
+
+  return { success, failure, informational }
+}
+
+/**
+ * Get all validation informational statuses from the report, including document-level,
+ * active manifest, and all ingredient manifests.
+ */
+export function getAllValidationInformational(report: CrJson): CrJsonValidationStatus[] {
+  const informational: CrJsonValidationStatus[] = []
+
+  if (report.validationResults?.informational) {
+    informational.push(...report.validationResults.informational)
+  }
+  if (report.validationResults?.activeManifest?.informational) {
+    informational.push(...report.validationResults.activeManifest.informational)
+  }
+
+  if (report.manifests) {
+    for (const manifest of report.manifests) {
+      const perManifest = manifest.validationResults as CrJsonValidationResults | undefined
+      if (perManifest?.informational) {
+        informational.push(...perManifest.informational)
+      }
     }
   }
 
-  // 2. Fallback to document-level for active manifest (legacy)
-  if (isFirst) {
-    const docLevel = report.validationResults?.activeManifest
-    if (docLevel && (docLevel.success?.length ?? 0) + (docLevel.failure?.length ?? 0) + (docLevel.informational?.length ?? 0) > 0) {
-      return docLevel
+  const uniqueInformational: CrJsonValidationStatus[] = []
+  const seenCodes = new Set<string>()
+  for (const s of informational) {
+    if (s?.code && !seenCodes.has(s.code)) {
+      seenCodes.add(s.code)
+      uniqueInformational.push(s)
     }
-    // If legacy has it flat at root
-    if (report.validationResults) {
-      const vr = report.validationResults
-      if ((vr.success?.length ?? 0) + (vr.failure?.length ?? 0) + (vr.informational?.length ?? 0) > 0) {
-        return {
-          success: vr.success,
-          informational: vr.informational,
-          failure: vr.failure
+  }
+
+  return uniqueInformational
+}
+
+/**
+ * Checks whether any manifest or document-level validation in the report
+ * contains a valid OCSP not-revoked status (in success or informational).
+ */
+export function isReportOcspVerified(report?: CrJson): boolean {
+  if (!report) return false
+
+  const activeStatus = getActiveManifestValidationStatus(report)
+  if (activeStatus?.success?.some((s) => isOcspNotRevokedCode(s.code))) return true
+  if (activeStatus?.informational?.some((s) => isOcspNotRevokedCode(s.code))) return true
+
+  const allSuccess = getAllValidationSuccesses(report)
+  if (allSuccess.some((s) => isOcspNotRevokedCode(s.code))) return true
+
+  const allInfo = getAllValidationInformational(report)
+  if (allInfo.some((s) => isOcspNotRevokedCode(s.code))) return true
+
+  if (report.manifests) {
+    for (const m of report.manifests) {
+      const vr = m.validationResults as CrJsonValidationResults | undefined
+      if (vr?.success?.some((s) => isOcspNotRevokedCode(s.code))) return true
+      if (vr?.informational?.some((s) => isOcspNotRevokedCode(s.code))) return true
+
+      if (m.assertions) {
+        for (const assertion of Object.values(m.assertions)) {
+          if (assertion && typeof assertion === 'object') {
+            const data = (assertion as { data?: any }).data ?? assertion
+            const vrIng = data?.validationResults
+            if (vrIng?.activeManifest?.success?.some((s: any) => isOcspNotRevokedCode(s?.code))) return true
+            if (vrIng?.activeManifest?.informational?.some((s: any) => isOcspNotRevokedCode(s?.code))) return true
+            if (vrIng?.success?.some((s: any) => isOcspNotRevokedCode(s?.code))) return true
+            if (vrIng?.informational?.some((s: any) => isOcspNotRevokedCode(s?.code))) return true
+          }
         }
       }
     }
   }
 
-  return undefined
+  return false
+}
+
+/**
+ * Checks whether any manifest or document-level validation in the report
+ * contains an OCSP revoked status (in failure).
+ */
+export function isReportOcspRevoked(report?: CrJson): boolean {
+  if (!report) return false
+
+  const activeStatus = getActiveManifestValidationStatus(report)
+  if (activeStatus?.failure?.some((f) => isOcspRevokedCode(f.code))) return true
+
+  const failures = getAllValidationFailures(report)
+  if (failures.some((f) => isOcspRevokedCode(f.code))) return true
+
+  if (report.manifests) {
+    for (const m of report.manifests) {
+      const vr = m.validationResults as CrJsonValidationResults | undefined
+      if (vr?.failure?.some((f) => isOcspRevokedCode(f.code))) return true
+    }
+  }
+
+  return false
 }
 
 

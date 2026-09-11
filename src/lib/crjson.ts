@@ -37,6 +37,7 @@ export interface CrJsonManifestEntry {
   'claim.v2'?: Record<string, unknown>
   signature?: Record<string, unknown>
   status?: Record<string, unknown>
+  validationResults?: CrJsonValidationResults
   [key: string]: unknown
 }
 

@@ -3,8 +3,8 @@ import type { Config, Context } from '@netlify/functions'
 export default async (req: Request, _context: Context): Promise<Response> => {
   const corsHeaders = {
     'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Headers': 'Content-Type, X-OCSP-Responder-URL',
-    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+    'Access-Control-Allow-Headers': '*',
+    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS, HEAD',
   }
 
   if (req.method === 'OPTIONS') {
@@ -12,7 +12,14 @@ export default async (req: Request, _context: Context): Promise<Response> => {
   }
 
   const urlObj = new URL(req.url)
-  const responderUrl = urlObj.searchParams.get('url') || req.headers.get('x-ocsp-responder-url')
+  let responderUrl: string | null = null
+  if (req.url.includes('?url=')) {
+    const rawParam = req.url.slice(req.url.indexOf('?url=') + 5)
+    responderUrl = decodeURIComponent(rawParam.replace(/\+/g, '%2B'))
+  } else {
+    responderUrl = urlObj.searchParams.get('url') || req.headers.get('x-ocsp-responder-url')
+  }
+
   if (!responderUrl) {
     return new Response(JSON.stringify({ error: 'Missing responder URL parameter (?url=...)' }), {
       status: 400,

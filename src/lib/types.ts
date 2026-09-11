@@ -4,6 +4,7 @@
  */
 
 import type { CrJson, CrJsonSignatureInfo } from './crjson'
+import type { ManifestCertificateGroup, ParsedCertificateItem } from './ocsp/types'
 
 export type {
   CrJson,
@@ -15,10 +16,20 @@ export type {
   CrJsonClaimInfo
 } from './crjson'
 
+export type {
+  ParsedCertificateItem,
+  OcspResponseData,
+  ManifestCertificateGroup,
+  OcspBatchSummary,
+  OcspCertStatus
+} from './ocsp/types'
+
 /** Report returned by processFile: crJSON (native format) plus conformance-tool metadata */
 export interface ConformanceReport extends CrJson {
   usedITL?: boolean
   usedTestCerts?: boolean
+  extractedCertificates?: ManifestCertificateGroup[]
+  allCertificates?: ParsedCertificateItem[]
   _conformanceToolVersion?: {
     commit: string
     shortCommit: string

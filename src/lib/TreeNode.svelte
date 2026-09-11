@@ -1,11 +1,24 @@
 <script lang="ts">
-  import type { OverviewNode } from './types'
+  import type { OverviewNode, OcspResponseData } from './types'
 
   export let node: OverviewNode
   export let onZoom: ((idx: number) => void) | undefined = undefined
   export let isRoot = false
   export let fileSrc: string | undefined = undefined
   export let fileMimeType: string | undefined = undefined
+  export let ocspStatusMap: Map<string, OcspResponseData> | undefined = undefined
+
+  $: isRevoked = (() => {
+    if (!ocspStatusMap || node.isStub) return false
+    for (const [id, data] of ocspStatusMap.entries()) {
+      if (data.status === 'revoked') {
+        // Match either root index or ingredient index
+        if (node.manifestIdx === 0 && id.includes('signer')) return true
+        if (id.includes(`Ingredient ${node.manifestIdx}`) || id.includes(`${node.manifestIdx}`)) return true
+      }
+    }
+    return false
+  })()
 
   const BROWSER_PREVIEWABLE_IMAGES = new Set([
     'image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp',
@@ -124,6 +137,14 @@
       </div>
     {/if}
 
+    <!-- Top-right Revocation badge if revoked -->
+    {#if isRevoked}
+      <div class="absolute top-2 right-2 flex items-center gap-1 bg-red-600 text-white backdrop-blur-sm rounded-lg px-2 py-0.5 shadow-sm text-xs font-bold animate-pulse">
+        <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6l-12 12"/><path d="M6 6l12 12"/></svg>
+        <span>Revoked</span>
+      </div>
+    {/if}
+
     <!-- Hover overlay for non-root -->
     {#if !isRoot && !node.isStub}
       <div class="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors pointer-events-none rounded-2xl"></div>
@@ -203,7 +224,7 @@
     <div class="flex flex-row">
       {#each node.children as child, i}
         <div class="flex flex-col items-center px-4" bind:clientWidth={colWidths[i]}>
-          <svelte:self node={child} {onZoom} isRoot={false} />
+          <svelte:self node={child} {onZoom} {ocspStatusMap} isRoot={false} />
         </div>
       {/each}
     </div>

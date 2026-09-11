@@ -18,6 +18,7 @@ export type {
 export interface IcaOcspInfo {
   status: 'good' | 'revoked' | 'unknown' | 'inaccessible' | 'no_responder' | 'untrusted_root' | 'root_ca'
   responderUrl?: string
+  responder_url?: string
   icaSubjectCn?: string
   icaIssuerCn?: string
   serialNumber?: string

@@ -3,7 +3,7 @@
  * Report format is crJSON (native) + conformance-tool metadata.
  */
 
-import type { CrJson, CrJsonSignatureInfo } from './crjson'
+import type { CrJson, CrJsonSignatureInfo, CrJsonValidationResults } from './crjson'
 
 export type {
   CrJson,
@@ -15,12 +15,25 @@ export type {
   CrJsonClaimInfo
 } from './crjson'
 
+export interface IcaOcspInfo {
+  status: 'good' | 'revoked' | 'unknown' | 'inaccessible' | 'no_responder' | 'untrusted_root' | 'root_ca'
+  responderUrl?: string
+  icaSubjectCn?: string
+  icaIssuerCn?: string
+  serialNumber?: string
+  thisUpdate?: string
+  nextUpdate?: string
+  revokedAt?: string
+  revocationReason?: string
+}
+
 /** Report returned by processFile: crJSON (native format) plus conformance-tool metadata */
 export interface ConformanceReport extends CrJson {
   usedITL?: boolean
   usedTestCerts?: boolean
   fetchedRemoteManifest?: boolean
   remoteManifestUrl?: string
+  _icaOcsp?: Record<string, IcaOcspInfo>
   _conformanceToolVersion?: {
     commit: string
     shortCommit: string
@@ -53,6 +66,14 @@ export interface OverviewNode {
   relationship?: string
   isStub?: boolean
   children: OverviewNode[]
+  isRevoked?: boolean
+  isOcspGood?: boolean
+  isIcaOcspGood?: boolean
+  isFullChainOcsp?: boolean
+  icaName?: string
+  leafOcspStatus?: string
+  icaOcspStatus?: string
+  validationStatus?: CrJsonValidationResults
 }
 
 /** Node in the ingredient provenance tree */

@@ -14,9 +14,26 @@ import type { Plugin } from 'vite'
 import type { IncomingMessage, ServerResponse } from 'node:http'
 
 function ocspProxyMiddleware(req: IncomingMessage, res: ServerResponse) {
-  const urlParam = new URL(req.url || '', 'http://localhost').searchParams.get('url')
+  if (req.method === 'OPTIONS') {
+    res.statusCode = 200
+    res.setHeader('Access-Control-Allow-Origin', '*')
+    res.setHeader('Access-Control-Allow-Headers', '*')
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, HEAD')
+    res.end()
+    return
+  }
+
+  let urlParam = ''
+  if (req.url && req.url.includes('?url=')) {
+    const rawParam = req.url.slice(req.url.indexOf('?url=') + 5)
+    urlParam = decodeURIComponent(rawParam.replace(/\+/g, '%2B'))
+  } else {
+    urlParam = new URL(req.url || '', 'http://localhost').searchParams.get('url') || ''
+  }
+
   if (!urlParam) {
     res.statusCode = 400
+    res.setHeader('Access-Control-Allow-Origin', '*')
     res.end('Missing ?url= parameter')
     return
   }

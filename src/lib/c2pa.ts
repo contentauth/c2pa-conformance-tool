@@ -1,7 +1,8 @@
 import { VERSION_INFO } from './version'
-import type { ConformanceReport } from './types'
+import type { ConformanceReport, IcaOcspInfo } from './types'
 import { VALIDATION_STATUS } from './constants'
 import { isCrJson, legacyToCrJson, getActiveManifestValidationStatus, type CrJson } from './crjson'
+import { X509Certificate } from '@peculiar/x509'
 
 // Trust/verify settings passed to the local WASM read functions.
 type Settings = {
@@ -26,12 +27,29 @@ type LocalC2paModule = {
     uri: string,
     settingsJson?: string,
   ) => Promise<Uint8Array>
+  set_ocsp_proxy_endpoint?: (url: string) => void
+  extract_manifest_certificates?: (
+    fileBytes: Uint8Array,
+    format: string,
+    settingsJson?: string,
+  ) => Promise<string>
+  extract_sidecar_manifest_certificates?: (
+    manifestBytes: Uint8Array,
+    assetBytes: Uint8Array,
+    assetFormat: string,
+    settingsJson?: string,
+  ) => Promise<string>
+  check_ica_ocsp?: (
+    icaPem: string,
+    rootsPem: string,
+  ) => Promise<string>
 }
 
 type ExtractedCrJsonResult = {
   crJson: CrJson
   usedITL: boolean
   usedTestCerts: boolean
+  icaOcsp?: Record<string, IcaOcspInfo>
 }
 
 const importModule = new Function('modulePath', 'return import(modulePath)') as (modulePath: string) => Promise<LocalC2paModule>
@@ -71,30 +89,27 @@ const DEFAULT_TRUST_CONFIG = [
   '1.3.6.1.4.1.62558.2.1',     // C2PA claim signing
 ].join('\n')
 
-function toLocalSettingsJson(settings?: Settings): string | undefined {
-  if (!settings) {
-    return undefined
-  }
-
+function toLocalSettingsJson(settings?: Settings): string {
   const localSettings = {
     verify: {
-      verify_after_reading: settings.verify?.verifyAfterReading ?? true,
-      verify_trust: settings.verify?.verifyTrust ?? true,
+      verify_after_reading: settings?.verify?.verifyAfterReading ?? true,
+      verify_trust: settings?.verify?.verifyTrust ?? true,
       // Never let c2pa-rs auto-fetch remote manifests: doing so would silently reveal
       // the validating user's IP address and the fact they're inspecting this file to
       // a third-party host, with no consent. We surface remote references instead and
       // fetch them ourselves only after the user explicitly opts in (see
       // processRemoteManifest).
       remote_manifest_fetch: false,
+      ocsp_fetch: true,
     },
-    trust: (settings.trust?.trustAnchors || settings.trust?.allowedList)
+    trust: (settings?.trust?.trustAnchors || settings?.trust?.allowedList)
       ? {
-          ...(settings.trust.trustAnchors ? { trust_anchors: settings.trust.trustAnchors } : {}),
-          ...(settings.trust.allowedList ? { allowed_list: settings.trust.allowedList } : {}),
+          ...(settings?.trust?.trustAnchors ? { trust_anchors: settings.trust.trustAnchors } : {}),
+          ...(settings?.trust?.allowedList ? { allowed_list: settings.trust.allowedList } : {}),
           trust_config: DEFAULT_TRUST_CONFIG,
         }
       : undefined,
-    ...(settings.softBindingAlgorithms?.length
+    ...(settings?.softBindingAlgorithms?.length
       ? { soft_binding: { soft_binding_algorithms: settings.softBindingAlgorithms } }
       : {}),
   }
@@ -116,6 +131,14 @@ type C2paInstance = {
     ) => Promise<ReaderHandle | null>
   }
   getVersion: () => string
+  extractCertificates?: (format: string, file: Blob, settings?: Settings) => Promise<any>
+  extractSidecarCertificates?: (
+    sidecarBytes: Uint8Array,
+    assetFormat: string,
+    assetFile: Blob,
+    settings?: Settings,
+  ) => Promise<any>
+  checkIcaOcsp?: (icaPem: string, rootsPem: string) => Promise<IcaOcspInfo>
 }
 
 type ReaderHandle = {
@@ -179,6 +202,46 @@ function buildC2paFromModule(localModule: LocalC2paModule): C2paInstance {
         : {}),
     },
     getVersion: () => localModule.get_version(),
+    ...(typeof localModule.extract_manifest_certificates === 'function'
+      ? {
+          extractCertificates: async (format: string, file: Blob, settings?: Settings) => {
+            const fileBytes = new Uint8Array(await file.arrayBuffer())
+            const json = await localModule.extract_manifest_certificates!(
+              fileBytes,
+              format,
+              toLocalSettingsJson(settings),
+            )
+            return JSON.parse(json)
+          },
+        }
+      : {}),
+    ...(typeof localModule.extract_sidecar_manifest_certificates === 'function'
+      ? {
+          extractSidecarCertificates: async (
+            sidecarBytes: Uint8Array,
+            assetFormat: string,
+            assetFile: Blob,
+            settings?: Settings,
+          ) => {
+            const assetBytes = new Uint8Array(await assetFile.arrayBuffer())
+            const json = await localModule.extract_sidecar_manifest_certificates!(
+              sidecarBytes,
+              assetBytes,
+              assetFormat,
+              toLocalSettingsJson(settings),
+            )
+            return JSON.parse(json)
+          },
+        }
+      : {}),
+    ...(typeof localModule.check_ica_ocsp === 'function'
+      ? {
+          checkIcaOcsp: async (icaPem: string, rootsPem: string): Promise<IcaOcspInfo> => {
+            const json = await localModule.check_ica_ocsp!(icaPem, rootsPem)
+            return JSON.parse(json) as IcaOcspInfo
+          },
+        }
+      : {}),
   }
 }
 
@@ -197,6 +260,14 @@ async function createLocalC2pa(): Promise<C2paInstance | null> {
 
     const localModule = await importModule(moduleUrl)
     await localModule.default()
+
+    if (typeof localModule.set_ocsp_proxy_endpoint === 'function') {
+      const origin = typeof window !== 'undefined' && window.location?.origin ? window.location.origin : ''
+      if (origin) {
+        localModule.set_ocsp_proxy_endpoint(`${origin}/api/ocsp-proxy`)
+      }
+    }
+
     return buildC2paFromModule(localModule)
   } catch (error) {
     console.info('Local c2pa-rs WASM not available:', error)
@@ -331,6 +402,10 @@ const MIME_TYPE_MAP: Record<string, string> = {
 }
 
 const EXTENSION_MIME_MAP: Record<string, string> = {
+  'heic': 'image/heic',
+  'heif': 'image/heif',
+  'avci': 'image/avci',
+  'avcs': 'image/avcs',
   'dng': 'image/x-adobe-dng',
   'arw': 'image/x-sony-arw',
   'cr2': 'image/x-canon-cr2',
@@ -571,6 +646,85 @@ async function runTrustValidationFlow(
   }
 }
 
+/**
+ * Sideband check: verify live OCSP status for each manifest's Issuing CA (ICA).
+ * Evaluates active manifest and all ingredients in the lineage against loaded trust anchors.
+ */
+async function checkLineageIcaOcsp(
+  c2pa: C2paInstance,
+  fileBytes: Uint8Array,
+  mimeType: string,
+  allRootsPem: string,
+  sidecarBytes?: Uint8Array,
+): Promise<Record<string, IcaOcspInfo>> {
+  if (!c2pa.module.check_ica_ocsp) {
+    return {}
+  }
+
+  try {
+    let certsJson: string | undefined
+    if (sidecarBytes && typeof c2pa.module.extract_sidecar_manifest_certificates === 'function') {
+      certsJson = await c2pa.module.extract_sidecar_manifest_certificates(sidecarBytes, fileBytes, mimeType, undefined)
+    } else if (typeof c2pa.module.extract_manifest_certificates === 'function') {
+      certsJson = await c2pa.module.extract_manifest_certificates(fileBytes, mimeType, undefined)
+    }
+
+    if (!certsJson) return {}
+
+    const extracted = JSON.parse(certsJson) as {
+      manifests?: Record<string, { cert_chain_pem?: string; common_name?: string }>
+    }
+
+    const icaResults: Record<string, IcaOcspInfo> = {}
+    if (!extracted.manifests) return icaResults
+
+    for (const [label, manifestData] of Object.entries(extracted.manifests)) {
+      if (!manifestData.cert_chain_pem) continue
+
+      const pems = manifestData.cert_chain_pem.match(/-----BEGIN CERTIFICATE-----[\s\S]*?-----END CERTIFICATE-----/g) || []
+      if (pems.length < 2) {
+        continue
+      }
+
+      const icaPem = pems[1]
+      try {
+        const icaCert = new X509Certificate(icaPem)
+        const icaSubjectCn = icaCert.subject.match(/CN=([^,]+)/)?.[1] ?? icaCert.subject
+        const icaIssuerCn = icaCert.issuer.match(/CN=([^,]+)/)?.[1] ?? icaCert.issuer
+
+        const rawRes = await c2pa.module.check_ica_ocsp(icaPem, allRootsPem)
+        const res = JSON.parse(rawRes) as Record<string, any>
+
+        const info: IcaOcspInfo = {
+          status: res.status,
+          responderUrl: res.responder_url ?? res.responderUrl,
+          serialNumber: res.serial_number ?? res.serialNumber,
+          thisUpdate: res.this_update ?? res.thisUpdate,
+          nextUpdate: res.next_update ?? res.nextUpdate,
+          icaSubjectCn,
+          icaIssuerCn,
+        }
+        const revokedAt = res.revoked_at ?? res.revokedAt
+        if (revokedAt) {
+          info.revokedAt = revokedAt
+        }
+        const revocationReason = res.revocation_reason ?? res.revocationReason
+        if (revocationReason) {
+          info.revocationReason = revocationReason
+        }
+        icaResults[label] = info
+      } catch (err) {
+        console.warn(`Failed to check ICA OCSP for manifest ${label}:`, err)
+      }
+    }
+
+    return icaResults
+  } catch (err) {
+    console.warn('Failed to extract certificates or check ICA OCSP:', err)
+    return {}
+  }
+}
+
 // ── Public API ────────────────────────────────────────────────────────────────
 
 async function extractCrJsonWithMetadata(file: File, testCertificates: string[] = []): Promise<ExtractedCrJsonResult> {
@@ -600,13 +754,52 @@ async function extractCrJsonWithMetadata(file: File, testCertificates: string[] 
   }
 
   try {
-    return await runTrustValidationFlow(
+    const result = await runTrustValidationFlow(
       readManifestStore,
       testCertificates,
       mimeType === SIDECAR_MIME
         ? 'No C2PA manifest could be read from this sidecar. It may be corrupted or not a valid .c2pa file.'
         : 'No C2PA manifest found in this file',
     )
+
+    try {
+      const [mainTrustList, itlData] = await Promise.all([
+        fetchMainTrustList(),
+        fetchITL(),
+      ])
+      const allRootsPem = mainTrustList + '\n' + itlData.anchors + (testCertificates.length > 0 ? '\n' + testCertificates.join('\n') : '')
+      const fileBytes = new Uint8Array(await file.arrayBuffer())
+      const icaOcsp = await checkLineageIcaOcsp(c2pa, fileBytes, mimeType, allRootsPem)
+      result.icaOcsp = icaOcsp
+
+      // If any ICA is revoked, mark that manifest untrusted per C2PA specification
+      for (const [label, icaInfo] of Object.entries(icaOcsp)) {
+        if (icaInfo.status === 'revoked') {
+          const manifest = result.crJson.manifests?.find((m) => m.label === label)
+          if (manifest) {
+            const vr = (manifest.validationResults = manifest.validationResults || { failure: [], success: [], informational: [] })
+            vr.failure = vr.failure || []
+            vr.failure.push({
+              code: VALIDATION_STATUS.SIGNING_CREDENTIAL_UNTRUSTED,
+              explanation: `Issuing CA (${icaInfo.icaSubjectCn || 'ICA'}) revoked via live OCSP`
+            })
+          }
+          if (result.crJson.active_manifest === label || result.crJson.manifests?.[0]?.label === label) {
+            if (result.crJson.validationResults) {
+              result.crJson.validationResults.failure = result.crJson.validationResults.failure || []
+              result.crJson.validationResults.failure.push({
+                code: VALIDATION_STATUS.SIGNING_CREDENTIAL_UNTRUSTED,
+                explanation: `Active manifest Issuing CA (${icaInfo.icaSubjectCn || 'ICA'}) revoked via live OCSP`
+              })
+            }
+          }
+        }
+      }
+    } catch (icaErr) {
+      console.warn('ICA OCSP sideband check failed non-fatally:', icaErr)
+    }
+
+    return result
   } catch (error) {
     console.error('❌ Error in processFile:', error)
     const msg = error instanceof Error ? error.message : String(error)
@@ -641,6 +834,7 @@ function buildConformanceReport(extracted: ExtractedCrJsonResult): ConformanceRe
     ...extracted.crJson,
     usedITL: extracted.usedITL,
     usedTestCerts: extracted.usedTestCerts,
+    _icaOcsp: extracted.icaOcsp,
     _conformanceToolVersion: {
       commit: VERSION_INFO.sha,
       shortCommit: VERSION_INFO.shortSha,
@@ -683,11 +877,50 @@ async function extractSidecarWithAssetCrJsonWithMetadata(
   }
 
   try {
-    return await runTrustValidationFlow(
+    const result = await runTrustValidationFlow(
       readManifestStore,
       testCertificates,
       `No C2PA manifest could be read from sidecar "${sidecar.name}" paired with "${asset.name}".`,
     )
+
+    try {
+      const [mainTrustList, itlData] = await Promise.all([
+        fetchMainTrustList(),
+        fetchITL(),
+      ])
+      const allRootsPem = mainTrustList + '\n' + itlData.anchors + (testCertificates.length > 0 ? '\n' + testCertificates.join('\n') : '')
+      const assetBytes = new Uint8Array(await asset.arrayBuffer())
+      const icaOcsp = await checkLineageIcaOcsp(c2pa, assetBytes, assetMimeType, allRootsPem, sidecarBytes)
+      result.icaOcsp = icaOcsp
+
+      // If any ICA is revoked, mark that manifest untrusted per C2PA specification
+      for (const [label, icaInfo] of Object.entries(icaOcsp)) {
+        if (icaInfo.status === 'revoked') {
+          const manifest = result.crJson.manifests?.find((m) => m.label === label)
+          if (manifest) {
+            const vr = (manifest.validationResults = manifest.validationResults || { failure: [], success: [], informational: [] })
+            vr.failure = vr.failure || []
+            vr.failure.push({
+              code: VALIDATION_STATUS.SIGNING_CREDENTIAL_UNTRUSTED,
+              explanation: `Issuing CA (${icaInfo.icaSubjectCn || 'ICA'}) revoked via live OCSP`
+            })
+          }
+          if (result.crJson.active_manifest === label || result.crJson.manifests?.[0]?.label === label) {
+            if (result.crJson.validationResults) {
+              result.crJson.validationResults.failure = result.crJson.validationResults.failure || []
+              result.crJson.validationResults.failure.push({
+                code: VALIDATION_STATUS.SIGNING_CREDENTIAL_UNTRUSTED,
+                explanation: `Active manifest Issuing CA (${icaInfo.icaSubjectCn || 'ICA'}) revoked via live OCSP`
+              })
+            }
+          }
+        }
+      }
+    } catch (icaErr) {
+      console.warn('ICA OCSP sideband check failed non-fatally:', icaErr)
+    }
+
+    return result
   } catch (error) {
     const msg = error instanceof Error ? error.message : String(error)
     if (msg.includes('HashMismatch') || msg.includes('dataHash') || msg.includes('bmffHash')) {
@@ -789,3 +1022,13 @@ export async function getVersion(): Promise<string> {
   const c2pa = await initC2pa()
   return c2pa.getVersion()
 }
+
+export async function extractCertificatesForFile(file: File): Promise<any> {
+  const c2pa = await initC2pa()
+  const mime = resolveMimeType(file)
+  if (isSidecarFile(file)) {
+    return null
+  }
+  return c2pa.extractCertificates ? c2pa.extractCertificates(mime, file) : null
+}
+

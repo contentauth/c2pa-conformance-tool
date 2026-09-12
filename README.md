@@ -1,11 +1,11 @@
 # C2PA Conformance Tool
 
-A client-side web application for validating C2PA (Coalition for Content Provenance and Authenticity) manifests in media files. All processing happens in the browser via WebAssembly — no server, no uploads.
+A web application for validating C2PA (Coalition for Content Provenance and Authenticity) manifests in media files. Core validation happens in the browser via WebAssembly.
 
 ## Features
 
 - **Drag & Drop Interface**: Upload files via drag-and-drop or file picker
-- **Client-Side Processing**: Files are processed entirely in your browser using a locally-built c2pa-rs WASM module — nothing leaves your machine
+- **Client-Side Processing**: Files are validated in your browser using a locally-built c2pa-rs WASM module
 - **Official C2PA Trust List**: Validates signatures against the official [C2PA Conformance Trust List](https://c2pa.org/conformance)
 - **Interim Trust List (ITL)**: Automatically falls back to ITL validation with distinct visual indicators
 - **Test Certificate Mode**: Load the C2PA Conformance Test Root, download the test signing cert (ZIP), and add custom PEM certificates (session-only, clearly marked)
@@ -163,8 +163,7 @@ Any format supported by c2pa-rs: JPEG, PNG, WebP, AVIF, HEIC, MP4, MOV, MP3, WAV
 
 ## Privacy & Security
 
-- **Client-side only** — all processing happens in your browser
-- **No server upload** — files never leave your machine
+- **Core validation runs in your browser** — manifest parsing and signature validation happens locally via WebAssembly
 - **No tracking or analytics**
 - Trust lists are fetched directly from the official C2PA repository at validation time
 

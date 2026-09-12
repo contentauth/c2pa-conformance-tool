@@ -4,7 +4,7 @@ This file provides guidance to AI coding agents when working with code in this r
 
 ## Project Overview
 
-A client-side SPA for validating C2PA (Coalition for Content Provenance and Authenticity) manifests in media files. All file processing happens in the browser via WebAssembly — there is no server-side code. Built with Svelte 5 + TypeScript + Vite.
+A client-side SPA for validating C2PA (Coalition for Content Provenance and Authenticity) manifests in media files. Core validation happens in the browser via WebAssembly. Built with Svelte 5 + TypeScript + Vite.
 
 ## Commands
 

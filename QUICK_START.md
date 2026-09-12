@@ -27,7 +27,7 @@ Merging to `main` automatically triggers a Netlify build and deploy. See [DEPLOY
 
 ## Architecture
 
-All C2PA processing happens client-side via WebAssembly — files never leave the browser. The app is a 100% static site with no backend.
+Core C2PA validation happens client-side via WebAssembly, running directly in the browser.
 
 ## Browser support
 

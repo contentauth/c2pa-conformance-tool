@@ -26,6 +26,7 @@ type LocalC2paModule = {
     uri: string,
     settingsJson?: string,
   ) => Promise<Uint8Array>
+  set_ocsp_proxy_endpoint?: (url: string) => void
 }
 
 type ExtractedCrJsonResult = {
@@ -86,6 +87,11 @@ function toLocalSettingsJson(settings?: Settings): string | undefined {
       // fetch them ourselves only after the user explicitly opts in (see
       // processRemoteManifest).
       remote_manifest_fetch: false,
+      // Live-fetch OCSP status for the signing certificate when the manifest doesn't
+      // already staple an OCSP response. Routed through our own SSRF-hardened proxy
+      // (see set_ocsp_proxy_endpoint / ProxyHttpResolver in the wasm crate) since OCSP
+      // responders don't serve CORS headers and can't be fetched from the browser directly.
+      ocsp_fetch: true,
     },
     trust: (settings.trust?.trustAnchors || settings.trust?.allowedList)
       ? {
@@ -197,6 +203,14 @@ async function createLocalC2pa(): Promise<C2paInstance | null> {
 
     const localModule = await importModule(moduleUrl)
     await localModule.default()
+
+    if (typeof localModule.set_ocsp_proxy_endpoint === 'function') {
+      const origin = typeof window !== 'undefined' && window.location?.origin ? window.location.origin : ''
+      if (origin) {
+        localModule.set_ocsp_proxy_endpoint(`${origin}/api/ocsp-proxy`)
+      }
+    }
+
     return buildC2paFromModule(localModule)
   } catch (error) {
     console.info('Local c2pa-rs WASM not available:', error)

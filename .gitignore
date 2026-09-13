@@ -53,6 +53,9 @@ TEST_README.md
 # Auto-generated version file
 src/lib/version.ts
 
+# TypeScript incremental build cache
+*.tsbuildinfo
+
 # Test certificates (but allow specific files for distribution)
 public/test-certs/*.pem
 public/test-certs/*.key

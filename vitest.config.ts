@@ -13,7 +13,7 @@ export default defineConfig({
     globals: true,
     environment: 'jsdom',
     setupFiles: ['./src/test/setup.ts'],
-    include: ['src/**/*.{test,spec}.{js,ts}'],
+    include: ['src/**/*.{test,spec}.{js,ts}', 'netlify/functions/**/*.{test,spec}.{js,ts}'],
     coverage: {
       reporter: ['text', 'json', 'html'],
       exclude: [

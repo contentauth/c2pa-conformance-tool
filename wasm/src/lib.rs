@@ -1,19 +1,153 @@
+use async_trait::async_trait;
+use c2pa::http::http::{HeaderName, HeaderValue, Method, Request, Response};
+use c2pa::http::{AsyncHttpResolver, HttpResolverError};
 use c2pa::{Context, Error as C2paError, Reader};
-use std::io::Cursor;
+use std::io::{Cursor, Read};
+use std::sync::RwLock;
 use wasm_bindgen::prelude::*;
+
+static PROXY_ENDPOINT: RwLock<Option<String>> = RwLock::new(None);
 
 #[wasm_bindgen]
 pub fn init() {
     console_error_panic_hook::set_once();
 }
 
+/// Sets the OCSP/timestamp proxy endpoint used by [`ProxyHttpResolver`]. The browser
+/// has no way to fetch most CA infrastructure (OCSP responders, some TSAs) directly —
+/// they don't serve CORS headers — so every outbound HTTP request c2pa-rs makes is
+/// relayed through our own SSRF-hardened server-side proxy instead.
+#[wasm_bindgen]
+pub fn set_ocsp_proxy_endpoint(url: String) {
+    if let Ok(mut lock) = PROXY_ENDPOINT.write() {
+        *lock = Some(url);
+    }
+}
+
+fn get_proxy_endpoint() -> String {
+    if let Ok(lock) = PROXY_ENDPOINT.read() {
+        if let Some(ref ep) = *lock {
+            if !ep.is_empty() {
+                return ep.clone();
+            }
+        }
+    }
+    if let Some(win) = web_sys::window() {
+        if let Ok(origin) = win.location().origin() {
+            if !origin.is_empty() && origin != "null" {
+                return format!("{}/api/ocsp-proxy", origin.trim_end_matches('/'));
+            }
+        }
+    }
+    "/api/ocsp-proxy".to_string()
+}
+
+/// Routes every outbound HTTP request c2pa-rs makes (OCSP, timestamp checks, AIA
+/// cert-chasing) through our own proxy rather than fetching directly.
+///
+/// This resolver has no way to know in advance which target hosts serve CORS headers
+/// and which don't — CA infrastructure is run by whoever issued the certificate being
+/// checked, at whatever hostname and however they've configured it, so there's no
+/// reliable signal (scheme, hostname substring, etc.) to decide "this one probably
+/// doesn't need the proxy." Trying to guess is exactly what let some requests bypass
+/// the proxy (and its SSRF hardening) entirely in an earlier version of this resolver.
+/// Always proxying costs one extra hop; never proxying (or guessing wrong) fails silently
+/// on CORS or reopens the SSRF surface, so unconditional proxying is the only case that's
+/// always correct.
+pub struct ProxyHttpResolver {
+    client: reqwest::Client,
+}
+
+impl ProxyHttpResolver {
+    pub fn new() -> Self {
+        Self {
+            client: reqwest::Client::new(),
+        }
+    }
+}
+
+// WASM is single-threaded, so `async_trait`'s default `Send`-bound futures don't apply
+// there (reqwest's wasm32 client isn't `Send`) — mirrors c2pa-rs's own
+// `maybe_send_sync` convention for the same reason (see that module's doc comment).
+#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
+#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+impl AsyncHttpResolver for ProxyHttpResolver {
+    async fn http_resolve_async(
+        &self,
+        request: Request<Vec<u8>>,
+    ) -> Result<Response<Box<dyn Read>>, HttpResolverError> {
+        let (parts, body): (c2pa::http::http::request::Parts, Vec<u8>) = request.into_parts();
+        let target_url = parts.uri.to_string();
+
+        let proxy = get_proxy_endpoint();
+        let encoded: String =
+            url::form_urlencoded::byte_serialize(target_url.as_bytes()).collect();
+        let fetch_url = format!("{}?url={}", proxy, encoded);
+
+        let mut reqwest_builder = match parts.method {
+            Method::GET => self.client.get(&fetch_url),
+            Method::POST => self.client.post(&fetch_url),
+            Method::PUT => self.client.put(&fetch_url),
+            Method::HEAD => self.client.head(&fetch_url),
+            _ => self.client.request(
+                reqwest::Method::from_bytes(parts.method.as_str().as_bytes())
+                    .unwrap_or(reqwest::Method::GET),
+                &fetch_url,
+            ),
+        };
+
+        for (name, value) in parts.headers.iter() {
+            let name_str: &str = name.as_str();
+            if name_str.eq_ignore_ascii_case("host")
+                || name_str.eq_ignore_ascii_case("connection")
+                || name_str.eq_ignore_ascii_case("content-length")
+            {
+                continue;
+            }
+            if let Ok(v) = reqwest::header::HeaderValue::from_bytes(value.as_bytes()) {
+                reqwest_builder = reqwest_builder.header(name_str, v);
+            }
+        }
+
+        if !body.is_empty() {
+            reqwest_builder = reqwest_builder.body(body);
+        }
+
+        let resp = reqwest_builder
+            .send()
+            .await
+            .map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e.to_string()))?;
+
+        let status = resp.status();
+        let mut resp_builder = Response::builder().status(status.as_u16());
+
+        for (name, value) in resp.headers().iter() {
+            if let Ok(hn) = HeaderName::from_bytes(name.as_str().as_bytes()) {
+                if let Ok(hv) = HeaderValue::from_bytes(value.as_bytes()) {
+                    resp_builder = resp_builder.header(hn, hv);
+                }
+            }
+        }
+
+        let bytes = resp
+            .bytes()
+            .await
+            .map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e.to_string()))?;
+
+        let body_box: Box<dyn Read> = Box::new(Cursor::new(bytes.to_vec()));
+        Ok(resp_builder.body(body_box)?)
+    }
+}
+
 fn build_context(settings_json: Option<String>) -> Result<Context, JsValue> {
-    match settings_json {
+    let context = match settings_json {
         Some(json) if !json.trim().is_empty() => Context::new()
             .with_settings(json)
-            .map_err(|e| JsValue::from_str(&format!("Failed to parse C2PA settings: {e}"))),
-        _ => Ok(Context::new()),
-    }
+            .map_err(|e| JsValue::from_str(&format!("Failed to parse C2PA settings: {e}")))?,
+        _ => Context::new(),
+    };
+
+    Ok(context.with_resolver_async(ProxyHttpResolver::new()))
 }
 
 ///

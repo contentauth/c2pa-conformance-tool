@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { getAllValidationFailures, getActiveManifestValidationStatus, isAssertionScopedStatus, type CrJson } from './crjson'
+import { getAllValidationFailures, getActiveManifestValidationStatus, getManifestValidationStatus, isAssertionScopedStatus, type CrJson } from './crjson'
 
 describe('crjson utilities', () => {
   describe('getAllValidationFailures', () => {
@@ -199,6 +199,35 @@ describe('crjson utilities', () => {
         { code: 'timeStamp.validated', url: claimUrl },
       ])
       expect(status?.informational).toEqual([])
+    })
+  })
+
+  // Regression: the "Validation Status Details" UI reads getManifestValidationStatus
+  // per-manifest, a separate code path from getActiveManifestValidationStatus above.
+  // It must apply the same exclusion, or a CAWG identity assertion's untrusted X.509
+  // credential shows up as a validation error even though this tool does not evaluate
+  // CAWG identity.
+  describe('getManifestValidationStatus', () => {
+    it('excludes assertion-scoped entries but keeps claim-signature-scoped ones', () => {
+      const claimUrl = 'self#jumbf=/c2pa/urn:c2pa:test/c2pa.signature'
+      const cawgUrl = 'self#jumbf=/c2pa/urn:c2pa:test/c2pa.assertions/cawg.identity'
+      const report: CrJson = {
+        manifests: [
+          {
+            label: 'active',
+            assertions: {},
+            validationResults: {
+              success: [{ code: 'signingCredential.trusted', url: claimUrl }],
+              failure: [{ code: 'signingCredential.untrusted', url: cawgUrl }],
+              informational: [{ code: 'cawg.identity.well-formed', url: cawgUrl }],
+            }
+          }
+        ]
+      }
+      const status = getManifestValidationStatus(report, report.manifests![0], true)
+      expect(status?.failure).toEqual([])
+      expect(status?.informational).toEqual([])
+      expect(status?.success).toEqual([{ code: 'signingCredential.trusted', url: claimUrl }])
     })
   })
 })

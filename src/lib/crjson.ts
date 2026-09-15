@@ -268,7 +268,9 @@ export function getAllValidationFailures(report: CrJson): CrJsonValidationStatus
 }
 
 /**
- * Get validation status for a specific manifest from crJSON.
+ * Get validation status for a specific manifest from crJSON — excludes statuses
+ * scoped to an embedded assertion (see `isAssertionScopedStatus`), e.g. a
+ * `cawg.identity` assertion's own X.509 credential, which this tool does not evaluate.
  * - Supports per-manifest results (native crJSON) on `m.validationResults`.
  * - Fallback to document-level results (legacy) for the active manifest (isFirst = true).
  */
@@ -280,28 +282,28 @@ export function getManifestValidationStatus(
   // 1. Try per-manifest status (c2pa-rs style crJSON)
   const perManifest = m.validationResults as CrJsonValidationResults | undefined
   if (perManifest && (perManifest.success?.length ?? 0) + (perManifest.failure?.length ?? 0) + (perManifest.informational?.length ?? 0) > 0) {
-    return {
+    return excludeAssertionScoped({
       success: perManifest.success,
       informational: perManifest.informational,
       failure: perManifest.failure
-    }
+    })
   }
 
   // 2. Fallback to document-level for active manifest (legacy)
   if (isFirst) {
     const docLevel = report.validationResults?.activeManifest
     if (docLevel && (docLevel.success?.length ?? 0) + (docLevel.failure?.length ?? 0) + (docLevel.informational?.length ?? 0) > 0) {
-      return docLevel
+      return excludeAssertionScoped(docLevel)
     }
     // If legacy has it flat at root
     if (report.validationResults) {
       const vr = report.validationResults
       if ((vr.success?.length ?? 0) + (vr.failure?.length ?? 0) + (vr.informational?.length ?? 0) > 0) {
-        return {
+        return excludeAssertionScoped({
           success: vr.success,
           informational: vr.informational,
           failure: vr.failure
-        }
+        })
       }
     }
   }

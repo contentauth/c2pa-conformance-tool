@@ -100,6 +100,10 @@ function toLocalSettingsJson(settings?: Settings): string {
       // fetch them ourselves only after the user explicitly opts in (see
       // processRemoteManifest).
       remote_manifest_fetch: false,
+      // Live-fetch OCSP status for the signing certificate when the manifest doesn't
+      // already staple an OCSP response. Routed through our own SSRF-hardened proxy
+      // (see set_ocsp_proxy_endpoint / ProxyHttpResolver in the wasm crate) since OCSP
+      // responders don't serve CORS headers and can't be fetched from the browser directly.
       ocsp_fetch: true,
     },
     trust: (settings?.trust?.trustAnchors || settings?.trust?.allowedList)

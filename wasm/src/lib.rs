@@ -13,6 +13,10 @@ pub fn init() {
     console_error_panic_hook::set_once();
 }
 
+/// Sets the OCSP/timestamp proxy endpoint used by [`ProxyHttpResolver`]. The browser
+/// has no way to fetch most CA infrastructure (OCSP responders, some TSAs) directly —
+/// they don't serve CORS headers — so every outbound HTTP request c2pa-rs makes is
+/// relayed through our own SSRF-hardened server-side proxy instead.
 #[wasm_bindgen]
 pub fn set_ocsp_proxy_endpoint(url: String) {
     if let Ok(mut lock) = PROXY_ENDPOINT.write() {
@@ -38,6 +42,18 @@ fn get_proxy_endpoint() -> String {
     "/api/ocsp-proxy".to_string()
 }
 
+/// Routes every outbound HTTP request c2pa-rs makes (OCSP, timestamp checks, AIA
+/// cert-chasing) through our own proxy rather than fetching directly.
+///
+/// This resolver has no way to know in advance which target hosts serve CORS headers
+/// and which don't — CA infrastructure is run by whoever issued the certificate being
+/// checked, at whatever hostname and however they've configured it, so there's no
+/// reliable signal (scheme, hostname substring, etc.) to decide "this one probably
+/// doesn't need the proxy." Trying to guess is exactly what let some requests bypass
+/// the proxy (and its SSRF hardening) entirely in an earlier version of this resolver.
+/// Always proxying costs one extra hop; never proxying (or guessing wrong) fails silently
+/// on CORS or reopens the SSRF surface, so unconditional proxying is the only case that's
+/// always correct.
 pub struct ProxyHttpResolver {
     client: reqwest::Client,
 }
@@ -50,7 +66,11 @@ impl ProxyHttpResolver {
     }
 }
 
-#[async_trait(?Send)]
+// WASM is single-threaded, so `async_trait`'s default `Send`-bound futures don't apply
+// there (reqwest's wasm32 client isn't `Send`) — mirrors c2pa-rs's own
+// `maybe_send_sync` convention for the same reason (see that module's doc comment).
+#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
+#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
 impl AsyncHttpResolver for ProxyHttpResolver {
     async fn http_resolve_async(
         &self,
@@ -59,14 +79,10 @@ impl AsyncHttpResolver for ProxyHttpResolver {
         let (parts, body): (c2pa::http::http::request::Parts, Vec<u8>) = request.into_parts();
         let target_url = parts.uri.to_string();
 
-        let fetch_url = if target_url.starts_with("http://") || target_url.contains("ocsp") {
-            let proxy = get_proxy_endpoint();
-            let encoded: String =
-                url::form_urlencoded::byte_serialize(target_url.as_bytes()).collect();
-            format!("{}?url={}", proxy, encoded)
-        } else {
-            target_url
-        };
+        let proxy = get_proxy_endpoint();
+        let encoded: String =
+            url::form_urlencoded::byte_serialize(target_url.as_bytes()).collect();
+        let fetch_url = format!("{}?url={}", proxy, encoded);
 
         let mut reqwest_builder = match parts.method {
             Method::GET => self.client.get(&fetch_url),

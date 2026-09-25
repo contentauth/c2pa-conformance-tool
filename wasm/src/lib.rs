@@ -364,18 +364,6 @@ pub fn get_version() -> String {
             c2pa::VERSION)
 }
 
-/// Check live OCSP status for an Issuing CA (ICA) certificate against loaded trust anchors.
-#[wasm_bindgen]
-pub async fn check_ica_ocsp(
-    ica_pem: String,
-    roots_pem: String,
-) -> Result<String, JsValue> {
-    let context = build_context(None)?;
-    let result = c2pa::crypto::ocsp::check_ica_ocsp_pem(&ica_pem, &roots_pem, &context).await;
-    serde_json::to_string(&result)
-        .map_err(|e| JsValue::from_str(&format!("Failed to serialize ICA OCSP result: {e}")))
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;

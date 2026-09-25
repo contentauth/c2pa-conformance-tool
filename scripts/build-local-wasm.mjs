@@ -19,18 +19,6 @@ rmSync(outDir, { recursive: true, force: true })
 mkdirSync(outDir, { recursive: true })
 mkdirSync(cargoHome, { recursive: true })
 
-const patchFile = resolve(repoRoot, 'patches/c2pa-rs-live-ocsp.patch')
-if (existsSync(patchFile)) {
-  const check = spawnSync('git', ['apply', '--check', patchFile], { cwd: c2paRsDir })
-  if (check.status === 0) {
-    console.log('Applying c2pa-rs live OCSP patch...')
-    const apply = spawnSync('git', ['apply', patchFile], { cwd: c2paRsDir })
-    if (apply.status !== 0) {
-      console.warn('Warning: failed to apply c2pa-rs live OCSP patch')
-    }
-  }
-}
-
 const result = spawnSync(
   'wasm-pack',
   [

@@ -166,8 +166,8 @@ describe('ReportViewer Component', () => {
 
     const { container } = render(ReportViewer, { report: mockReport })
 
-    // Query all provenance graph nodes (button cards)
-    const nodeCards = container.querySelectorAll('button.relative')
+    // Query all non-interactive provenance graph cards.
+    const nodeCards = container.querySelectorAll('div[role="group"].relative')
     expect(nodeCards.length).toBe(2)
 
     // Root node (active manifest): should NOT render an image because its c2pa.thumbnail.ingredient was filtered out of claim thumbnails.
@@ -225,7 +225,7 @@ describe('ReportViewer Component', () => {
 
     const { container } = render(ReportViewer, { report: mockReport })
 
-    const nodeCards = container.querySelectorAll('button.relative')
+    const nodeCards = container.querySelectorAll('div[role="group"].relative')
     expect(nodeCards.length).toBe(2)
 
     // Root node (active manifest): should NOT render an image.
@@ -238,4 +238,3 @@ describe('ReportViewer Component', () => {
     expect(childImg?.getAttribute('src')).toBe('data:image/jpeg;base64,active_ingredient_thumb_b64')
   })
 })
-

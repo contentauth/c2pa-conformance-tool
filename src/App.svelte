@@ -5,7 +5,7 @@
 </svelte:head>
 
 <script lang="ts">
-  import { onMount } from 'svelte'
+  import { onMount, tick } from 'svelte'
   import FileUpload from './lib/FileUpload.svelte'
   import ReportViewer from './lib/ReportViewer.svelte'
   import CertificateManager from './lib/CertificateManager.svelte'
@@ -20,6 +20,7 @@
   // 'sidecar-only' = user supplied a .c2pa without the asset; manifest is
   //   parsed and inspected directly.
   type ValidationMode = 'embedded' | 'sidecar+asset' | 'sidecar-only'
+  type FocusableFileUpload = { focus: () => void }
 
   let report: ConformanceReport | null = null
   let error: string | null = null
@@ -42,6 +43,11 @@
   let processingStatus = 'Processing file...'
   let currentPage: Page = 'main'
   let menuOpen = false
+  let remoteManifestConsentPanel: HTMLDivElement
+  let processingRegion: HTMLDivElement
+  let resultsRegion: HTMLDivElement
+  let errorRegion: HTMLDivElement
+  let mainFileUpload: FocusableFileUpload | null = null
   // Test trust list fetching on component mount
   onMount(() => {
     console.log('=== C2PA Conformance Tool Initialized ===')
@@ -212,6 +218,10 @@
       console.log('🏁 Processing complete. Report:', !!report, 'Error:', !!error)
       processing = false
       processingStatus = 'Processing file...'
+      if (pendingRemoteManifestUrl) {
+        await tick()
+        remoteManifestConsentPanel?.focus()
+      }
     }
   }
 
@@ -259,9 +269,11 @@
     selectedFile = null
   }
 
-  function declineRemoteManifest() {
+  async function declineRemoteManifest() {
     pendingRemoteManifestUrl = null
     selectedFile = null
+    await tick()
+    mainFileUpload?.focus()
   }
 
   async function fetchRemoteManifest() {
@@ -271,6 +283,8 @@
     processing = true
     error = null
     processingStatus = 'Fetching remote manifest...'
+    await tick()
+    processingRegion?.focus()
     try {
       const { report: fetchedReport, manifestBytes } = await processRemoteManifest(selectedFile, url, testCertificates)
       report = fetchedReport
@@ -283,6 +297,12 @@
     } finally {
       processing = false
       processingStatus = 'Processing file...'
+      await tick()
+      if (report) {
+        resultsRegion?.focus()
+      } else if (error) {
+        errorRegion?.focus()
+      }
     }
   }
 
@@ -431,14 +451,16 @@
         <!-- Left: Title (clickable to return home) -->
         <div class="flex items-center justify-start flex-1">
           {#if report || processing || currentPage !== 'main'}
-            <button
-              on:click={resetToHome}
-              class="flex items-center gap-2 text-xl font-bold text-gray-900 dark:text-white hover:text-blue-600 dark:hover:text-gray-300 transition-colors duration-200 cursor-pointer"
-              aria-label="Return to home"
-            >
-              C2PA Verify
-              <span class="badge tracking-wide bg-gray-200 text-gray-700 dark:bg-blue-900/60 dark:text-blue-300">Beta</span>
-            </button>
+            <h1>
+              <button
+                on:click={resetToHome}
+                class="flex items-center gap-2 text-xl font-bold text-gray-900 dark:text-white hover:text-blue-600 dark:hover:text-gray-300 transition-colors duration-200 cursor-pointer"
+                aria-label="Return to home"
+              >
+                C2PA Verify
+                <span class="badge tracking-wide bg-gray-200 text-gray-700 dark:bg-blue-900/60 dark:text-blue-300">Beta</span>
+              </button>
+            </h1>
           {:else}
             <h1 class="flex items-center gap-2 text-xl font-bold text-gray-900 dark:text-white">
               C2PA Verify
@@ -476,7 +498,7 @@
             <button
               on:click={() => menuOpen = !menuOpen}
               class="btn-icon"
-              aria-label="Open menu"
+              aria-label={menuOpen ? 'Close menu' : 'Open menu'}
               aria-expanded={menuOpen}
             >
               {#if menuOpen}
@@ -568,6 +590,8 @@
           <button
             on:click={toggleInfoSection}
             class="inline-flex items-center gap-2 px-4 py-2 bg-blue-100 dark:bg-gray-800 hover:bg-blue-200 dark:hover:bg-gray-700 text-blue-900 dark:text-gray-100 rounded-lg transition-colors text-sm font-semibold"
+            aria-expanded={infoSectionExpanded}
+            aria-controls="content-credentials-explanation"
           >
             <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0" /><path d="M12 9h.01" /><path d="M11 12h1v4h1" /></svg>
             What is this all about?
@@ -575,7 +599,7 @@
           </button>
 
           {#if infoSectionExpanded}
-            <div class="bg-blue-100 dark:bg-gray-900 border-2 border-blue-400 dark:border-gray-700 rounded-2xl p-8 mt-4 text-left shadow-sm">
+            <div id="content-credentials-explanation" class="bg-blue-100 dark:bg-gray-900 border-2 border-blue-400 dark:border-gray-700 rounded-2xl p-8 mt-4 text-left shadow-sm">
               <p class="text-gray-700 dark:text-gray-300 mb-4 leading-relaxed">
                 <a href="https://contentcredentials.org/" target="_blank" rel="noopener noreferrer" class="underline">Content Credentials</a> from the <a href="https://c2pa.org" target="_blank" rel="noopener noreferrer" class="underline">Coalition for Content Provenance and Authenticity (C2PA)</a> is the technical standard for digital provenance. It provides verifiable assertions about the origin and history of digital content including images, video, audio, and documents.
               </p>
@@ -630,7 +654,12 @@
         {/if}
 
         {#if error}
-          <div class="bg-red-50 dark:bg-gray-900 border border-red-200 dark:border-gray-700 rounded-2xl p-8 mb-10 shadow-sm text-left">
+          <div
+            bind:this={errorRegion}
+            class="bg-red-50 dark:bg-gray-900 border border-red-200 dark:border-gray-700 rounded-2xl p-8 mb-10 shadow-sm text-left focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-inset"
+            role="alert"
+            tabindex="-1"
+          >
             <div class="flex items-start gap-4">
               <div class="flex-shrink-0 w-12 h-12 bg-red-600 dark:bg-gray-600 rounded-full flex items-center justify-center text-white">
                 <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 9v4" /><path d="M10.363 3.591l-8.106 13.534a1.914 1.914 0 0 0 1.636 2.871h16.214a1.914 1.914 0 0 0 1.636 -2.87l-8.106 -13.536a1.914 1.914 0 0 0 -3.274 0z" /><path d="M12 16h.01" /></svg>
@@ -653,20 +682,26 @@
           <!-- Asset has no embedded manifest, only a reference to one hosted remotely.
                Never fetched automatically — fetching would reveal the user's IP address
                and that this specific file is being validated to a third-party host. -->
-          <div class="bg-blue-100 dark:bg-gray-900 border-2 border-blue-400 dark:border-gray-600 border-dashed rounded-2xl p-8 mb-6 text-left shadow-sm">
+          <div
+            bind:this={remoteManifestConsentPanel}
+            class="bg-blue-100 dark:bg-gray-900 border-2 border-blue-400 dark:border-gray-600 border-dashed rounded-2xl p-8 mb-6 text-left shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-700 focus:ring-inset"
+            role="region"
+            aria-labelledby="remote-manifest-consent-heading"
+            tabindex="-1"
+          >
             <div class="flex items-start gap-4">
               <div class="flex-shrink-0 w-12 h-12 bg-blue-600 dark:bg-gray-600 rounded-full flex items-center justify-center text-white">
-                <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0" /><path d="M12 3a9 9 0 0 0 0 18" /><path d="M12 3a9 9 0 0 1 0 18" /><path d="M3 12h18" /></svg>
+                <svg aria-hidden="true" class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0" /><path d="M12 3a9 9 0 0 0 0 18" /><path d="M12 3a9 9 0 0 1 0 18" /><path d="M3 12h18" /></svg>
               </div>
               <div class="flex-1 min-w-0">
-                <h3 class="text-lg font-bold text-blue-900 dark:text-white mb-1">This file's manifest is hosted remotely</h3>
+                <h3 id="remote-manifest-consent-heading" class="text-lg font-bold text-blue-900 dark:text-white mb-1">This file's manifest is hosted remotely</h3>
                 <p class="text-sm text-blue-700 dark:text-gray-300 mb-1">
                   No manifest is embedded in this file — it only references one hosted at:
                 </p>
                 <p class="text-sm font-mono text-blue-900 dark:text-gray-200 bg-blue-50 dark:bg-gray-800 rounded-lg px-3 py-2 mb-4 break-all select-all">
                   {pendingRemoteManifestUrl}
                 </p>
-                <p class="text-sm text-blue-600 dark:text-gray-400 mb-4">
+                <p class="text-sm text-blue-700 dark:text-gray-300 mb-4">
                   Fetching it will send a request to that host, which will be able to see your IP address and that this file is being validated. No request has been made yet.
                 </p>
                 <div class="flex flex-wrap gap-4">
@@ -678,7 +713,7 @@
                   </button>
                   <button
                     on:click={declineRemoteManifest}
-                    class="btn-ghost px-4 py-2"
+                    class="btn-outline"
                   >
                     Don't Fetch
                   </button>
@@ -732,6 +767,7 @@
           -->
           <div class="mb-6">
             <FileUpload
+              bind:this={mainFileUpload}
               on:fileselect={(e) => handleFilesDropped([e.detail])}
               compact={false}
             />
@@ -743,10 +779,12 @@
     <div class="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex-1 flex flex-col">
       {#if processing}
         <div
+          bind:this={processingRegion}
           class="flex flex-col items-center gap-6 py-20"
           aria-live="polite"
           aria-busy="true"
           aria-label="Processing file"
+          tabindex="-1"
         >
           <div class="relative" aria-hidden="true">
             <div class="w-20 h-20 border-4 border-blue-200 dark:border-gray-700 rounded-full"></div>
@@ -760,11 +798,19 @@
       {/if}
 
       {#if report}
-        <ReportViewer
-          {report}
-          {usedTestCertificates}
-          file={selectedFile}
-        />
+        <div
+          bind:this={resultsRegion}
+          class="flex-1 flex flex-col min-h-0 focus:outline-none"
+          role="region"
+          aria-label="Validation results"
+          tabindex="-1"
+        >
+          <ReportViewer
+            {report}
+            {usedTestCertificates}
+            file={selectedFile}
+          />
+        </div>
       {/if}
     </div>
 
@@ -775,7 +821,7 @@
   <!-- Footer (always shown) -->
   <footer class="bg-[#f3f4f6] dark:bg-gray-900">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
-      <span class="text-xs text-gray-500 dark:text-gray-400">Built with ❤️ by the C2PA Conformance community</span>
+      <span class="text-xs text-gray-600 dark:text-gray-400">Built with ❤️ by the C2PA Conformance community</span>
       <div class="flex items-center gap-4">
         <a href="https://contentcredentials.org" target="_blank" rel="noopener noreferrer" aria-label="Visit Content Credentials website">
           <img src="{import.meta.env.BASE_URL}content_credentials_icon.svg" alt="Content Credentials" class="h-6 w-auto opacity-60 hover:opacity-100 transition-opacity dark:brightness-0 dark:invert" />

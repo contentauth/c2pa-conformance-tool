@@ -143,6 +143,19 @@
     isDragging = false
   }
 
+  function onKeyDown(e: KeyboardEvent) {
+    const PAN_STEP = 40
+    if (e.key === 'ArrowLeft') panX += PAN_STEP
+    else if (e.key === 'ArrowRight') panX -= PAN_STEP
+    else if (e.key === 'ArrowUp') panY += PAN_STEP
+    else if (e.key === 'ArrowDown') panY -= PAN_STEP
+    else if (e.key === '+' || e.key === '=') stepZoom(1)
+    else if (e.key === '-') stepZoom(-1)
+    else if (e.key === '0') resetView()
+    else return
+    e.preventDefault()
+  }
+
   function onWheel(e: WheelEvent) {
     if (!canvasEl) return
     const rect = canvasEl.getBoundingClientRect()
@@ -443,20 +456,22 @@
 {#if tree}
   <!-- Pan/zoom canvas — role="application" is the correct ARIA landmark for a custom widget;
        Svelte doesn't recognise it as interactive so we suppress the lint warning. -->
-  <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
+  <!-- svelte-ignore a11y_no_noninteractive_tabindex a11y_no_noninteractive_element_interactions -->
   <div
     bind:this={canvasEl}
     bind:clientWidth={containerWidth}
     use:touchAction
-    class="relative w-full flex-1 overflow-hidden rounded-2xl"
+    class="relative w-full flex-1 overflow-hidden rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-inset"
     style="cursor: {isDragging ? 'grabbing' : 'grab'}; background-color: var(--canvas-bg, #fafafa);"
     role="application"
-    aria-label="Provenance tree — drag to pan, scroll to zoom"
+    tabindex="0"
+    aria-label="File history. Use the arrow keys to pan, plus or minus to zoom, and zero to reset the view."
     on:mousedown={onMouseDown}
     on:mousemove={onMouseMove}
     on:mouseup={onMouseUp}
     on:mouseleave={onMouseUp}
     on:wheel|preventDefault={onWheel}
+    on:keydown={onKeyDown}
     on:dragstart|preventDefault={() => {}}
   >
     <!-- Canvas background -->
@@ -483,26 +498,37 @@
         on:click|stopPropagation={() => stepZoom(1)}
         class="w-8 h-8 rounded-lg bg-white/90 dark:bg-gray-800/90 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center justify-center shadow-sm backdrop-blur-sm transition-colors text-xl font-medium leading-none"
         title="Zoom in (scroll up)"
-      >+</button>
+        aria-label="Zoom in"
+      >
+        <svg aria-hidden="true" class="w-4 h-4" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M8 3v10M3 8h10" />
+        </svg>
+      </button>
       <button
         on:click|stopPropagation={resetView}
         class="w-8 h-8 rounded-lg bg-white/90 dark:bg-gray-800/90 border border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center justify-center shadow-sm backdrop-blur-sm transition-colors"
         title="Reset view"
+        aria-label="Reset view"
       >
-        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M20 11a8.1 8.1 0 0 0 -15.5 -2m-.5 -4v4h4" /><path d="M4 13a8.1 8.1 0 0 0 15.5 2m.5 4v-4h-4" /></svg>
+        <svg aria-hidden="true" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M20 11a8.1 8.1 0 0 0 -15.5 -2m-.5 -4v4h4" /><path d="M4 13a8.1 8.1 0 0 0 15.5 2m.5 4v-4h-4" /></svg>
       </button>
       <button
         on:click|stopPropagation={() => stepZoom(-1)}
         class="w-8 h-8 rounded-lg bg-white/90 dark:bg-gray-800/90 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center justify-center shadow-sm backdrop-blur-sm transition-colors text-xl font-medium leading-none"
         title="Zoom out (scroll down)"
-      >−</button>
+        aria-label="Zoom out"
+      >
+        <svg aria-hidden="true" class="w-4 h-4" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M3 8h10" />
+        </svg>
+      </button>
     </div>
 
     <!-- Signal loading hint (floating bottom-left) -->
     {#if !signals}
-      <p class="absolute bottom-3 left-3 text-xs text-gray-400 dark:text-gray-600 pointer-events-none">Loading signal data…</p>
+      <p class="absolute bottom-3 left-3 text-xs text-gray-600 dark:text-gray-300 pointer-events-none">Loading signal data…</p>
     {/if}
   </div>
 {:else}
-  <p class="text-center py-12 text-gray-400 dark:text-gray-600 text-sm">No manifest data</p>
+  <p class="text-center py-12 text-gray-600 dark:text-gray-300 text-sm">No manifest data</p>
 {/if}

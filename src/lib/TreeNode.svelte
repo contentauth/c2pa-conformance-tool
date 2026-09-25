@@ -2,7 +2,6 @@
   import type { OverviewNode } from './types'
 
   export let node: OverviewNode
-  export let onZoom: ((idx: number) => void) | undefined = undefined
   export let isRoot = false
   export let fileSrc: string | undefined = undefined
   export let fileMimeType: string | undefined = undefined
@@ -62,19 +61,22 @@
   function formatRelationship(r: string): string {
     return r.replace(/([A-Z])/g, ' $1').replace(/^./, s => s.toUpperCase()).trim()
   }
+
+  $: cardAccessibleLabel = node.isStub
+    ? `${node.signer ?? 'Unknown source file'}. No Content Credentials.`
+    : `${isRoot ? 'Current file' : 'Source file'}${node.signer ? `, signed by ${node.signer}` : ''}${node.date ? `, ${node.date}` : ''}.`
 </script>
 
 <div class="flex flex-col items-center min-w-0">
   <!-- Card -->
-  <button
-    class="relative rounded-2xl overflow-hidden border-2 transition-all w-[300px] focus:outline-none
+  <div
+    role="group"
+    aria-label={cardAccessibleLabel}
+    class="relative rounded-2xl overflow-hidden border-2 transition-all w-[300px]
       {node.isStub
         ? 'border-dashed border-gray-300 dark:border-gray-600 cursor-default'
-        : isRoot || !onZoom
-          ? 'border-blue-500 shadow-lg cursor-default'
-          : 'border-gray-200 dark:border-gray-700 hover:border-gray-400 dark:hover:border-gray-500 hover:shadow-sm cursor-pointer'}"
+        : 'border-blue-500 shadow-lg cursor-default'}"
     style="aspect-ratio: 4/3"
-    on:click={() => onZoom && !isRoot && !node.isStub && onZoom(node.manifestIdx)}
   >
     <!-- Media fill -->
     {#if cardMedia === 'video-live'}
@@ -128,19 +130,19 @@
     {#if !isRoot && !node.isStub}
       <div class="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors pointer-events-none rounded-2xl"></div>
     {/if}
-  </button>
+  </div>
 
   <!-- Label below card -->
   <div class="mt-2 text-center w-[300px] px-2">
     <!-- Relationship (non-root only) -->
     {#if !isRoot && node.relationship}
-      <p class="text-xs font-medium text-gray-400 dark:text-gray-400 uppercase tracking-wide mb-1">
+      <p class="text-xs font-medium text-gray-600 dark:text-gray-300 uppercase tracking-wide mb-1">
         {formatRelationship(node.relationship)}
       </p>
     {/if}
 
     <!-- Tool / filename -->
-    <p class="text-xs font-semibold {node.isStub ? 'text-gray-400 dark:text-gray-400' : 'text-gray-800 dark:text-gray-200'} truncate">
+    <p class="text-xs font-semibold {node.isStub ? 'text-gray-600 dark:text-gray-300' : 'text-gray-800 dark:text-gray-200'} truncate">
       {#if node.isStub}
         {node.signer ?? 'Unknown file'}
       {:else}
@@ -150,7 +152,7 @@
 
     <!-- No credentials label for stubs -->
     {#if node.isStub}
-      <p class="text-xs text-gray-400 dark:text-gray-400 mt-1 italic">No Content Credentials</p>
+      <p class="text-xs text-gray-600 dark:text-gray-300 mt-1 italic">No Content Credentials</p>
     {:else}
       <!-- Date -->
       {#if node.date}
@@ -203,7 +205,7 @@
     <div class="flex flex-row">
       {#each node.children as child, i}
         <div class="flex flex-col items-center px-4" bind:clientWidth={colWidths[i]}>
-          <svelte:self node={child} {onZoom} isRoot={false} />
+          <svelte:self node={child} isRoot={false} />
         </div>
       {/each}
     </div>

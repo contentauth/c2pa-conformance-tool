@@ -8,6 +8,10 @@ export PATH="$RUSTUP_HOME/bin:$CARGO_HOME/bin:$PATH"
 # or just sets it as the default if it's already cached.
 if command -v rustup &>/dev/null; then
   rustup default stable
+  # Ensure cached stable toolchain meets c2pa-rs MSRV (1.96.0+).
+  if ! rustc -V 2>/dev/null | awk '{split($2,v,"."); exit !(v[1]>1 || (v[1]==1 && v[2]>=96))}'; then
+    rustup update stable --no-self-update
+  fi
 else
   echo "Installing Rust..."
   curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain stable --no-modify-path

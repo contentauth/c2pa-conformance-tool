@@ -1,4 +1,3 @@
-import type { Config, Context } from '@netlify/functions'
 import {
   SsrfBlockedError,
   validateResponderUrl,
@@ -24,7 +23,7 @@ function jsonError(status: number, error: string): Response {
   })
 }
 
-export default async (req: Request, _context: Context): Promise<Response> => {
+export default async (req: Request): Promise<Response> => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { status: 200, headers: CORS_HEADERS })
   }
@@ -95,6 +94,6 @@ export default async (req: Request, _context: Context): Promise<Response> => {
   }
 }
 
-export const config: Config = {
-  path: '/api/ocsp-proxy'
+export const config = {
+  path: '/api/ocsp-proxy',
 }

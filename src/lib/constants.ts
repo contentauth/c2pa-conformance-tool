@@ -23,6 +23,27 @@ export const VALIDATION_STATUS = {
   CAWG_ICA_CREDENTIAL_VALID: 'cawg.ica.credential_valid'
 } as const
 
+export function isOcspNotRevokedCode(code?: string): boolean {
+  if (!code) return false
+  const lower = code.toLowerCase().replace(/[-_]/g, '')
+  return (
+    lower === 'signingcredential.ocsp.notrevoked' ||
+    lower === 'ocsp.notrevoked' ||
+    lower.endsWith('.ocsp.notrevoked') ||
+    lower === 'ocsp.good'
+  )
+}
+
+export function isOcspRevokedCode(code?: string): boolean {
+  if (!code) return false
+  const lower = code.toLowerCase().replace(/[-_]/g, '')
+  return (
+    lower === 'signingcredential.ocsp.revoked' ||
+    lower === 'ocsp.revoked' ||
+    lower.endsWith('.ocsp.revoked')
+  )
+}
+
 // Certificate OIDs
 export const CERTIFICATE_OID = {
   COMMON_NAME: '2.5.4.3',

@@ -237,5 +237,248 @@ describe('ReportViewer Component', () => {
     expect(childImg).toBeTruthy()
     expect(childImg?.getAttribute('src')).toBe('data:image/jpeg;base64,active_ingredient_thumb_b64')
   })
+
+  it('should render solid red Cr badge and Signature Not Trusted — Certificate Revoked when active cert is revoked', () => {
+    const mockReport: ConformanceReport = {
+      manifests: [
+        {
+          label: 'active_manifest',
+          assertions: {},
+          validationResults: {
+            success: [{ code: 'claimSignature.validated' }],
+            failure: [{ code: 'signingCredential.ocsp.revoked', explanation: 'The certificate was revoked by CA' }]
+          },
+          signature: {
+            certificateInfo: {
+              subject: { CN: 'Revoked Signer' }
+            }
+          }
+        }
+      ]
+    } as unknown as ConformanceReport
+
+    const { container, getByText } = render(ReportViewer, { report: mockReport })
+
+    // Check main banner
+    expect(getByText(/Signature Not Trusted — Certificate Revoked/)).toBeTruthy()
+
+    // Check top-left Cr pin badge on the card
+    const badge = container.querySelector('.bg-red-600')
+    expect(badge).toBeTruthy()
+    expect(badge?.textContent).toContain('Revoked')
+
+    // Check card border is border-red-500
+    const card = container.querySelector('button.border-red-500')
+    expect(card).toBeTruthy()
+  })
+
+  it('should display OCSP Verified badge when active manifest has signingCredential.ocsp.notRevoked and is trusted', () => {
+    const mockReport: ConformanceReport = {
+      manifests: [
+        {
+          label: 'active_manifest',
+          assertions: {},
+          validationResults: {
+            success: [
+              { code: 'signingCredential.trusted' },
+              { code: 'signingCredential.ocsp.notRevoked' },
+              { code: 'claimSignature.validated' }
+            ],
+            failure: []
+          },
+          signature: {
+            certificateInfo: {
+              subject: { CN: 'Trusted Signer' }
+            }
+          }
+        }
+      ]
+    } as unknown as ConformanceReport
+
+    const { container, getByText } = render(ReportViewer, { report: mockReport })
+
+    expect(getByText('Signature Trusted')).toBeTruthy()
+    expect(getByText('OCSP Verified (Not Revoked)')).toBeTruthy()
+    expect(container.textContent).toContain('Validated against official C2PA Trust List and verified active (not revoked) via OCSP')
+  })
+
+  it('should display OCSP Verified badge and headline when signingCredential.ocsp.notRevoked is under informational', () => {
+    const mockReport: ConformanceReport = {
+      manifests: [
+        {
+          label: 'active_manifest',
+          assertions: {},
+          validationResults: {
+            success: [
+              { code: 'signingCredential.trusted' },
+              { code: 'claimSignature.validated' }
+            ],
+            informational: [
+              { code: 'signingCredential.ocsp.notRevoked', explanation: 'certificate not revoked' }
+            ],
+            failure: []
+          },
+          signature: {
+            certificateInfo: {
+              subject: { CN: 'Trusted Signer' }
+            }
+          }
+        }
+      ]
+    } as unknown as ConformanceReport
+
+    const { container, getByText } = render(ReportViewer, { report: mockReport })
+
+    expect(getByText('Signature Trusted')).toBeTruthy()
+    expect(getByText('OCSP Verified (Not Revoked)')).toBeTruthy()
+    expect(container.textContent).toContain('Validated against official C2PA Trust List and verified active (not revoked) via OCSP')
+  })
+
+  it('should mark overall verdict untrusted if an ingredient manifest has revoked certificate', () => {
+    const mockReport: ConformanceReport = {
+      manifests: [
+        {
+          label: 'active_manifest',
+          assertions: {
+            'c2pa.ingredient.v3': {
+              relationship: 'parentOf',
+              activeManifest: 'urn:c2pa:ingredient'
+            }
+          },
+          validationResults: {
+            success: [{ code: 'signingCredential.trusted' }]
+          },
+          signature: {
+            certificateInfo: {
+              subject: { CN: 'Active Signer' }
+            }
+          }
+        },
+        {
+          label: 'urn:c2pa:ingredient',
+          assertions: {},
+          validationResults: {
+            failure: [{ code: 'signingCredential.ocsp.revoked' }]
+          },
+          signature: {
+            certificateInfo: {
+              subject: { CN: 'Revoked Ingredient' }
+            }
+          }
+        }
+      ]
+    } as unknown as ConformanceReport
+
+    const { container, getByText } = render(ReportViewer, { report: mockReport })
+
+    // Overall verdict should be untrusted due to ingredient revocation
+    expect(getByText(/Signature Not Trusted — Certificate Revoked/)).toBeTruthy()
+
+    // The ingredient card should have border-red-500 and the red revoked Cr badge
+    const redCards = container.querySelectorAll('button.border-red-500')
+    expect(redCards.length).toBe(1)
+  })
+
+  it('should display Full-Chain OCSP Verified badge and headline when both leaf and issuing CA are good', () => {
+    const mockReport: ConformanceReport = {
+      manifests: [
+        {
+          label: 'active_manifest',
+          assertions: {},
+          validationResults: {
+            success: [
+              { code: 'signingCredential.trusted' },
+              { code: 'signingCredential.ocsp.notRevoked' }
+            ],
+            failure: []
+          },
+          signature: {
+            certificateInfo: {
+              subject: { CN: 'Active Signer' }
+            }
+          }
+        }
+      ],
+      _icaOcsp: {
+        active_manifest: {
+          status: 'good',
+          icaSubjectCn: 'Test Issuing CA G1',
+          responderUrl: 'http://ocsp.test-pki.example'
+        }
+      }
+    } as unknown as ConformanceReport
+
+    const { container, getByText, getAllByText } = render(ReportViewer, { report: mockReport })
+
+    // Check subtitle (on headline banner, visible across tabs)
+    expect(getByText(/verified active \(not revoked\) via Full-Chain OCSP/)).toBeTruthy()
+
+    // Check badge (on headline banner)
+    expect(getByText(/Full-Chain OCSP Verified/)).toBeTruthy()
+
+    // Check top-right shield overlay on thumbnail card
+    const shieldOverlay = container.querySelector('[title="All certificates in the chain passed live OCSP checks"]')
+    expect(shieldOverlay).toBeTruthy()
+    expect(shieldOverlay?.classList.contains('bg-blue-600')).toBe(true)
+
+    // Ensure "Full-Chain OCSP" text badge is NOT present below the thumbnail card
+    const badgeSpans = container.querySelectorAll('.badge')
+    for (const b of badgeSpans) {
+      expect(b.textContent?.toLowerCase()).not.toContain('full-chain ocsp')
+    }
+
+    // Switch to Report tab to check Validation Status Details
+    fireEvent.click(getByText('Report'))
+
+    // Check Issuing CA row in Validation Status Details
+    expect(getByText(/issuingCA.ocsp.notRevoked/)).toBeTruthy()
+
+    // Test Issuing CA G1 appears in both Validation Status Details and Signature Information
+    const icaNodes = getAllByText(/Test Issuing CA G1/)
+    expect(icaNodes.length).toBe(2)
+  })
+
+  it('should mark overall verdict untrusted when an Issuing CA is revoked in _icaOcsp', () => {
+    const mockReport: ConformanceReport = {
+      manifests: [
+        {
+          label: 'active_manifest',
+          assertions: {},
+          validationResults: {
+            success: [
+              { code: 'signingCredential.trusted' },
+              { code: 'signingCredential.ocsp.notRevoked' }
+            ],
+            failure: []
+          },
+          signature: {
+            certificateInfo: {
+              subject: { CN: 'Active Signer' }
+            }
+          }
+        }
+      ],
+      _icaOcsp: {
+        active_manifest: {
+          status: 'revoked',
+          icaSubjectCn: 'Revoked Issuing CA G1',
+          responderUrl: 'http://ocsp.test-pki.example',
+          revokedAt: '2026-09-01T12:00:00Z'
+        }
+      }
+    } as unknown as ConformanceReport
+
+    const { getByText } = render(ReportViewer, { report: mockReport })
+
+    // Headline should reflect revoked status (visible across tabs)
+    expect(getByText(/Signature Not Trusted — Certificate Revoked/)).toBeTruthy()
+
+    // Switch to Report tab
+    fireEvent.click(getByText('Report'))
+
+    // Issuing CA failure row in Validation Status Details
+    expect(getByText(/issuingCA.ocsp.revoked/)).toBeTruthy()
+  })
 })
+
 

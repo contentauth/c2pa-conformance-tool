@@ -1,5 +1,5 @@
 import { VERSION_INFO } from './version'
-import type { ConformanceReport } from './types'
+import type { ConformanceReport, IcaOcspInfo } from './types'
 import { VALIDATION_STATUS } from './constants'
 import { isCrJson, legacyToCrJson, getActiveManifestValidationStatus, type CrJson } from './crjson'
 
@@ -26,12 +26,25 @@ type LocalC2paModule = {
     uri: string,
     settingsJson?: string,
   ) => Promise<Uint8Array>
+  set_ocsp_proxy_endpoint?: (url: string) => void
+  extract_manifest_certificates?: (
+    fileBytes: Uint8Array,
+    format: string,
+    settingsJson?: string,
+  ) => Promise<string>
+  extract_sidecar_manifest_certificates?: (
+    manifestBytes: Uint8Array,
+    assetBytes: Uint8Array,
+    assetFormat: string,
+    settingsJson?: string,
+  ) => Promise<string>
 }
 
 type ExtractedCrJsonResult = {
   crJson: CrJson
   usedITL: boolean
   usedTestCerts: boolean
+  icaOcsp?: Record<string, IcaOcspInfo>
 }
 
 const importModule = new Function('modulePath', 'return import(modulePath)') as (modulePath: string) => Promise<LocalC2paModule>
@@ -71,30 +84,31 @@ const DEFAULT_TRUST_CONFIG = [
   '1.3.6.1.4.1.62558.2.1',     // C2PA claim signing
 ].join('\n')
 
-function toLocalSettingsJson(settings?: Settings): string | undefined {
-  if (!settings) {
-    return undefined
-  }
-
+function toLocalSettingsJson(settings?: Settings): string {
   const localSettings = {
     verify: {
-      verify_after_reading: settings.verify?.verifyAfterReading ?? true,
-      verify_trust: settings.verify?.verifyTrust ?? true,
+      verify_after_reading: settings?.verify?.verifyAfterReading ?? true,
+      verify_trust: settings?.verify?.verifyTrust ?? true,
       // Never let c2pa-rs auto-fetch remote manifests: doing so would silently reveal
       // the validating user's IP address and the fact they're inspecting this file to
       // a third-party host, with no consent. We surface remote references instead and
       // fetch them ourselves only after the user explicitly opts in (see
       // processRemoteManifest).
       remote_manifest_fetch: false,
+      // Live-fetch OCSP status for the signing certificate when the manifest doesn't
+      // already staple an OCSP response. Routed through our own SSRF-hardened proxy
+      // (see set_ocsp_proxy_endpoint / ProxyHttpResolver in the wasm crate) since OCSP
+      // responders don't serve CORS headers and can't be fetched from the browser directly.
+      ocsp_fetch: true,
     },
-    trust: (settings.trust?.trustAnchors || settings.trust?.allowedList)
+    trust: (settings?.trust?.trustAnchors || settings?.trust?.allowedList)
       ? {
-          ...(settings.trust.trustAnchors ? { trust_anchors: settings.trust.trustAnchors } : {}),
-          ...(settings.trust.allowedList ? { allowed_list: settings.trust.allowedList } : {}),
+          ...(settings?.trust?.trustAnchors ? { trust_anchors: settings.trust.trustAnchors } : {}),
+          ...(settings?.trust?.allowedList ? { allowed_list: settings.trust.allowedList } : {}),
           trust_config: DEFAULT_TRUST_CONFIG,
         }
       : undefined,
-    ...(settings.softBindingAlgorithms?.length
+    ...(settings?.softBindingAlgorithms?.length
       ? { soft_binding: { soft_binding_algorithms: settings.softBindingAlgorithms } }
       : {}),
   }
@@ -116,6 +130,13 @@ type C2paInstance = {
     ) => Promise<ReaderHandle | null>
   }
   getVersion: () => string
+  extractCertificates?: (format: string, file: Blob, settings?: Settings) => Promise<any>
+  extractSidecarCertificates?: (
+    sidecarBytes: Uint8Array,
+    assetFormat: string,
+    assetFile: Blob,
+    settings?: Settings,
+  ) => Promise<any>
 }
 
 type ReaderHandle = {
@@ -179,6 +200,38 @@ function buildC2paFromModule(localModule: LocalC2paModule): C2paInstance {
         : {}),
     },
     getVersion: () => localModule.get_version(),
+    ...(typeof localModule.extract_manifest_certificates === 'function'
+      ? {
+          extractCertificates: async (format: string, file: Blob, settings?: Settings) => {
+            const fileBytes = new Uint8Array(await file.arrayBuffer())
+            const json = await localModule.extract_manifest_certificates!(
+              fileBytes,
+              format,
+              toLocalSettingsJson(settings),
+            )
+            return JSON.parse(json)
+          },
+        }
+      : {}),
+    ...(typeof localModule.extract_sidecar_manifest_certificates === 'function'
+      ? {
+          extractSidecarCertificates: async (
+            sidecarBytes: Uint8Array,
+            assetFormat: string,
+            assetFile: Blob,
+            settings?: Settings,
+          ) => {
+            const assetBytes = new Uint8Array(await assetFile.arrayBuffer())
+            const json = await localModule.extract_sidecar_manifest_certificates!(
+              sidecarBytes,
+              assetBytes,
+              assetFormat,
+              toLocalSettingsJson(settings),
+            )
+            return JSON.parse(json)
+          },
+        }
+      : {}),
   }
 }
 
@@ -197,6 +250,14 @@ async function createLocalC2pa(): Promise<C2paInstance | null> {
 
     const localModule = await importModule(moduleUrl)
     await localModule.default()
+
+    if (typeof localModule.set_ocsp_proxy_endpoint === 'function') {
+      const origin = typeof window !== 'undefined' && window.location?.origin ? window.location.origin : ''
+      if (origin) {
+        localModule.set_ocsp_proxy_endpoint(`${origin}/api/ocsp-proxy`)
+      }
+    }
+
     return buildC2paFromModule(localModule)
   } catch (error) {
     console.info('Local c2pa-rs WASM not available:', error)
@@ -331,6 +392,10 @@ const MIME_TYPE_MAP: Record<string, string> = {
 }
 
 const EXTENSION_MIME_MAP: Record<string, string> = {
+  'heic': 'image/heic',
+  'heif': 'image/heif',
+  'avci': 'image/avci',
+  'avcs': 'image/avcs',
   'dng': 'image/x-adobe-dng',
   'arw': 'image/x-sony-arw',
   'cr2': 'image/x-canon-cr2',
@@ -600,13 +665,15 @@ async function extractCrJsonWithMetadata(file: File, testCertificates: string[] 
   }
 
   try {
-    return await runTrustValidationFlow(
+    const result = await runTrustValidationFlow(
       readManifestStore,
       testCertificates,
       mimeType === SIDECAR_MIME
         ? 'No C2PA manifest could be read from this sidecar. It may be corrupted or not a valid .c2pa file.'
         : 'No C2PA manifest found in this file',
     )
+
+    return result
   } catch (error) {
     console.error('❌ Error in processFile:', error)
     const msg = error instanceof Error ? error.message : String(error)
@@ -641,6 +708,7 @@ function buildConformanceReport(extracted: ExtractedCrJsonResult): ConformanceRe
     ...extracted.crJson,
     usedITL: extracted.usedITL,
     usedTestCerts: extracted.usedTestCerts,
+    _icaOcsp: extracted.icaOcsp,
     _conformanceToolVersion: {
       commit: VERSION_INFO.sha,
       shortCommit: VERSION_INFO.shortSha,
@@ -683,11 +751,13 @@ async function extractSidecarWithAssetCrJsonWithMetadata(
   }
 
   try {
-    return await runTrustValidationFlow(
+    const result = await runTrustValidationFlow(
       readManifestStore,
       testCertificates,
       `No C2PA manifest could be read from sidecar "${sidecar.name}" paired with "${asset.name}".`,
     )
+
+    return result
   } catch (error) {
     const msg = error instanceof Error ? error.message : String(error)
     if (msg.includes('HashMismatch') || msg.includes('dataHash') || msg.includes('bmffHash')) {
@@ -789,3 +859,13 @@ export async function getVersion(): Promise<string> {
   const c2pa = await initC2pa()
   return c2pa.getVersion()
 }
+
+export async function extractCertificatesForFile(file: File): Promise<any> {
+  const c2pa = await initC2pa()
+  const mime = resolveMimeType(file)
+  if (isSidecarFile(file)) {
+    return null
+  }
+  return c2pa.extractCertificates ? c2pa.extractCertificates(mime, file) : null
+}
+

@@ -36,8 +36,24 @@ export function isTextFile(file: File): boolean {
   return fileExtension(file) in TEXT_EXTENSION_MIME_MAP
 }
 
+// Fonts (OpenType and TrueType, `font/otf` and `font/ttf`). Reading them needs the c2pa-rs font
+// handler (contentauth/c2pa-rs#2768), which is not in a c2pa-rs release yet; until then c2pa-rs
+// reports them as unsupported. The C2PA specification marks the font `C2PA` table as
+// preliminary. Browsers report fonts inconsistently (font/ttf, application/x-font-ttf, or
+// nothing), so the extension wins over the browser-reported MIME type.
+export const FONT_EXTENSION_MIME_MAP: Record<string, string> = {
+  'otf': 'font/otf',
+  'ttf': 'font/ttf',
+}
+
+/** True for the font formats above. */
+export function isFontFile(file: File): boolean {
+  return fileExtension(file) in FONT_EXTENSION_MIME_MAP
+}
+
 // Formats the file pickers offer alongside the browser's image/video/audio families.
 const OTHER_ACCEPT = '.pdf,.dng,.arw,.cr2,.cr3,.nef,.orf,.rw2'
+const FONT_ACCEPT = Object.keys(FONT_EXTENSION_MIME_MAP).map(ext => `.${ext}`).join(',')
 
 /** `accept` value for asset pickers (no sidecars). */
-export const ASSET_ACCEPT = `image/*,video/*,audio/*,${OTHER_ACCEPT},${TEXT_ACCEPT}`
+export const ASSET_ACCEPT = `image/*,video/*,audio/*,${OTHER_ACCEPT},${FONT_ACCEPT},${TEXT_ACCEPT}`

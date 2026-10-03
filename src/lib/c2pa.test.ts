@@ -4,7 +4,7 @@ import {
   processRemoteManifest, revalidateRemoteManifest,
   _setLocalModuleForTesting, _fetchSoftBindingAlgorithmsForTesting, _resetSoftBindingCacheForTesting,
 } from './c2pa'
-import { ASSET_ACCEPT, TEXT_ACCEPT, isTextFile } from './fileTypes'
+import { ASSET_ACCEPT, TEXT_ACCEPT, isFontFile, isTextFile } from './fileTypes'
 import type { ConformanceReport } from './types'
 
 // ── Shared crJSON factory ─────────────────────────────────────────────────────
@@ -185,6 +185,38 @@ describe('c2pa utilities', () => {
         expect(ASSET_ACCEPT.split(',')).toContain(ext)
       }
       expect(TEXT_ACCEPT.split(',').every(e => ASSET_ACCEPT.split(',').includes(e))).toBe(true)
+    })
+  })
+
+  // ── Font formats ────────────────────────────────────────────────────────────
+
+  describe('font formats', () => {
+    const file = (name: string, type: string) => new File(['font'], name, { type })
+    // What the c2pa-rs WASM build rejects with when it has no handler for the format.
+    const unsupported = () => Promise.reject('Failed to read C2PA data: type is unsupported')
+
+    it('maps font extensions to font/otf and font/ttf, over the browser MIME', () => {
+      expect(resolveMimeType(file('Inter.otf', ''))).toBe('font/otf')
+      expect(resolveMimeType(file('Roboto.TTF', 'application/x-font-ttf'))).toBe('font/ttf')
+      expect(resolveMimeType(file('Roboto.ttf', 'font/ttf'))).toBe('font/ttf')
+    })
+
+    it('recognises fonts by extension and offers them in the asset picker', () => {
+      expect(isFontFile(file('Inter.otf', ''))).toBe(true)
+      expect(isFontFile(file('Inter.woff2', 'font/woff2'))).toBe(false)
+      expect(ASSET_ACCEPT.split(',')).toEqual(expect.arrayContaining(['.otf', '.ttf']))
+    })
+
+    it('explains that fonts need the c2pa-rs font handler when the build lacks it', async () => {
+      _setLocalModuleForTesting(makeLocalModule({ readManifestStore: unsupported }))
+      await expect(processFile(file('Inter.otf', 'font/otf')))
+        .rejects.toThrow(/contentauth\/c2pa-rs#2768/)
+    })
+
+    it('keeps the general unsupported-format message for other types', async () => {
+      _setLocalModuleForTesting(makeLocalModule({ readManifestStore: unsupported }))
+      await expect(processFile(file('clip.xyz', 'application/x-unknown')))
+        .rejects.toThrow(/^Unsupported file format \(application\/x-unknown\)/)
     })
   })
 

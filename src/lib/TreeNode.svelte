@@ -103,7 +103,7 @@
             <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
             <path d="M3 17a3 3 0 1 0 6 0a3 3 0 0 0-6 0"/><path d="M6 17v-13l12-2v13"/><path d="M15 15a3 3 0 1 0 6 0a3 3 0 0 0-6 0"/>
           </svg>
-        {:else if effectiveMimeType?.startsWith('application/') || effectiveMimeType?.startsWith('text/')}
+        {:else if effectiveMimeType?.startsWith('application/') || effectiveMimeType?.startsWith('text/') || effectiveMimeType?.startsWith('font/')}
           <svg class="w-10 h-10 text-gray-300 dark:text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
             <path d="M14 3v4a1 1 0 0 0 1 1h4"/><path d="M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2z"/><path d="M9 17h6"/><path d="M9 13h6"/>

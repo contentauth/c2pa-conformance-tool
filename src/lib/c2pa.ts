@@ -1,5 +1,5 @@
 import { VERSION_INFO } from './version'
-import { TEXT_EXTENSION_MIME_MAP, fileExtension } from './fileTypes'
+import { MIDI_EXTENSION_MIME_MAP, TEXT_EXTENSION_MIME_MAP, fileExtension, isMidiMimeType } from './fileTypes'
 import type { ConformanceReport } from './types'
 import { VALIDATION_STATUS } from './constants'
 import { isCrJson, legacyToCrJson, getActiveManifestValidationStatus, type CrJson } from './crjson'
@@ -342,7 +342,7 @@ const EXTENSION_MIME_MAP: Record<string, string> = {
   'c2pa': 'application/c2pa',
 }
 
-export { isTextFile, TEXT_ACCEPT } from './fileTypes'
+export { isMidiFile, isTextFile, TEXT_ACCEPT } from './fileTypes'
 
 export const SIDECAR_MIME = 'application/c2pa'
 
@@ -354,8 +354,8 @@ export function isSidecarFile(file: File): boolean {
 
 export function resolveMimeType(file: File): string {
   const ext = fileExtension(file)
-  const text = TEXT_EXTENSION_MIME_MAP[ext]
-  if (text) return text
+  const byExtension = TEXT_EXTENSION_MIME_MAP[ext] ?? MIDI_EXTENSION_MIME_MAP[ext]
+  if (byExtension) return byExtension
   const mapped = MIME_TYPE_MAP[file.type]
   if (mapped) return mapped
   if (file.type && file.type !== 'application/octet-stream') return file.type
@@ -625,7 +625,10 @@ async function extractCrJsonWithMetadata(file: File, testCertificates: string[] 
       // the generic error banner.
       throw new Error(msg)
     }
-    if (msg.includes('UnsupportedFormatError') || msg.includes('Unsupported format')) {
+    if (msg.includes('UnsupportedFormatError') || msg.includes('Unsupported format') || msg.includes('type is unsupported')) {
+      if (isMidiMimeType(mimeType)) {
+        throw new Error(`MIDI files (${mimeType}) are not supported yet: reading them needs the experimental c2pa-rs MIDI handler (contentauth/c2pa-rs#2733, the \`unstable_midi\` feature), which this build of the tool does not include.`)
+      }
       throw new Error(`Unsupported file format (${mimeType}). Supported formats include JPEG, PNG, WebP, AVIF, MP4, MOV, MP3, WAV, PDF, and text (plain text, Markdown, YAML and other structured text).`)
     }
     if (msg.includes('InvalidAsset') || msg.includes('Box size extends beyond') || msg.includes('box size')) {

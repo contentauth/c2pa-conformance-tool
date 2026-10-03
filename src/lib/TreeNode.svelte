@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { OverviewNode } from './types'
+  import { isMidiMimeType } from './fileTypes'
 
   export let node: OverviewNode
   export let onZoom: ((idx: number) => void) | undefined = undefined
@@ -24,7 +25,8 @@
   $: cardMedia = (() => {
     if (fileSrc) {
       if (effectiveMimeType?.startsWith('video/')) return 'video-live'
-      if (effectiveMimeType?.startsWith('audio/')) return 'audio-live'
+      // Browsers cannot play MIDI, so it gets the audio placeholder instead of a player.
+      if (effectiveMimeType?.startsWith('audio/') && !isMidiMimeType(effectiveMimeType)) return 'audio-live'
       if (effectiveMimeType?.startsWith('image/') && BROWSER_PREVIEWABLE_IMAGES.has(effectiveMimeType ?? '')) return 'image'
       return 'placeholder'
     }

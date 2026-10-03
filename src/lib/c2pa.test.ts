@@ -4,7 +4,7 @@ import {
   processRemoteManifest, revalidateRemoteManifest,
   _setLocalModuleForTesting, _fetchSoftBindingAlgorithmsForTesting, _resetSoftBindingCacheForTesting,
 } from './c2pa'
-import { ASSET_ACCEPT, TEXT_ACCEPT, isTextFile } from './fileTypes'
+import { ASSET_ACCEPT, TEXT_ACCEPT, isMidiFile, isMidiMimeType, isTextFile } from './fileTypes'
 import type { ConformanceReport } from './types'
 
 // ── Shared crJSON factory ─────────────────────────────────────────────────────
@@ -185,6 +185,39 @@ describe('c2pa utilities', () => {
         expect(ASSET_ACCEPT.split(',')).toContain(ext)
       }
       expect(TEXT_ACCEPT.split(',').every(e => ASSET_ACCEPT.split(',').includes(e))).toBe(true)
+    })
+  })
+
+  // ── MIDI ────────────────────────────────────────────────────────────────────
+
+  describe('MIDI', () => {
+    const file = (name: string, type = '') => new File(['MThd'], name, { type })
+    const unsupported = () => Promise.reject('Failed to read C2PA data: type is unsupported')
+
+    it('maps MIDI extensions to audio/midi, over the browser MIME', () => {
+      expect(resolveMimeType(file('song.mid'))).toBe('audio/midi')
+      expect(resolveMimeType(file('song.MIDI', 'audio/mid'))).toBe('audio/midi')
+    })
+
+    it('recognises MIDI by extension or MIME type and offers it in the asset picker', () => {
+      expect(isMidiFile(file('song.mid'))).toBe(true)
+      expect(isMidiFile(file('song', 'audio/x-midi'))).toBe(true)
+      expect(isMidiFile(file('song.mp3', 'audio/mpeg'))).toBe(false)
+      expect(isMidiMimeType('audio/mid')).toBe(true)
+      expect(isMidiMimeType('audio/wav')).toBe(false)
+      expect(ASSET_ACCEPT.split(',')).toEqual(expect.arrayContaining(['.mid', '.midi']))
+    })
+
+    it('explains that MIDI needs the c2pa-rs MIDI handler when the build lacks it', async () => {
+      _setLocalModuleForTesting(makeLocalModule({ readManifestStore: unsupported }))
+      await expect(processFile(file('song.mid', 'audio/midi')))
+        .rejects.toThrow(/MIDI files \(audio\/midi\) are not supported yet.*contentauth\/c2pa-rs#2733/)
+    })
+
+    it('keeps the general unsupported-format message for other types', async () => {
+      _setLocalModuleForTesting(makeLocalModule({ readManifestStore: unsupported }))
+      await expect(processFile(file('clip.xyz', 'application/x-unknown')))
+        .rejects.toThrow(/^Unsupported file format \(application\/x-unknown\)/)
     })
   })
 

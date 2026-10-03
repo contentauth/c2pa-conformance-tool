@@ -1,6 +1,7 @@
 <script lang="ts">
   import { createEventDispatcher, onDestroy } from 'svelte'
-  import { ASSET_ACCEPT, isTextFile, TEXT_EXTENSION_MIME_MAP, fileExtension } from './fileTypes'
+  import { ASSET_ACCEPT, isMidiFile, isTextFile, MIDI_EXTENSION_MIME_MAP, TEXT_EXTENSION_MIME_MAP, fileExtension } from './fileTypes'
+  import { midiFormatName, readMidiSummary, type MidiSummary } from './midiSummary'
   import ManifestSummary from './ManifestSummary.svelte'
   import RubricsPanel from './RubricsPanel.svelte'
   import OverviewPanel from './OverviewPanel.svelte'
@@ -41,7 +42,18 @@
   let copied = false
   let copyTimeout: ReturnType<typeof setTimeout> | null = null
   let mediaUrl: string | null = null
-  let mediaType: 'image' | 'video' | 'audio' | 'document' | 'text' | 'sidecar' | 'unknown' = 'unknown'
+  let mediaType: 'image' | 'video' | 'audio' | 'midi' | 'document' | 'text' | 'sidecar' | 'unknown' = 'unknown'
+
+  // Browsers cannot play MIDI, so MIDI files get a summary of their header instead of a player.
+  let midiSummary: MidiSummary | null = null
+  let midiSummaryFor: File | null = null
+
+  async function loadMidiSummary(f: File) {
+    midiSummaryFor = f
+    midiSummary = null
+    const summary = await readMidiSummary(f)
+    if (midiSummaryFor === f) midiSummary = summary
+  }
 
   // Text files are previewed as source (never rendered, so HTML cannot run), up to this many
   // characters.
@@ -109,6 +121,9 @@
     const lowerName = file.name.toLowerCase()
     if (file.type === 'application/c2pa' || lowerName.endsWith('.c2pa')) {
       mediaType = 'sidecar'
+    } else if (isMidiFile(file)) {
+      mediaType = 'midi'
+      if (midiSummaryFor !== file) void loadMidiSummary(file)
     } else if (isTextFile(file)) {
       mediaType = 'text'
       if (textPreviewFor !== file) void loadTextPreview(file)
@@ -817,7 +832,7 @@
               <div class="bg-gray-50 dark:bg-gray-900 rounded-2xl p-4">
                 <div class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">Type</div>
                 <p class="text-sm font-medium text-[#1e293b] dark:text-gray-100">
-                  {mediaType === 'sidecar' ? 'application/c2pa (sidecar)' : mediaType === 'text' ? TEXT_EXTENSION_MIME_MAP[fileExtension(file)] : (file.type || 'Unknown')}
+                  {mediaType === 'sidecar' ? 'application/c2pa (sidecar)' : mediaType === 'text' ? TEXT_EXTENSION_MIME_MAP[fileExtension(file)] : mediaType === 'midi' ? (MIDI_EXTENSION_MIME_MAP[fileExtension(file)] ?? file.type) : (file.type || 'Unknown')}
                 </p>
               </div>
               <div class="bg-gray-50 dark:bg-gray-900 rounded-2xl p-4">
@@ -859,6 +874,24 @@
                     <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2 -2v-2" /><path d="M7 11l5 5l5 -5" /><path d="M12 4l0 12" /></svg>
                     Download PDF
                   </a>
+                </div>
+              {:else if mediaType === 'midi'}
+                <div class="text-center max-w-md" data-testid="midi-preview">
+                  <div class="w-20 h-20 mx-auto bg-gradient-to-br from-blue-500 to-blue-500 dark:from-blue-700 dark:to-blue-700 rounded-2xl flex items-center justify-center text-white mb-6 shadow-lg">
+                    <svg class="w-10 h-10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                      <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                      <path d="M3 17a3 3 0 1 0 6 0a3 3 0 0 0-6 0"/><path d="M6 17v-13l12-2v13"/><path d="M15 15a3 3 0 1 0 6 0a3 3 0 0 0-6 0"/>
+                    </svg>
+                  </div>
+                  <p class="text-gray-700 dark:text-gray-200 text-lg font-semibold mb-2">Standard MIDI File</p>
+                  {#if midiSummary}
+                    <p class="text-sm text-gray-600 dark:text-gray-300 mb-2">
+                      Format {midiSummary.format} ({midiFormatName(midiSummary.format)}) &middot;
+                      {midiSummary.tracks.toLocaleString()} {midiSummary.tracks === 1 ? 'track' : 'tracks'} &middot;
+                      {midiSummary.timing}
+                    </p>
+                  {/if}
+                  <p class="text-gray-500 dark:text-gray-400 text-sm">Browsers cannot play MIDI files; the manifest is shown below.</p>
                 </div>
               {:else if mediaType === 'text'}
                 <div class="w-full self-stretch flex flex-col gap-2">

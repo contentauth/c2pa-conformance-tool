@@ -4,6 +4,7 @@ import {
   processRemoteManifest, revalidateRemoteManifest,
   _setLocalModuleForTesting, _fetchSoftBindingAlgorithmsForTesting, _resetSoftBindingCacheForTesting,
 } from './c2pa'
+import { ASSET_ACCEPT, TEXT_ACCEPT, isFontFile, isTextFile } from './fileTypes'
 import type { ConformanceReport } from './types'
 
 // ── Shared crJSON factory ─────────────────────────────────────────────────────
@@ -143,6 +144,79 @@ describe('c2pa utilities', () => {
       const f = new File([new Uint8Array([0])], 'photo.jpg', { type: 'image/jpeg' })
       expect(isSidecarFile(f)).toBe(false)
       expect(resolveMimeType(f)).toBe('image/jpeg')
+    })
+
+    it('falls back to the extension when the browser reports no specific MIME', () => {
+      const empty = new File([new Uint8Array([0])], 'scan.ARW', { type: '' })
+      expect(resolveMimeType(empty)).toBe('image/x-sony-arw')
+      const octet = new File([new Uint8Array([0])], 'asset.heics', { type: 'application/octet-stream' })
+      expect(resolveMimeType(octet)).toBe('heics')
+      const noExt = new File([new Uint8Array([0])], 'blob', { type: 'application/octet-stream' })
+      expect(resolveMimeType(noExt)).toBe('application/octet-stream')
+    })
+  })
+
+  // ── Text formats ────────────────────────────────────────────────────────────
+
+  describe('text formats', () => {
+    const file = (name: string, type: string) => new File(['hello'], name, { type })
+
+    it('maps text extensions to the format c2pa-rs registers, over the browser MIME', () => {
+      expect(resolveMimeType(file('notes.txt', 'text/plain'))).toBe('text/plain')
+      expect(resolveMimeType(file('README.md', ''))).toBe('text/markdown')
+      expect(resolveMimeType(file('config.yaml', 'application/x-yaml'))).toBe('application/yaml')
+      expect(resolveMimeType(file('Cargo.toml', ''))).toBe('application/toml')
+      expect(resolveMimeType(file('setup.ini', 'application/octet-stream'))).toBe('ini')
+      expect(resolveMimeType(file('app.js', 'application/x-javascript'))).toBe('text/javascript')
+      expect(resolveMimeType(file('script.py', 'text/x-python-script'))).toBe('text/x-python')
+      expect(resolveMimeType(file('Notes.MD', 'text/markdown'))).toBe('text/markdown')
+    })
+
+    it('recognises text files by extension only', () => {
+      expect(isTextFile(file('notes.TXT', ''))).toBe(true)
+      expect(isTextFile(file('feed.atom', ''))).toBe(true)
+      expect(isTextFile(file('photo.jpg', 'image/jpeg'))).toBe(false)
+      expect(isTextFile(file('manifest.c2pa', ''))).toBe(false)
+      expect(isTextFile(file('txt', 'text/plain'))).toBe(false)
+    })
+
+    it('offers every text extension in the asset picker', () => {
+      for (const ext of ['.txt', '.md', '.yaml', '.toml', '.ini', '.py', '.vtt']) {
+        expect(ASSET_ACCEPT.split(',')).toContain(ext)
+      }
+      expect(TEXT_ACCEPT.split(',').every(e => ASSET_ACCEPT.split(',').includes(e))).toBe(true)
+    })
+  })
+
+  // ── Font formats ────────────────────────────────────────────────────────────
+
+  describe('font formats', () => {
+    const file = (name: string, type: string) => new File(['font'], name, { type })
+    // What the c2pa-rs WASM build rejects with when it has no handler for the format.
+    const unsupported = () => Promise.reject('Failed to read C2PA data: type is unsupported')
+
+    it('maps font extensions to font/otf and font/ttf, over the browser MIME', () => {
+      expect(resolveMimeType(file('Inter.otf', ''))).toBe('font/otf')
+      expect(resolveMimeType(file('Roboto.TTF', 'application/x-font-ttf'))).toBe('font/ttf')
+      expect(resolveMimeType(file('Roboto.ttf', 'font/ttf'))).toBe('font/ttf')
+    })
+
+    it('recognises fonts by extension and offers them in the asset picker', () => {
+      expect(isFontFile(file('Inter.otf', ''))).toBe(true)
+      expect(isFontFile(file('Inter.woff2', 'font/woff2'))).toBe(false)
+      expect(ASSET_ACCEPT.split(',')).toEqual(expect.arrayContaining(['.otf', '.ttf']))
+    })
+
+    it('explains that fonts need the c2pa-rs font handler when the build lacks it', async () => {
+      _setLocalModuleForTesting(makeLocalModule({ readManifestStore: unsupported }))
+      await expect(processFile(file('Inter.otf', 'font/otf')))
+        .rejects.toThrow(/contentauth\/c2pa-rs#2768/)
+    })
+
+    it('keeps the general unsupported-format message for other types', async () => {
+      _setLocalModuleForTesting(makeLocalModule({ readManifestStore: unsupported }))
+      await expect(processFile(file('clip.xyz', 'application/x-unknown')))
+        .rejects.toThrow(/^Unsupported file format \(application\/x-unknown\)/)
     })
   })
 

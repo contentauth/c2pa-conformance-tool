@@ -4,7 +4,7 @@ import {
   processRemoteManifest, revalidateRemoteManifest,
   _setLocalModuleForTesting, _fetchSoftBindingAlgorithmsForTesting, _resetSoftBindingCacheForTesting,
 } from './c2pa'
-import { ASSET_ACCEPT, TEXT_ACCEPT, isFontFile, isTextFile } from './fileTypes'
+import { ASSET_ACCEPT, TEXT_ACCEPT, isFontFile, isTextFile, mlFormatOf } from './fileTypes'
 import type { ConformanceReport } from './types'
 
 // ── Shared crJSON factory ─────────────────────────────────────────────────────
@@ -217,6 +217,36 @@ describe('c2pa utilities', () => {
       _setLocalModuleForTesting(makeLocalModule({ readManifestStore: unsupported }))
       await expect(processFile(file('clip.xyz', 'application/x-unknown')))
         .rejects.toThrow(/^Unsupported file format \(application\/x-unknown\)/)
+    })
+  })
+
+  // ── ML formats ──────────────────────────────────────────────────────────────
+
+  describe('ML formats', () => {
+    const file = (name: string, type = '') => new File(['model'], name, { type })
+    const unsupported = () => Promise.reject('Failed to read C2PA data: type is unsupported')
+
+    it('maps ML extensions to the format names the c2pa-rs handlers register', () => {
+      expect(resolveMimeType(file('model.safetensors'))).toBe('safetensors')
+      expect(resolveMimeType(file('model.ONNX', 'application/octet-stream'))).toBe('onnx')
+      expect(resolveMimeType(file('data.parquet'))).toBe('application/vnd.apache.parquet')
+      expect(resolveMimeType(file('model.keras', 'application/zip'))).toBe('keras')
+    })
+
+    it('recognises ML files by extension and offers them in the asset picker', () => {
+      expect(mlFormatOf(file('model.safetensors'))?.pr).toBe(2769)
+      expect(mlFormatOf(file('model.pt'))).toBeUndefined()
+      expect(ASSET_ACCEPT.split(',')).toEqual(expect.arrayContaining(['.safetensors', '.onnx', '.parquet', '.keras']))
+    })
+
+    it.each([
+      ['model.safetensors', /SafeTensors model files are not supported yet.*contentauth\/c2pa-rs#2769/],
+      ['model.onnx', /ONNX model files are not supported yet.*contentauth\/c2pa-rs#2770/],
+      ['data.parquet', /Apache Parquet dataset files are not supported yet.*contentauth\/c2pa-rs#2771/],
+      ['model.keras', /Keras model files are not supported yet.*contentauth\/c2pa-rs#2775/],
+    ])('explains which c2pa-rs PR %s needs when the build lacks it', async (name, message) => {
+      _setLocalModuleForTesting(makeLocalModule({ readManifestStore: unsupported }))
+      await expect(processFile(file(name))).rejects.toThrow(message)
     })
   })
 

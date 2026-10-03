@@ -1,5 +1,5 @@
 import { VERSION_INFO } from './version'
-import { FONT_EXTENSION_MIME_MAP, TEXT_EXTENSION_MIME_MAP, fileExtension } from './fileTypes'
+import { FONT_EXTENSION_MIME_MAP, ML_FORMATS, TEXT_EXTENSION_MIME_MAP, fileExtension, mlFormatByName } from './fileTypes'
 import type { ConformanceReport } from './types'
 import { VALIDATION_STATUS } from './constants'
 import { isCrJson, legacyToCrJson, getActiveManifestValidationStatus, type CrJson } from './crjson'
@@ -342,7 +342,7 @@ const EXTENSION_MIME_MAP: Record<string, string> = {
   'c2pa': 'application/c2pa',
 }
 
-export { isFontFile, isTextFile, TEXT_ACCEPT } from './fileTypes'
+export { isFontFile, isTextFile, mlFormatOf, TEXT_ACCEPT } from './fileTypes'
 
 export const SIDECAR_MIME = 'application/c2pa'
 
@@ -354,7 +354,7 @@ export function isSidecarFile(file: File): boolean {
 
 export function resolveMimeType(file: File): string {
   const ext = fileExtension(file)
-  const byExtension = TEXT_EXTENSION_MIME_MAP[ext] ?? FONT_EXTENSION_MIME_MAP[ext]
+  const byExtension = TEXT_EXTENSION_MIME_MAP[ext] ?? FONT_EXTENSION_MIME_MAP[ext] ?? ML_FORMATS[ext]?.format
   if (byExtension) return byExtension
   const mapped = MIME_TYPE_MAP[file.type]
   if (mapped) return mapped
@@ -626,6 +626,10 @@ async function extractCrJsonWithMetadata(file: File, testCertificates: string[] 
       throw new Error(msg)
     }
     if (msg.includes('UnsupportedFormatError') || msg.includes('Unsupported format') || msg.includes('type is unsupported')) {
+      const ml = mlFormatByName(mimeType)
+      if (ml) {
+        throw new Error(`${ml.label} files are not supported yet: reading them needs the c2pa-rs handler in contentauth/c2pa-rs#${ml.pr}, which this build of the tool does not include.`)
+      }
       if (mimeType.startsWith('font/')) {
         throw new Error(`Font files (${mimeType}) are not supported yet: reading them needs the c2pa-rs font handler (contentauth/c2pa-rs#2768), which this build of the tool does not include.`)
       }

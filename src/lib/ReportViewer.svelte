@@ -1,6 +1,7 @@
 <script lang="ts">
   import { createEventDispatcher, onDestroy } from 'svelte'
-  import { ASSET_ACCEPT, isFontFile, isTextFile, FONT_EXTENSION_MIME_MAP, TEXT_EXTENSION_MIME_MAP, fileExtension } from './fileTypes'
+  import { ASSET_ACCEPT, isFontFile, isTextFile, FONT_EXTENSION_MIME_MAP, TEXT_EXTENSION_MIME_MAP, fileExtension, mlFormatOf } from './fileTypes'
+  import { readSafetensorsSummary, type SafetensorsSummary } from './safetensorsSummary'
   import ManifestSummary from './ManifestSummary.svelte'
   import RubricsPanel from './RubricsPanel.svelte'
   import OverviewPanel from './OverviewPanel.svelte'
@@ -41,7 +42,21 @@
   let copied = false
   let copyTimeout: ReturnType<typeof setTimeout> | null = null
   let mediaUrl: string | null = null
-  let mediaType: 'image' | 'video' | 'audio' | 'document' | 'text' | 'font' | 'sidecar' | 'unknown' = 'unknown'
+  let mediaType: 'image' | 'video' | 'audio' | 'document' | 'text' | 'font' | 'model' | 'sidecar' | 'unknown' = 'unknown'
+
+  // ML formats have no browser preview; SafeTensors gets a summary of its JSON header (the
+  // other formats would need protobuf, Thrift or ZIP parsing).
+  const MAX_LISTED_TENSORS = 50
+  let modelSummary: SafetensorsSummary | null = null
+  let modelSummaryFor: File | null = null
+
+  async function loadModelSummary(f: File) {
+    modelSummaryFor = f
+    modelSummary = null
+    if (fileExtension(f) !== 'safetensors') return
+    const summary = await readSafetensorsSummary(f)
+    if (modelSummaryFor === f) modelSummary = summary
+  }
 
   // Fonts are previewed by loading them with the FontFace API under a unique family name, so
   // the uploaded font never replaces one the page uses.
@@ -137,6 +152,9 @@
     const lowerName = file.name.toLowerCase()
     if (file.type === 'application/c2pa' || lowerName.endsWith('.c2pa')) {
       mediaType = 'sidecar'
+    } else if (mlFormatOf(file)) {
+      mediaType = 'model'
+      if (modelSummaryFor !== file) void loadModelSummary(file)
     } else if (isFontFile(file)) {
       mediaType = 'font'
       if (fontFor !== file) void loadFontPreview(file)
@@ -849,7 +867,7 @@
               <div class="bg-gray-50 dark:bg-gray-900 rounded-2xl p-4">
                 <div class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">Type</div>
                 <p class="text-sm font-medium text-[#1e293b] dark:text-gray-100">
-                  {mediaType === 'sidecar' ? 'application/c2pa (sidecar)' : mediaType === 'text' ? TEXT_EXTENSION_MIME_MAP[fileExtension(file)] : mediaType === 'font' ? FONT_EXTENSION_MIME_MAP[fileExtension(file)] : (file.type || 'Unknown')}
+                  {mediaType === 'sidecar' ? 'application/c2pa (sidecar)' : mediaType === 'text' ? TEXT_EXTENSION_MIME_MAP[fileExtension(file)] : mediaType === 'font' ? FONT_EXTENSION_MIME_MAP[fileExtension(file)] : mediaType === 'model' ? mlFormatOf(file)?.label : (file.type || 'Unknown')}
                 </p>
               </div>
               <div class="bg-gray-50 dark:bg-gray-900 rounded-2xl p-4">
@@ -891,6 +909,37 @@
                     <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2 -2v-2" /><path d="M7 11l5 5l5 -5" /><path d="M12 4l0 12" /></svg>
                     Download PDF
                   </a>
+                </div>
+              {:else if mediaType === 'model'}
+                <div class="w-full self-stretch flex flex-col gap-4 text-left" data-testid="model-preview">
+                  {#if modelSummary}
+                    <div class="flex flex-wrap gap-x-6 gap-y-1 text-sm text-[#1e293b] dark:text-gray-100">
+                      <span><span class="font-semibold">{modelSummary.tensors.length.toLocaleString()}</span> tensors</span>
+                      <span><span class="font-semibold">{modelSummary.totalParams.toLocaleString()}</span> parameters</span>
+                      <span>dtypes: <span class="font-mono">{modelSummary.dtypes.join(', ') || '—'}</span></span>
+                      <span>metadata: <span class="font-mono">{modelSummary.metadataKeys.join(', ') || '—'}</span></span>
+                    </div>
+                    <div class="max-h-[480px] overflow-auto rounded-xl border border-gray-200 dark:border-gray-700">
+                      <table class="w-full text-xs font-mono">
+                        <thead class="sticky top-0 bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300">
+                          <tr><th class="text-left p-2">Tensor</th><th class="text-left p-2">dtype</th><th class="text-left p-2">Shape</th><th class="text-right p-2">Parameters</th></tr>
+                        </thead>
+                        <tbody class="text-[#1e293b] dark:text-gray-100">
+                          {#each modelSummary.tensors.slice(0, MAX_LISTED_TENSORS) as t}
+                            <tr class="border-t border-gray-200 dark:border-gray-700"><td class="p-2 break-all">{t.name}</td><td class="p-2">{t.dtype}</td><td class="p-2">[{t.shape.join(', ')}]</td><td class="p-2 text-right">{t.params.toLocaleString()}</td></tr>
+                          {/each}
+                        </tbody>
+                      </table>
+                    </div>
+                    {#if modelSummary.tensors.length > MAX_LISTED_TENSORS}
+                      <p class="text-xs text-gray-500 dark:text-gray-400">Showing the first {MAX_LISTED_TENSORS} of {modelSummary.tensors.length.toLocaleString()} tensors.</p>
+                    {/if}
+                  {:else}
+                    <div class="text-center">
+                      <p class="text-gray-700 dark:text-gray-200 text-lg font-semibold mb-2">{mlFormatOf(file)?.label}</p>
+                      <p class="text-gray-500 dark:text-gray-400 text-sm">No preview is available for this format; the manifest is shown below.</p>
+                    </div>
+                  {/if}
                 </div>
               {:else if mediaType === 'font'}
                 <div class="w-full self-stretch flex flex-col gap-4 text-left" data-testid="font-preview">

@@ -51,9 +51,30 @@ export function isFontFile(file: File): boolean {
   return fileExtension(file) in FONT_EXTENSION_MIME_MAP
 }
 
+// Machine-learning model and dataset formats, with the format name each c2pa-rs handler
+// registers. None is in a c2pa-rs release yet; until the handler PR listed for each is merged,
+// c2pa-rs reports them as unsupported. Browsers report no MIME type for these.
+export const ML_FORMATS: Record<string, { format: string; label: string; pr: number }> = {
+  'safetensors': { format: 'safetensors', label: 'SafeTensors model', pr: 2769 },
+  'onnx': { format: 'onnx', label: 'ONNX model', pr: 2770 },
+  'parquet': { format: 'application/vnd.apache.parquet', label: 'Apache Parquet dataset', pr: 2771 },
+  'keras': { format: 'keras', label: 'Keras model', pr: 2775 },
+}
+
+/** The ML format entry for a file, by extension. */
+export function mlFormatOf(file: File): (typeof ML_FORMATS)[string] | undefined {
+  return ML_FORMATS[fileExtension(file)]
+}
+
+/** The ML format entry for a format name passed to c2pa-rs. */
+export function mlFormatByName(format: string): (typeof ML_FORMATS)[string] | undefined {
+  return Object.values(ML_FORMATS).find(f => f.format === format)
+}
+
 // Formats the file pickers offer alongside the browser's image/video/audio families.
 const OTHER_ACCEPT = '.pdf,.dng,.arw,.cr2,.cr3,.nef,.orf,.rw2'
 const FONT_ACCEPT = Object.keys(FONT_EXTENSION_MIME_MAP).map(ext => `.${ext}`).join(',')
+const ML_ACCEPT = Object.keys(ML_FORMATS).map(ext => `.${ext}`).join(',')
 
 /** `accept` value for asset pickers (no sidecars). */
-export const ASSET_ACCEPT = `image/*,video/*,audio/*,${OTHER_ACCEPT},${FONT_ACCEPT},${TEXT_ACCEPT}`
+export const ASSET_ACCEPT = `image/*,video/*,audio/*,${OTHER_ACCEPT},${FONT_ACCEPT},${ML_ACCEPT},${TEXT_ACCEPT}`

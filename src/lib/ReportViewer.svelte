@@ -1,5 +1,6 @@
 <script lang="ts">
   import { createEventDispatcher, onDestroy } from 'svelte'
+  import { ASSET_ACCEPT, isTextFile, TEXT_EXTENSION_MIME_MAP, fileExtension } from './fileTypes'
   import ManifestSummary from './ManifestSummary.svelte'
   import RubricsPanel from './RubricsPanel.svelte'
   import OverviewPanel from './OverviewPanel.svelte'
@@ -40,7 +41,23 @@
   let copied = false
   let copyTimeout: ReturnType<typeof setTimeout> | null = null
   let mediaUrl: string | null = null
-  let mediaType: 'image' | 'video' | 'audio' | 'document' | 'sidecar' | 'unknown' = 'unknown'
+  let mediaType: 'image' | 'video' | 'audio' | 'document' | 'text' | 'sidecar' | 'unknown' = 'unknown'
+
+  // Text files are previewed as source (never rendered, so HTML cannot run), up to this many
+  // characters.
+  const TEXT_PREVIEW_LIMIT = 200_000
+  let textPreview: string | null = null
+  let textPreviewTruncated = false
+  let textPreviewFor: File | null = null
+
+  async function loadTextPreview(f: File) {
+    textPreviewFor = f
+    textPreview = null
+    const text = await f.slice(0, TEXT_PREVIEW_LIMIT * 4).text()
+    if (textPreviewFor !== f) return
+    textPreviewTruncated = text.length > TEXT_PREVIEW_LIMIT || f.size > TEXT_PREVIEW_LIMIT * 4
+    textPreview = text.slice(0, TEXT_PREVIEW_LIMIT)
+  }
 
   // Only these image types can be rendered by browsers natively
   const BROWSER_PREVIEWABLE_IMAGES = new Set([
@@ -92,6 +109,9 @@
     const lowerName = file.name.toLowerCase()
     if (file.type === 'application/c2pa' || lowerName.endsWith('.c2pa')) {
       mediaType = 'sidecar'
+    } else if (isTextFile(file)) {
+      mediaType = 'text'
+      if (textPreviewFor !== file) void loadTextPreview(file)
     } else if (file.type.startsWith('image/')) {
       mediaType = BROWSER_PREVIEWABLE_IMAGES.has(file.type) ? 'image' : 'unknown'
     } else if (file.type.startsWith('video/')) {
@@ -666,7 +686,7 @@
     bind:this={fileInput}
     type="file"
     on:change={handleFileInput}
-    accept="image/*,video/*,audio/*,.pdf,.dng,.arw,.cr2,.cr3,.nef,.orf,.rw2"
+    accept={ASSET_ACCEPT}
     class="hidden"
   />
 
@@ -797,7 +817,7 @@
               <div class="bg-gray-50 dark:bg-gray-900 rounded-2xl p-4">
                 <div class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">Type</div>
                 <p class="text-sm font-medium text-[#1e293b] dark:text-gray-100">
-                  {mediaType === 'sidecar' ? 'application/c2pa (sidecar)' : (file.type || 'Unknown')}
+                  {mediaType === 'sidecar' ? 'application/c2pa (sidecar)' : mediaType === 'text' ? TEXT_EXTENSION_MIME_MAP[fileExtension(file)] : (file.type || 'Unknown')}
                 </p>
               </div>
               <div class="bg-gray-50 dark:bg-gray-900 rounded-2xl p-4">
@@ -840,6 +860,17 @@
                     Download PDF
                   </a>
                 </div>
+              {:else if mediaType === 'text'}
+                <div class="w-full self-stretch flex flex-col gap-2">
+                  {#if textPreview === null}
+                    <p class="text-sm text-gray-500 dark:text-gray-400">Loading text…</p>
+                  {:else}
+                    <pre class="w-full max-h-[600px] overflow-auto text-left text-xs leading-relaxed font-mono whitespace-pre-wrap break-words bg-white dark:bg-gray-800 text-[#1e293b] dark:text-gray-100 rounded-xl p-4 border border-gray-200 dark:border-gray-700" data-testid="text-preview">{textPreview}</pre>
+                    {#if textPreviewTruncated}
+                      <p class="text-xs text-gray-500 dark:text-gray-400">Preview truncated to the first {TEXT_PREVIEW_LIMIT.toLocaleString()} characters.</p>
+                    {/if}
+                  {/if}
+                </div>
               {:else if mediaType === 'sidecar'}
                 <div class="text-center max-w-md">
                   <div class="w-20 h-20 mx-auto bg-gradient-to-br from-blue-500 to-blue-600 dark:from-gray-600 dark:to-gray-700 rounded-2xl flex items-center justify-center text-white mb-6 shadow-lg">
@@ -859,7 +890,7 @@
               {:else}
                 <div class="text-center">
                   <div class="w-20 h-20 mx-auto bg-gradient-to-br from-gray-400 to-gray-500 dark:from-gray-600 dark:to-gray-700 rounded-2xl flex items-center justify-center text-white mb-6 shadow-lg">
-                    {#if file.type.startsWith('image/') || /\.(heic|heif|tiff?|avci|avcs)$/i.test(file.name)}
+                    {#if file.type.startsWith('image/') || /\.(heic|heif|heics|heifs|tiff?|avci|avcs)$/i.test(file.name)}
                       <svg class="w-10 h-10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                         <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
                         <path d="M15 8h.01"/><path d="M3 6a3 3 0 0 1 3-3h12a3 3 0 0 1 3 3v12a3 3 0 0 1-3 3H6a3 3 0 0 1-3-3V6z"/><path d="M3 16l5-5c.928-.893 2.072-.893 3 0l5 5"/><path d="M14 14l1-1c.928-.893 2.072-.893 3 0l3 3"/>

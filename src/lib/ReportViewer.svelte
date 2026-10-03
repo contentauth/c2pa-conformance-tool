@@ -890,7 +890,7 @@
               {:else}
                 <div class="text-center">
                   <div class="w-20 h-20 mx-auto bg-gradient-to-br from-gray-400 to-gray-500 dark:from-gray-600 dark:to-gray-700 rounded-2xl flex items-center justify-center text-white mb-6 shadow-lg">
-                    {#if file.type.startsWith('image/') || /\.(heic|heif|tiff?|avci|avcs)$/i.test(file.name)}
+                    {#if file.type.startsWith('image/') || /\.(heic|heif|heics|heifs|tiff?|avci|avcs)$/i.test(file.name)}
                       <svg class="w-10 h-10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                         <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
                         <path d="M15 8h.01"/><path d="M3 6a3 3 0 0 1 3-3h12a3 3 0 0 1 3 3v12a3 3 0 0 1-3 3H6a3 3 0 0 1-3-3V6z"/><path d="M3 16l5-5c.928-.893 2.072-.893 3 0l5 5"/><path d="M14 14l1-1c.928-.893 2.072-.893 3 0l3 3"/>

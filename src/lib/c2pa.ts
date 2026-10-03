@@ -339,6 +339,13 @@ const EXTENSION_MIME_MAP: Record<string, string> = {
   'nef': 'image/x-nikon-nef',
   'orf': 'image/x-olympus-orf',
   'rw2': 'image/x-panasonic-rw2',
+  // HEIF images and image sequences (browsers often report no MIME type for these). c2pa-rs
+  // reads sequences through its BMFF handler by detecting the container; registering the
+  // sequence types (and signing them) is contentauth/c2pa-rs#2774.
+  'heic': 'image/heic',
+  'heif': 'image/heif',
+  'heics': 'image/heic-sequence',
+  'heifs': 'image/heif-sequence',
   'c2pa': 'application/c2pa',
 }
 

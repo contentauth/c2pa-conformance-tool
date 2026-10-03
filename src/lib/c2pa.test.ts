@@ -149,8 +149,8 @@ describe('c2pa utilities', () => {
     it('falls back to the extension when the browser reports no specific MIME', () => {
       const empty = new File([new Uint8Array([0])], 'scan.ARW', { type: '' })
       expect(resolveMimeType(empty)).toBe('image/x-sony-arw')
-      const octet = new File([new Uint8Array([0])], 'asset.heics', { type: 'application/octet-stream' })
-      expect(resolveMimeType(octet)).toBe('heics')
+      const octet = new File([new Uint8Array([0])], 'asset.jxl', { type: 'application/octet-stream' })
+      expect(resolveMimeType(octet)).toBe('jxl')
       const noExt = new File([new Uint8Array([0])], 'blob', { type: 'application/octet-stream' })
       expect(resolveMimeType(noExt)).toBe('application/octet-stream')
     })
@@ -185,6 +185,28 @@ describe('c2pa utilities', () => {
         expect(ASSET_ACCEPT.split(',')).toContain(ext)
       }
       expect(TEXT_ACCEPT.split(',').every(e => ASSET_ACCEPT.split(',').includes(e))).toBe(true)
+    })
+  })
+
+  // ── HEIF image sequences ────────────────────────────────────────────────────
+
+  describe('HEIF formats', () => {
+    const file = (name: string, type = '') => new File(['heif'], name, { type })
+
+    it('maps HEIF extensions when the browser reports no MIME type', () => {
+      expect(resolveMimeType(file('burst.heics'))).toBe('image/heic-sequence')
+      expect(resolveMimeType(file('anim.HEIFS', 'application/octet-stream'))).toBe('image/heif-sequence')
+      expect(resolveMimeType(file('photo.heic'))).toBe('image/heic')
+      expect(resolveMimeType(file('photo.heif'))).toBe('image/heif')
+    })
+
+    it('keeps a MIME type the browser reports', () => {
+      expect(resolveMimeType(file('burst.heics', 'image/heic-sequence'))).toBe('image/heic-sequence')
+      expect(resolveMimeType(file('photo.heic', 'image/heic'))).toBe('image/heic')
+    })
+
+    it('offers HEIF images and sequences in the asset picker', () => {
+      expect(ASSET_ACCEPT.split(',')).toEqual(expect.arrayContaining(['.heic', '.heif', '.heics', '.heifs']))
     })
   })
 

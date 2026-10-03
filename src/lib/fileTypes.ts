@@ -36,8 +36,9 @@ export function isTextFile(file: File): boolean {
   return fileExtension(file) in TEXT_EXTENSION_MIME_MAP
 }
 
-// Formats the file pickers offer alongside the browser's image/video/audio families.
-const OTHER_ACCEPT = '.pdf,.dng,.arw,.cr2,.cr3,.nef,.orf,.rw2'
+// Formats the file pickers offer alongside the browser's image/video/audio families. HEIF
+// images and sequences are listed by extension because not every OS maps them to image/*.
+const OTHER_ACCEPT = '.pdf,.dng,.arw,.cr2,.cr3,.nef,.orf,.rw2,.heic,.heif,.heics,.heifs'
 
 /** `accept` value for asset pickers (no sidecars). */
 export const ASSET_ACCEPT = `image/*,video/*,audio/*,${OTHER_ACCEPT},${TEXT_ACCEPT}`

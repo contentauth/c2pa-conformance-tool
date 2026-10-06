@@ -151,23 +151,21 @@
     <!-- No credentials label for stubs -->
     {#if node.isStub}
       <p class="text-xs text-gray-400 dark:text-gray-400 mt-1 italic">No Content Credentials</p>
-    {:else}
+    {:else if node.date}
       <!-- Date -->
-      {#if node.date}
-        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">{node.date}</p>
-      {/if}
+      <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">{node.date}</p>
+    {/if}
 
-      <!-- Actions -->
-      {#if node.inceptions.length > 0 || node.transformations.length > 0}
-        <div class="flex flex-wrap justify-center gap-1 mt-2">
-          {#each node.inceptions as s}
-            <span class="badge bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300">{s}</span>
-          {/each}
-          {#each node.transformations as s}
-            <span class="badge bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300">{s}</span>
-          {/each}
-        </div>
-      {/if}
+    <!-- Actions -->
+    {#if node.inceptions.length > 0 || node.transformations.length > 0}
+      <div class="flex flex-wrap justify-center gap-1 mt-2">
+        {#each node.inceptions as s}
+          <span class="badge bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300">{s}</span>
+        {/each}
+        {#each node.transformations as s}
+          <span class="badge bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300">{s}</span>
+        {/each}
+      </div>
     {/if}
   </div>
 

@@ -1,7 +1,10 @@
-import { describe, it, expect } from 'vitest'
+import fs from 'fs'
+import path from 'path'
+import { describe, it, expect, vi } from 'vitest'
 import { render, fireEvent } from '@testing-library/svelte'
 import ReportViewer from './ReportViewer.svelte'
 import type { ConformanceReport } from './types'
+import { _resetSignalsCacheForTests } from './summarySignals'
 
 describe('ReportViewer Component', () => {
   it('should render failures grouped by manifest in Validation Status Details', () => {
@@ -237,5 +240,110 @@ describe('ReportViewer Component', () => {
     expect(childImg).toBeTruthy()
     expect(childImg?.getAttribute('src')).toBe('data:image/jpeg;base64,active_ingredient_thumb_b64')
   })
+
+  it('should overlay pseudo-manifest signals onto flat ingredient stub nodes without duplicating leaves', async () => {
+    const originalFetch = global.fetch
+    const signalsYamlPath = path.resolve(__dirname, '../../public/rubrics/asset-rubric-signals-local.yml')
+    const signalsYaml = fs.readFileSync(signalsYamlPath, 'utf-8')
+
+    global.fetch = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const urlStr = typeof input === 'string' ? input : input instanceof URL ? input.toString() : (input as Request).url
+      if (urlStr.endsWith('asset-rubric-signals-local.yml')) {
+        return {
+          ok: true,
+          text: async () => signalsYaml
+        } as unknown as Response
+      }
+      if (typeof originalFetch === 'function') {
+        return originalFetch(input, init)
+      }
+      return { ok: false, status: 404, text: async () => '' } as unknown as Response
+    })
+
+    const mockReport: ConformanceReport = {
+      manifests: [
+        {
+          label: 'urn:c2pa:55b69364-2693-de82-a555-4c605a19e9c0',
+          assertions: {
+            'c2pa.ingredient.v3': {
+              'dc:format': 'image/png',
+              'dc:title': 'Opened Ingredient PNG',
+              description: 'Opened ingredient',
+              digitalSourceType: 'http://cv.iptc.org/newscodes/digitalsourcetype/compositeWithTrainedAlgorithmicMedia',
+              relationship: 'parentOf'
+            },
+            'c2pa.ingredient.v3__1': {
+              'dc:format': 'image/png',
+              'dc:title': 'Placed Ingredient PNG',
+              description: 'Placed ingredient 0',
+              digitalSourceType: 'http://cv.iptc.org/newscodes/digitalsourcetype/compositeWithTrainedAlgorithmicMedia',
+              relationship: 'componentOf'
+            },
+            'c2pa.actions.v2': {
+              allActionsIncluded: true,
+              actions: [
+                {
+                  action: 'c2pa.opened',
+                  parameters: {
+                    ingredients: [
+                      {
+                        url: 'self#jumbf=c2pa.assertions/c2pa.ingredient.v3',
+                        hash: "b64'h1'"
+                      }
+                    ]
+                  }
+                },
+                {
+                  action: 'c2pa.placed',
+                  parameters: {
+                    ingredients: [
+                      {
+                        url: 'self#jumbf=c2pa.assertions/c2pa.ingredient.v3__1',
+                        hash: "b64'h2'"
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          },
+          signature: {
+            certificateInfo: {
+              subject: {
+                CN: 'TESTING Google Media Processing Services',
+                O: 'TESTING Google LLC'
+              }
+            }
+          },
+          validationResults: {
+            success: [{ code: 'signingCredential.trusted' }],
+            failure: [],
+            informational: []
+          }
+        }
+      ]
+    } as unknown as ConformanceReport
+
+    try {
+      _resetSignalsCacheForTests()
+
+      const { container } = render(ReportViewer, { report: mockReport })
+
+      await vi.waitFor(() => {
+        const nodeCards = container.querySelectorAll('button.relative')
+        expect(nodeCards.length).toBe(3)
+
+        expect(container.textContent).toContain('Opened Ingredient PNG')
+        expect(container.textContent).toContain('Placed Ingredient PNG')
+
+        expect(nodeCards[1].parentElement?.textContent).toContain('Contains Partly GenAI Creation')
+        expect(nodeCards[2].parentElement?.textContent).toContain('Contains Partly GenAI Creation')
+      })
+    } finally {
+      global.fetch = originalFetch
+      _resetSignalsCacheForTests()
+    }
+  })
 })
+
 

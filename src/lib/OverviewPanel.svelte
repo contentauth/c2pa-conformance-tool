@@ -271,7 +271,15 @@
     return undefined
   }
 
-  type Edge = { childIdx: number | null; relationship?: string; stubTitle?: string; stubFormat?: string; thumbnailSrc?: string }
+  type Edge = {
+    childIdx: number | null
+    pseudoIdx?: number
+    hasPseudo?: boolean
+    relationship?: string
+    stubTitle?: string
+    stubFormat?: string
+    thumbnailSrc?: string
+  }
 
   function ingredientThumbnailSrc(v: Record<string, unknown>, m: CrJsonManifestEntry): string | undefined {
     const thumb = v.thumbnail
@@ -323,50 +331,71 @@
     return undefined
   }
 
+  function hasOpenedActionWithDst(assertions: Record<string, unknown>): boolean {
+    for (const [aKey, aVal] of Object.entries(assertions)) {
+      if (!aKey.startsWith('c2pa.actions') || !aVal || typeof aVal !== 'object') continue
+      const actions = Array.isArray((aVal as Record<string, unknown>).actions)
+        ? ((aVal as Record<string, unknown>).actions as unknown[])
+        : []
+      for (const act of actions) {
+        if (!act || typeof act !== 'object') continue
+        const a = act as Record<string, unknown>
+        if (a.action === 'c2pa.opened' && typeof a.digitalSourceType === 'string') {
+          return true
+        }
+      }
+    }
+    return false
+  }
+
   function crJsonEdges(
     m: CrJsonManifestEntry,
     idx: Map<string, number>
   ): Edge[] {
     const out: Edge[] = []
-    for (const [key, raw] of Object.entries((m.assertions ?? {}) as Record<string, unknown>)) {
+    const assertions = (m.assertions ?? {}) as Record<string, unknown>
+    const openedHasDst = hasOpenedActionWithDst(assertions)
+    for (const [key, raw] of Object.entries(assertions)) {
       if (!key.startsWith('c2pa.ingredient') || !raw || typeof raw !== 'object') continue
       const v = raw as Record<string, unknown>
       const relationship = v.relationship as string | undefined
-      const stubTitle = (v.title ?? v.dc_title) as string | undefined
-      const stubFormat = (v.format ?? v.dc_format) as string | undefined
+      const stubTitle = (v.title ?? v['dc:title'] ?? v.dc_title) as string | undefined
+      const stubFormat = (v.format ?? v['dc:format'] ?? v.dc_format) as string | undefined
       const resolvedThumbnailSrc = ingredientThumbnailSrc(v, m)
       // v1: c2pa_manifest is an object { url, alg, hash }
       // v2: active_manifest is a direct string (manifest label)
       const manifestRef = (v.c2pa_manifest ?? v.activeManifest) as Record<string, unknown> | undefined
       const activeManifestStr = v['active_manifest'] as string | undefined
       const url = (manifestRef?.url as string | undefined) ?? (typeof activeManifestStr === 'string' ? activeManifestStr : undefined)
+      const hasPseudo = typeof manifestRef?.url !== 'string' && (typeof v.digitalSourceType === 'string' || openedHasDst)
       if (!url) {
         // No manifest reference — ingredient has no Content Credentials
-        out.push({ childIdx: null, relationship, stubTitle, stubFormat, thumbnailSrc: resolvedThumbnailSrc })
+        out.push({ childIdx: null, hasPseudo, relationship, stubTitle, stubFormat, thumbnailSrc: resolvedThumbnailSrc })
       } else {
         const childIdx = idx.get(parseManifestLabel(url))
         if (childIdx != null) {
           out.push({ childIdx, relationship, thumbnailSrc: resolvedThumbnailSrc })
         } else {
           // Manifest referenced but not present in this report
-          out.push({ childIdx: null, relationship, stubTitle, stubFormat, thumbnailSrc: resolvedThumbnailSrc })
+          out.push({ childIdx: null, hasPseudo, relationship, stubTitle, stubFormat, thumbnailSrc: resolvedThumbnailSrc })
         }
       }
     }
     return out
   }
 
-  function makeStubNode(edge: Edge): OverviewNode {
+  function makeStubNode(edge: Edge, s: SignalsRubricResult | null): OverviewNode {
+    const pseudoSig = edge.pseudoIdx != null ? s?.manifests[edge.pseudoIdx] : undefined
     return {
       manifestIdx: -1,
       claimGenerator: edge.stubTitle,
       signer: edge.stubTitle,
-      mimeType: edge.stubFormat ?? null,
+      mimeType: pseudoSig?.mimeType ?? edge.stubFormat ?? null,
       thumbnailSrc: edge.thumbnailSrc,
       date: undefined,
       ingredientCount: 0,
-      inceptions: [],
-      transformations: [],
+      inceptions: pseudoSig?.localInceptions.map(h => h.reportText) ?? [],
+      transformations: pseudoSig?.localTransformations.map(h => h.reportText) ?? [],
       relationship: edge.relationship,
       isStub: true,
       children: [],
@@ -391,22 +420,37 @@
     const claimInfo = getClaimInfo(manifest)
 
     const allCrJsonEdges = crJsonEdges(manifest, idx)
-    const edges: Edge[] = sigData
-      ? [
-          // sigData has better relationship/index data for credentialed ingredients
-          ...sigData.ingredients.map(e => {
-            const crEdge = allCrJsonEdges.find(ce => ce.childIdx === e.index)
-            return { childIdx: e.index, relationship: e.relationship, thumbnailSrc: crEdge?.thumbnailSrc }
+    let edges: Edge[]
+    if (sigData) {
+      const realSigEdges = sigData.ingredients.filter(e => !s?.manifests[e.index]?.pseudo)
+      const pseudoSigEdges = sigData.ingredients.filter(e => s?.manifests[e.index]?.pseudo)
+      let pseudoCursor = 0
+      edges = [
+        // sigData has better relationship/index data for credentialed ingredients
+        ...realSigEdges.map(e => {
+          const crEdge = allCrJsonEdges.find(ce => ce.childIdx === e.index)
+          return { childIdx: e.index, relationship: e.relationship, thumbnailSrc: crEdge?.thumbnailSrc }
+        }),
+        // Uncredentialed ingredients from crJsonEdges, with any corresponding pseudo-manifest overlaid
+        ...allCrJsonEdges
+          .filter(e => e.childIdx === null)
+          .map(e => {
+            const pseudoEdge = e.hasPseudo ? pseudoSigEdges[pseudoCursor++] : undefined
+            return {
+              ...e,
+              pseudoIdx: pseudoEdge?.index,
+              relationship: pseudoEdge?.relationship ?? e.relationship,
+            }
           }),
-          // but extractIngredients skips uncredentialed ones — add them from crJsonEdges
-          ...allCrJsonEdges.filter(e => e.childIdx === null),
-        ]
-      : allCrJsonEdges
+      ]
+    } else {
+      edges = allCrJsonEdges
+    }
 
     const children: OverviewNode[] = []
     for (const edge of edges) {
       if (edge.childIdx == null) {
-        children.push(makeStubNode(edge))
+        children.push(makeStubNode(edge, s))
       } else {
         const child = buildTree(edge.childIdx, r, s, idx, new Set(visited), edge.thumbnailSrc)
         if (child) {
@@ -414,7 +458,7 @@
           children.push(child)
         } else if (!r.manifests?.[edge.childIdx]) {
           // Referenced index has no manifest entry
-          children.push(makeStubNode(edge))
+          children.push(makeStubNode(edge, s))
         }
       }
     }

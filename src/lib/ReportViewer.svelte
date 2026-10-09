@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { createEventDispatcher, onDestroy } from 'svelte'
+  import { createEventDispatcher, onDestroy, tick } from 'svelte'
   import ManifestSummary from './ManifestSummary.svelte'
   import RubricsPanel from './RubricsPanel.svelte'
   import OverviewPanel from './OverviewPanel.svelte'
@@ -29,9 +29,12 @@
 
   type ReportTab = 'summary' | 'report' | 'crjson' | 'rubrics'
   let activeTab: ReportTab = 'summary'
+  let advancedOpen = false
+  let advancedButton: HTMLButtonElement
+  let reportTabButton: HTMLButtonElement
 
   const tabHeadings: Record<ReportTab, { title: string; subtitle: string }> = {
-    summary:  { title: 'Overview',           subtitle: 'Content Credentials summary' },
+    summary:  { title: 'Summary',            subtitle: '' },
     report:   { title: 'Conformance Report', subtitle: 'Manifest validation details' },
     crjson:   { title: 'crJSON Output',      subtitle: 'crJSON-formatted validation results' },
     rubrics:  { title: 'Asset Rubrics',      subtitle: 'Check crJSON against rubrics' },
@@ -525,6 +528,20 @@
     fileInput?.click()
   }
 
+  async function openAdvanced() {
+    advancedOpen = true
+    activeTab = 'report'
+    await tick()
+    reportTabButton?.focus()
+  }
+
+  async function closeAdvanced() {
+    activeTab = 'summary'
+    advancedOpen = false
+    await tick()
+    advancedButton?.focus()
+  }
+
   function handleFileInput(event: Event) {
     const target = event.target as HTMLInputElement
     const files = target.files
@@ -625,7 +642,9 @@
   <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-6 gap-4">
     <div>
       <h2 class="text-xl font-semibold text-[#1e293b] dark:text-white">{heading.title}</h2>
-      <p class="text-sm text-gray-600 dark:text-gray-300 mt-1">{heading.subtitle}</p>
+      {#if heading.subtitle}
+        <p class="text-sm text-gray-600 dark:text-gray-300 mt-1">{heading.subtitle}</p>
+      {/if}
     </div>
     <div class="flex flex-wrap items-center gap-2" role="group" aria-label="Report sections">
       <button
@@ -635,28 +654,52 @@
       >
         Summary
       </button>
-      <button
-        class="btn-outline-gray {activeTab === 'report' ? 'is-selected' : ''}"
-        on:click={() => activeTab = 'report'}
-        aria-pressed={activeTab === 'report'}
-      >
-        Report
-      </button>
-      <button
-        class="btn-outline-gray {activeTab === 'crjson' ? 'is-selected' : ''}"
-        on:click={() => activeTab = 'crjson'}
-        aria-pressed={activeTab === 'crjson'}
-      >
-        crJSON
-      </button>
-      <button
-        class="btn-outline-gray {activeTab === 'rubrics' ? 'is-selected' : ''}"
-        on:click={() => activeTab = 'rubrics'}
-        title="Evaluate this manifest against selectable rubrics"
-        aria-pressed={activeTab === 'rubrics'}
-      >
-        Rubrics
-      </button>
+      {#if advancedOpen}
+        <div id="advanced-report-sections" class="contents">
+          <button
+            bind:this={reportTabButton}
+            class="btn-outline-gray {activeTab === 'report' ? 'is-selected' : ''}"
+            on:click={() => activeTab = 'report'}
+            aria-pressed={activeTab === 'report'}
+          >
+            Report
+          </button>
+          <button
+            class="btn-outline-gray {activeTab === 'crjson' ? 'is-selected' : ''}"
+            on:click={() => activeTab = 'crjson'}
+            aria-pressed={activeTab === 'crjson'}
+          >
+            crJSON
+          </button>
+          <button
+            class="btn-outline-gray {activeTab === 'rubrics' ? 'is-selected' : ''}"
+            on:click={() => activeTab = 'rubrics'}
+            title="Evaluate this manifest against selectable rubrics"
+            aria-pressed={activeTab === 'rubrics'}
+          >
+            Rubrics
+          </button>
+        </div>
+        <button
+          class="btn-outline-gray"
+          on:click={closeAdvanced}
+        >
+          <svg aria-hidden="true" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M15 6l-6 6l6 6" />
+          </svg>
+          Exit advanced view
+        </button>
+      {:else}
+        <button
+          bind:this={advancedButton}
+          class="btn-outline-gray"
+          on:click={openAdvanced}
+          aria-expanded="false"
+          aria-controls="advanced-report-sections"
+        >
+          Advanced
+        </button>
+      {/if}
       <button
         class="btn btn-primary"
         on:click={handleNewFile}
@@ -739,7 +782,7 @@
   {/if}
 
   {#if activeTab === 'summary'}
-    <div class="bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 rounded-2xl shadow-sm overflow-hidden flex-1 flex flex-col min-h-0 mb-6">
+    <div class="bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 rounded-2xl shadow-sm overflow-hidden flex-1 flex flex-col min-h-[32rem] mb-6">
       <OverviewPanel {report} {file} />
     </div>
   {:else if activeTab === 'crjson'}

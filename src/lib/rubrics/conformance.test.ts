@@ -92,9 +92,10 @@ describe('$expected_spec_version injection', () => {
     expect(specCheck?.passed).toBe(true)
   })
 
-  it('mandatory_spec_version PASSES when specVersion is present but for a later spec, and rubric is spec2.2', () => {
-    // Regression test for #39: a claim_generator_info.specVersion of "2.4.0" was
-    // failing the 0.2/spec2.2 rubric even though the check only applies to spec 2.4+.
+  it('mandatory_spec_version FAILS when specVersion is present but for a later spec, and rubric is spec2.2', () => {
+    // specVersion is not defined for claim_generator_info before spec 2.4, so a
+    // spec 2.2 asset declaring "2.4.0" is flagged (matches upstream; see
+    // c2pa-org/conformance#514).
     const rubric22 = loadRubric('asset-rubric-conformance0.2-spec2.2.yml')
     expect(rubric22.metadata.variables?.['$expected_spec_version']).toBe('2.2')
 
@@ -113,7 +114,7 @@ describe('$expected_spec_version injection', () => {
 
     const result = evaluateRubric(rubric22, crJsonSpec24Generator, { rubricId: 'test' })
     const specCheck = result.statements.find((s) => s.id === 'validation:mandatory_spec_version')
-    expect(specCheck?.passed).toBe(true)
+    expect(specCheck?.passed).toBe(false)
   })
 
   it('no_dst_for_opened_action is enforced when rubric is spec2.4', () => {

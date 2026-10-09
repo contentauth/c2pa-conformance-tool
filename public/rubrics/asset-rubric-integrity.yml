@@ -2,7 +2,7 @@ rubric_metadata:
   name: C2PA Asset Integrity Rubric
   issuer: C2PA Conformance Task Force
   date: '2026-08-06T00:00:00Z'
-  version: '1.0'
+  version: '1.1'
   language: en
 variables:
   $well_formed_error_codes:
@@ -69,8 +69,7 @@ variables:
   - signingCredential.untrusted
   - MISSING_VALIDATION_RESULTS
 expressions:
-  _manifest_validationResults: |-
-    ($args[0].validationResults || { failure: [{code: "MISSING_VALIDATION_RESULTS"}] })
+  _manifest_validationResults: '($args[0].validationResults || { failure: [{code: "MISSING_VALIDATION_RESULTS"}] })'
   _activeManifest: manifests[0]
   _validationResults: _manifest_validationResults(_activeManifest())
 
@@ -78,63 +77,61 @@ expressions:
 
 - id: validation:well_formed_data_present
   description: Check if validation results are present for structural analysis
-  expression: 'manifests[0].validationResults != null
-
-    '
+  expression: |
+    manifests[0].validationResults != null
   reportText:
     'true':
       en: Validation results are present for structural analysis
     'false':
       en: Missing validation results in the manifest
-- id: validation:well_formed_success
-  description: |-
-    Check if the asset has any structural or malformation failures (from the well-formed list)
-  failIfMatched: true
-  expression: '_validationResults().failure[?contains($well_formed_error_codes, code)].code
 
-    '
+- id: validation:well_formed_success
+  description: Check if the asset has any structural or malformation failures (from the well-formed list)
+  failIfMatched: true
+  expression: |
+    _validationResults().failure[?contains($well_formed_error_codes, code)].code
   reportText:
     'true':
       en: No structural failures found
     'false':
       en: 'Found structural failures: {{matches}}'
+
 - id: validation:valid_data_present
   description: Check if validation results are present for integrity analysis
-  expression: 'manifests[0].validationResults != null
-
-    '
+  expression: |
+    manifests[0].validationResults != null
   reportText:
     'true':
       en: Validation results are present for integrity analysis
     'false':
       en: Missing validation results in the manifest
+
 - id: validation:valid_success
   description: Check if the asset has any validation mismatches (from the valid list)
   failIfMatched: true
-  expression: '_validationResults().failure[?contains($valid_error_codes, code)].code
-
-    '
+  expression: |
+    _validationResults().failure[?contains($valid_error_codes, code)].code
   reportText:
     'true':
       en: No validation mismatches found
     'false':
       en: 'Found validation mismatches: {{matches}}'
+
 - id: validation:trusted_data_present
   description: Check if validation results are present for trust analysis
-  expression: 'manifests[0].validationResults != null
-
-    '
+  expression: |
+    manifests[0].validationResults != null
   reportText:
     'true':
       en: Validation results are present for trust analysis
     'false':
       en: Missing validation results in the manifest
+
 - id: validation:trusted_success
   description: Check if the asset has any trust failures (from the trusted list)
   failIfMatched: true
-  expression: '_validationResults().failure[?contains($trust_error_codes, code)].code
-
-    '
+  expression: |
+    _validationResults().failure[?contains($trust_error_codes, code)].code
   reportText:
     'true':
       en: Asset is trusted

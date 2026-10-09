@@ -8,6 +8,11 @@
 
   let dragOver = false
   let fileInput: HTMLInputElement
+  let triggerElement: HTMLButtonElement | HTMLDivElement
+
+  export function focus() {
+    triggerElement?.focus()
+  }
 
   function handleDragOver(event: DragEvent) {
     event.preventDefault()
@@ -47,10 +52,18 @@
   function handleClick() {
     fileInput?.click()
   }
+
+  function handleKeyDown(event: KeyboardEvent) {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault()
+      handleClick()
+    }
+  }
 </script>
 
 {#if compact}
   <button
+    bind:this={triggerElement}
     class="btn btn-primary whitespace-nowrap"
     on:click={handleClick}
   >
@@ -66,6 +79,7 @@
   />
 {:else}
   <div
+    bind:this={triggerElement}
     class={`relative border-2 border-dashed rounded-2xl p-12 sm:p-16 cursor-pointer transition-colors duration-200 group ${
       dragOver
         ? 'border-blue-400 bg-blue-50 dark:bg-gray-700/40 shadow-sm'
@@ -77,7 +91,7 @@
     role="button"
     tabindex="0"
     on:click={handleClick}
-    on:keydown={(e) => e.key === 'Enter' && handleClick()}
+    on:keydown={handleKeyDown}
   >
     
     <!-- Content -->

@@ -140,6 +140,8 @@ export interface ManifestSignalsResult {
   ingredients: IngredientEdge[]
   /** True for synthetic manifests created from flat ingredients with a digitalSourceType. */
   pseudo?: boolean
+  /** Source ingredient assertion key on the parent manifest (e.g. "c2pa.ingredient.v3__1") for pseudo manifests. */
+  ingredientKey?: string
 }
 
 /** Aggregate signals rubric result across all manifests. */

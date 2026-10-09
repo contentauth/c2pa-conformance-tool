@@ -1,5 +1,6 @@
 <script lang="ts">
   import { createEventDispatcher } from 'svelte'
+  import { ASSET_ACCEPT } from './fileTypes'
 
   export let compact = false
   export let label = 'Browse Files'
@@ -74,7 +75,7 @@
     bind:this={fileInput}
     type="file"
     on:change={handleFileInput}
-    accept="image/*,video/*,audio/*,.pdf,.dng,.arw,.cr2,.cr3,.nef,.orf,.rw2,.c2pa,application/c2pa"
+    accept={`${ASSET_ACCEPT},.c2pa,application/c2pa`}
     class="hidden"
   />
 {:else}
@@ -122,7 +123,7 @@
       bind:this={fileInput}
       type="file"
       on:change={handleFileInput}
-      accept="image/*,video/*,audio/*,.pdf,.dng,.arw,.cr2,.cr3,.nef,.orf,.rw2,.c2pa,application/c2pa"
+      accept={`${ASSET_ACCEPT},.c2pa,application/c2pa`}
       multiple
       class="hidden"
     />

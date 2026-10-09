@@ -67,6 +67,7 @@
 <div class="flex flex-col items-center min-w-0">
   <!-- Card -->
   <button
+    data-testid="tree-node-card"
     class="relative rounded-2xl overflow-hidden border-2 transition-all w-[300px] focus:outline-none
       {node.isStub
         ? 'border-dashed border-gray-300 dark:border-gray-600 cursor-default'

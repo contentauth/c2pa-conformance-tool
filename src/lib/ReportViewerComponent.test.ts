@@ -330,7 +330,7 @@ describe('ReportViewer Component', () => {
       const { container } = render(ReportViewer, { report: mockReport })
 
       await vi.waitFor(() => {
-        const nodeCards = container.querySelectorAll('button.relative')
+        const nodeCards = container.querySelectorAll('[data-testid="tree-node-card"]')
         expect(nodeCards.length).toBe(3)
 
         expect(container.textContent).toContain('Opened Ingredient PNG')
@@ -338,6 +338,246 @@ describe('ReportViewer Component', () => {
 
         expect(nodeCards[1].parentElement?.textContent).toContain('Contains Partly GenAI Creation')
         expect(nodeCards[2].parentElement?.textContent).toContain('Contains Partly GenAI Creation')
+      })
+    } finally {
+      global.fetch = originalFetch
+      _resetSignalsCacheForTests()
+    }
+  })
+
+  it('should match pseudo-manifest signals by ingredient key when mixing a credentialed ingredient, flat ingredients with distinct digitalSourceTypes, and a flat ingredient without a digitalSourceType', async () => {
+    const originalFetch = global.fetch
+    const signalsYamlPath = path.resolve(__dirname, '../../public/rubrics/asset-rubric-signals-local.yml')
+    const signalsYaml = fs.readFileSync(signalsYamlPath, 'utf-8')
+
+    global.fetch = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const urlStr = typeof input === 'string' ? input : input instanceof URL ? input.toString() : (input as Request).url
+      if (urlStr.endsWith('asset-rubric-signals-local.yml')) {
+        return {
+          ok: true,
+          text: async () => signalsYaml
+        } as unknown as Response
+      }
+      if (typeof originalFetch === 'function') {
+        return originalFetch(input, init)
+      }
+      return { ok: false, status: 404, text: async () => '' } as unknown as Response
+    })
+
+    const mockReport: ConformanceReport = {
+      manifests: [
+        {
+          label: 'urn:c2pa:root-manifest',
+          'claim.v2': {
+            instanceID: 'xmp:iid:root',
+            'dc:format': 'image/png',
+            claim_generator_info: { name: 'Composite Editor', version: '1.0' },
+            created_assertions: [],
+            gathered_assertions: [],
+            redacted_assertions: []
+          },
+          assertions: {
+            'c2pa.ingredient.v3': {
+              'dc:format': 'image/jpeg',
+              'dc:title': 'Credentialed Child Ingredient',
+              active_manifest: 'urn:c2pa:child-manifest',
+              digitalSourceType: 'http://cv.iptc.org/newscodes/digitalsourcetype/digitalCreation',
+              relationship: 'parentOf'
+            },
+            'c2pa.ingredient.v3__1': {
+              'dc:format': 'image/jpeg',
+              'dc:title': 'Uncredentialed No-DST Ingredient',
+              relationship: 'componentOf'
+            },
+            'c2pa.ingredient.v3__2': {
+              'dc:format': 'image/png',
+              'dc:title': 'GenAI Flat Ingredient',
+              digitalSourceType: 'http://cv.iptc.org/newscodes/digitalsourcetype/trainedAlgorithmicMedia',
+              relationship: 'componentOf'
+            },
+            'c2pa.ingredient.v3__3': {
+              'dc:format': 'image/png',
+              'dc:title': 'Composite Flat Ingredient',
+              digitalSourceType: 'http://cv.iptc.org/newscodes/digitalsourcetype/compositeWithTrainedAlgorithmicMedia',
+              relationship: 'componentOf'
+            },
+            'c2pa.actions.v2': {
+              allActionsIncluded: true,
+              actions: [{ action: 'c2pa.edited' }]
+            }
+          },
+          signature: {
+            alg: 'ps256',
+            certificateInfo: {
+              alg: 'ps256',
+              issuer: { CN: 'Test CA', O: 'Test Org' },
+              serialNumber: '1',
+              subject: { CN: 'Root Signer', O: 'Root Org' },
+              validity: { notBefore: '2026-01-01T00:00:00Z', notAfter: '2036-01-01T00:00:00Z' }
+            }
+          },
+          validationResults: {
+            success: [{ code: 'signingCredential.trusted' }],
+            failure: [],
+            informational: []
+          }
+        },
+        {
+          label: 'urn:c2pa:child-manifest',
+          'claim.v2': {
+            instanceID: 'xmp:iid:child',
+            'dc:format': 'image/jpeg',
+            claim_generator_info: { name: 'Camera App', version: '1.0' },
+            created_assertions: [],
+            gathered_assertions: [],
+            redacted_assertions: []
+          },
+          assertions: {
+            'c2pa.actions.v2': {
+              allActionsIncluded: true,
+              actions: [
+                {
+                  action: 'c2pa.created',
+                  digitalSourceType: 'http://cv.iptc.org/newscodes/digitalsourcetype/digitalCapture'
+                }
+              ]
+            }
+          },
+          signature: {
+            alg: 'ps256',
+            certificateInfo: {
+              alg: 'ps256',
+              issuer: { CN: 'Test CA', O: 'Test Org' },
+              serialNumber: '2',
+              subject: { CN: 'Camera Signer', O: 'Camera Org' },
+              validity: { notBefore: '2026-01-01T00:00:00Z', notAfter: '2036-01-01T00:00:00Z' }
+            }
+          },
+          validationResults: {
+            success: [{ code: 'signingCredential.trusted' }],
+            failure: [],
+            informational: []
+          }
+        }
+      ]
+    } as unknown as ConformanceReport
+
+    try {
+      _resetSignalsCacheForTests()
+
+      const { container } = render(ReportViewer, { report: mockReport })
+
+      await vi.waitFor(() => {
+        const cards = container.querySelectorAll('[data-testid="tree-node-card"]')
+        expect(cards.length).toBe(5)
+
+        const labelBlocks = Array.from(cards).map(card => card.nextElementSibling as HTMLElement).filter(Boolean)
+
+        const childLabel = labelBlocks.find(el => el.textContent?.includes('Camera Signer'))
+        expect(childLabel).toBeTruthy()
+        expect(childLabel?.textContent).not.toContain('No Content Credentials')
+        expect(childLabel?.textContent).toContain('Contains Captured Media')
+
+        const noDstLabel = labelBlocks.find(el => el.textContent?.includes('Uncredentialed No-DST Ingredient'))
+        expect(noDstLabel).toBeTruthy()
+        expect(noDstLabel?.textContent).toContain('No Content Credentials')
+        expect(noDstLabel?.querySelectorAll('.badge').length).toBe(0)
+
+        const genAiLabel = labelBlocks.find(el => el.textContent?.includes('GenAI Flat Ingredient'))
+        expect(genAiLabel).toBeTruthy()
+        expect(genAiLabel?.textContent).toContain('No Content Credentials')
+        expect(genAiLabel?.textContent).toContain('Contains Fully GenAI Media')
+        expect(genAiLabel?.textContent).not.toContain('Contains Partly GenAI Creation')
+
+        const compositeLabel = labelBlocks.find(el => el.textContent?.includes('Composite Flat Ingredient'))
+        expect(compositeLabel).toBeTruthy()
+        expect(compositeLabel?.textContent).toContain('No Content Credentials')
+        expect(compositeLabel?.textContent).toContain('Contains Partly GenAI Creation')
+        expect(compositeLabel?.textContent).not.toContain('Contains Fully GenAI Media')
+      })
+    } finally {
+      global.fetch = originalFetch
+      _resetSignalsCacheForTests()
+    }
+  })
+
+  it('should overlay pseudo-manifest signals on a flat ingredient whose digitalSourceType comes from a c2pa.opened action fallback', async () => {
+    const originalFetch = global.fetch
+    const signalsYamlPath = path.resolve(__dirname, '../../public/rubrics/asset-rubric-signals-local.yml')
+    const signalsYaml = fs.readFileSync(signalsYamlPath, 'utf-8')
+
+    global.fetch = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const urlStr = typeof input === 'string' ? input : input instanceof URL ? input.toString() : (input as Request).url
+      if (urlStr.endsWith('asset-rubric-signals-local.yml')) {
+        return {
+          ok: true,
+          text: async () => signalsYaml
+        } as unknown as Response
+      }
+      if (typeof originalFetch === 'function') {
+        return originalFetch(input, init)
+      }
+      return { ok: false, status: 404, text: async () => '' } as unknown as Response
+    })
+
+    const mockReport: ConformanceReport = {
+      manifests: [
+        {
+          label: 'urn:c2pa:opened-fallback-root',
+          assertions: {
+            'c2pa.ingredient.v3': {
+              'dc:format': 'image/tiff',
+              'dc:title': 'Opened Fallback Ingredient',
+              relationship: 'parentOf'
+            },
+            'c2pa.actions.v2': {
+              allActionsIncluded: true,
+              actions: [
+                {
+                  action: 'c2pa.opened',
+                  digitalSourceType: 'http://cv.iptc.org/newscodes/digitalsourcetype/digitalCapture',
+                  parameters: {
+                    ingredients: [
+                      {
+                        url: 'self#jumbf=c2pa.assertions/c2pa.ingredient.v3',
+                        hash: "b64'h1'"
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          },
+          signature: {
+            certificateInfo: {
+              subject: {
+                CN: 'Root Signer'
+              }
+            }
+          },
+          validationResults: {
+            success: [{ code: 'signingCredential.trusted' }],
+            failure: [],
+            informational: []
+          }
+        }
+      ]
+    } as unknown as ConformanceReport
+
+    try {
+      _resetSignalsCacheForTests()
+
+      const { container } = render(ReportViewer, { report: mockReport })
+
+      await vi.waitFor(() => {
+        const cards = container.querySelectorAll('[data-testid="tree-node-card"]')
+        expect(cards.length).toBe(2)
+
+        const labelBlocks = Array.from(cards).map(card => card.nextElementSibling as HTMLElement).filter(Boolean)
+        const fallbackLabel = labelBlocks.find(el => el.textContent?.includes('Opened Fallback Ingredient'))
+        expect(fallbackLabel).toBeTruthy()
+        expect(fallbackLabel?.textContent).toContain('No Content Credentials')
+        expect(fallbackLabel?.textContent).toContain('Contains Captured Media')
       })
     } finally {
       global.fetch = originalFetch

@@ -2,9 +2,1468 @@ rubric_metadata:
   name: C2PA Asset Conformance 0.2 Spec 2.2 Rubric
   issuer: C2PA Conformance Task Force
   date: '2026-08-06T00:00:00Z'
-  version: '1.0'
+  version: '1.1'
   language: en
 variables:
+  $valid_digital_source_types:
+  - http://cv.iptc.org/newscodes/digitalsourcetype/digitalCapture
+  - http://cv.iptc.org/newscodes/digitalsourcetype/computationalCapture
+  - http://cv.iptc.org/newscodes/digitalsourcetype/negativeFilm
+  - http://cv.iptc.org/newscodes/digitalsourcetype/positiveFilm
+  - http://cv.iptc.org/newscodes/digitalsourcetype/print
+  - http://cv.iptc.org/newscodes/digitalsourcetype/humanEdits
+  - http://cv.iptc.org/newscodes/digitalsourcetype/compositeWithTrainedAlgorithmicMedia
+  - http://cv.iptc.org/newscodes/digitalsourcetype/algorithmicallyEnhanced
+  - http://cv.iptc.org/newscodes/digitalsourcetype/digitalCreation
+  - http://cv.iptc.org/newscodes/digitalsourcetype/dataDrivenMedia
+  - http://cv.iptc.org/newscodes/digitalsourcetype/trainedAlgorithmicMedia
+  - http://cv.iptc.org/newscodes/digitalsourcetype/algorithmicMedia
+  - http://cv.iptc.org/newscodes/digitalsourcetype/screenCapture
+  - http://cv.iptc.org/newscodes/digitalsourcetype/virtualRecording
+  - http://cv.iptc.org/newscodes/digitalsourcetype/composite
+  - http://cv.iptc.org/newscodes/digitalsourcetype/compositeCapture
+  - http://cv.iptc.org/newscodes/digitalsourcetype/compositeSynthetic
+  - http://c2pa.org/digitalsourcetype/empty
+  - http://c2pa.org/digitalsourcetype/trainedAlgorithmicData
+  $iana_tlds:
+  - aaa
+  - aarp
+  - abb
+  - abbott
+  - abbvie
+  - abc
+  - able
+  - abogado
+  - abudhabi
+  - ac
+  - academy
+  - accenture
+  - accountant
+  - accountants
+  - aco
+  - actor
+  - ad
+  - ads
+  - adult
+  - ae
+  - aeg
+  - aero
+  - aetna
+  - af
+  - afl
+  - africa
+  - ag
+  - agakhan
+  - agency
+  - ai
+  - aig
+  - airbus
+  - airforce
+  - airtel
+  - akdn
+  - al
+  - alibaba
+  - alipay
+  - allfinanz
+  - allstate
+  - ally
+  - alsace
+  - alstom
+  - am
+  - amazon
+  - americanexpress
+  - americanfamily
+  - amex
+  - amfam
+  - amica
+  - amsterdam
+  - analytics
+  - android
+  - anquan
+  - anz
+  - ao
+  - aol
+  - apartments
+  - app
+  - apple
+  - aq
+  - aquarelle
+  - ar
+  - arab
+  - aramco
+  - archi
+  - army
+  - arpa
+  - art
+  - arte
+  - as
+  - asda
+  - asia
+  - associates
+  - at
+  - athleta
+  - attorney
+  - au
+  - auction
+  - audi
+  - audible
+  - audio
+  - auspost
+  - author
+  - auto
+  - autos
+  - aw
+  - aws
+  - ax
+  - axa
+  - az
+  - azure
+  - ba
+  - baby
+  - baidu
+  - banamex
+  - band
+  - bank
+  - bar
+  - barcelona
+  - barclaycard
+  - barclays
+  - barefoot
+  - bargains
+  - baseball
+  - basketball
+  - bauhaus
+  - bayern
+  - bb
+  - bbc
+  - bbt
+  - bbva
+  - bcg
+  - bcn
+  - bd
+  - be
+  - beats
+  - beauty
+  - beer
+  - berlin
+  - best
+  - bestbuy
+  - bet
+  - bf
+  - bg
+  - bh
+  - bharti
+  - bi
+  - bible
+  - bid
+  - bike
+  - bing
+  - bingo
+  - bio
+  - biz
+  - bj
+  - black
+  - blackfriday
+  - blockbuster
+  - blog
+  - bloomberg
+  - blue
+  - bm
+  - bms
+  - bmw
+  - bn
+  - bnpparibas
+  - bo
+  - boats
+  - boehringer
+  - bofa
+  - bom
+  - bond
+  - boo
+  - book
+  - booking
+  - bosch
+  - bostik
+  - boston
+  - bot
+  - boutique
+  - box
+  - br
+  - bradesco
+  - bridgestone
+  - broadway
+  - broker
+  - brother
+  - brussels
+  - bs
+  - bt
+  - build
+  - builders
+  - business
+  - buy
+  - buzz
+  - bv
+  - bw
+  - by
+  - bz
+  - bzh
+  - ca
+  - cab
+  - cafe
+  - cal
+  - call
+  - calvinklein
+  - cam
+  - camera
+  - camp
+  - canon
+  - capetown
+  - capital
+  - capitalone
+  - car
+  - caravan
+  - cards
+  - care
+  - career
+  - careers
+  - cars
+  - casa
+  - case
+  - cash
+  - casino
+  - cat
+  - catering
+  - catholic
+  - cba
+  - cbn
+  - cbre
+  - cc
+  - cd
+  - center
+  - ceo
+  - cern
+  - cf
+  - cfa
+  - cfd
+  - cg
+  - ch
+  - chanel
+  - channel
+  - charity
+  - chase
+  - chat
+  - cheap
+  - chintai
+  - christmas
+  - chrome
+  - church
+  - ci
+  - cipriani
+  - circle
+  - cisco
+  - citadel
+  - citi
+  - citic
+  - city
+  - ck
+  - cl
+  - claims
+  - cleaning
+  - click
+  - clinic
+  - clinique
+  - clothing
+  - cloud
+  - club
+  - clubmed
+  - cm
+  - cn
+  - co
+  - coach
+  - codes
+  - coffee
+  - college
+  - cologne
+  - com
+  - commbank
+  - community
+  - company
+  - compare
+  - computer
+  - comsec
+  - condos
+  - construction
+  - consulting
+  - contact
+  - contractors
+  - cooking
+  - cool
+  - coop
+  - corsica
+  - country
+  - coupon
+  - coupons
+  - courses
+  - cpa
+  - cr
+  - credit
+  - creditcard
+  - creditunion
+  - cricket
+  - crown
+  - crs
+  - cruise
+  - cruises
+  - cu
+  - cuisinella
+  - cv
+  - cw
+  - cx
+  - cy
+  - cymru
+  - cyou
+  - cz
+  - dad
+  - dance
+  - data
+  - date
+  - dating
+  - datsun
+  - day
+  - dclk
+  - dds
+  - de
+  - deal
+  - dealer
+  - deals
+  - degree
+  - delivery
+  - dell
+  - deloitte
+  - delta
+  - democrat
+  - dental
+  - dentist
+  - desi
+  - design
+  - dev
+  - dhl
+  - diamonds
+  - diet
+  - digital
+  - direct
+  - directory
+  - discount
+  - discover
+  - dish
+  - diy
+  - dj
+  - dk
+  - dm
+  - dnp
+  - do
+  - docs
+  - doctor
+  - dog
+  - domains
+  - dot
+  - download
+  - drive
+  - dtv
+  - dubai
+  - dupont
+  - durban
+  - dvag
+  - dvr
+  - dz
+  - earth
+  - eat
+  - ec
+  - eco
+  - edeka
+  - edu
+  - education
+  - ee
+  - eg
+  - email
+  - emerck
+  - energy
+  - engineer
+  - engineering
+  - enterprises
+  - epson
+  - equipment
+  - er
+  - ericsson
+  - erni
+  - es
+  - esq
+  - estate
+  - et
+  - eu
+  - eurovision
+  - eus
+  - events
+  - exchange
+  - expert
+  - exposed
+  - express
+  - extraspace
+  - fage
+  - fail
+  - fairwinds
+  - faith
+  - family
+  - fan
+  - fans
+  - farm
+  - farmers
+  - fashion
+  - fast
+  - fedex
+  - feedback
+  - ferrari
+  - ferrero
+  - fi
+  - fidelity
+  - fido
+  - film
+  - final
+  - finance
+  - financial
+  - fire
+  - firestone
+  - firmdale
+  - fish
+  - fishing
+  - fit
+  - fitness
+  - fj
+  - fk
+  - flickr
+  - flights
+  - flir
+  - florist
+  - flowers
+  - fly
+  - fm
+  - fo
+  - foo
+  - food
+  - football
+  - ford
+  - forex
+  - forsale
+  - forum
+  - foundation
+  - fox
+  - fr
+  - free
+  - fresenius
+  - frl
+  - frogans
+  - frontier
+  - ftr
+  - fujitsu
+  - fun
+  - fund
+  - furniture
+  - futbol
+  - fyi
+  - ga
+  - gal
+  - gallery
+  - gallo
+  - gallup
+  - game
+  - games
+  - gap
+  - garden
+  - gay
+  - gb
+  - gbiz
+  - gd
+  - gdn
+  - ge
+  - gea
+  - gent
+  - genting
+  - george
+  - gf
+  - gg
+  - ggee
+  - gh
+  - gi
+  - gift
+  - gifts
+  - gives
+  - giving
+  - gl
+  - glass
+  - gle
+  - global
+  - globo
+  - gm
+  - gmail
+  - gmbh
+  - gmo
+  - gmx
+  - gn
+  - godaddy
+  - gold
+  - goldpoint
+  - golf
+  - goodyear
+  - goog
+  - google
+  - gop
+  - got
+  - gov
+  - gp
+  - gq
+  - gr
+  - grainger
+  - graphics
+  - gratis
+  - green
+  - gripe
+  - grocery
+  - group
+  - gs
+  - gt
+  - gu
+  - gucci
+  - guge
+  - guide
+  - guitars
+  - guru
+  - gw
+  - gy
+  - hair
+  - hamburg
+  - hangout
+  - haus
+  - hbo
+  - hdfc
+  - hdfcbank
+  - health
+  - healthcare
+  - help
+  - helsinki
+  - here
+  - hermes
+  - hiphop
+  - hisamitsu
+  - hitachi
+  - hiv
+  - hk
+  - hkt
+  - hm
+  - hn
+  - hockey
+  - holdings
+  - holiday
+  - homedepot
+  - homegoods
+  - homes
+  - homesense
+  - honda
+  - horse
+  - hospital
+  - host
+  - hosting
+  - hot
+  - hotels
+  - hotmail
+  - house
+  - how
+  - hr
+  - hsbc
+  - ht
+  - hu
+  - hughes
+  - hyatt
+  - hyundai
+  - ibm
+  - icbc
+  - ice
+  - icu
+  - id
+  - ie
+  - ieee
+  - ifm
+  - ikano
+  - il
+  - im
+  - imamat
+  - imdb
+  - immo
+  - immobilien
+  - in
+  - inc
+  - industries
+  - infiniti
+  - info
+  - ing
+  - ink
+  - institute
+  - insurance
+  - insure
+  - int
+  - international
+  - intuit
+  - investments
+  - io
+  - ipiranga
+  - iq
+  - ir
+  - irish
+  - is
+  - ismaili
+  - ist
+  - istanbul
+  - it
+  - itau
+  - itv
+  - jaguar
+  - java
+  - jcb
+  - je
+  - jeep
+  - jetzt
+  - jewelry
+  - jio
+  - jll
+  - jm
+  - jmp
+  - jnj
+  - jo
+  - jobs
+  - joburg
+  - jot
+  - joy
+  - jp
+  - jpmorgan
+  - jprs
+  - juegos
+  - juniper
+  - kaufen
+  - kddi
+  - ke
+  - kerryhotels
+  - kerryproperties
+  - kfh
+  - kg
+  - kh
+  - ki
+  - kia
+  - kids
+  - kim
+  - kindle
+  - kitchen
+  - kiwi
+  - km
+  - kn
+  - koeln
+  - komatsu
+  - kosher
+  - kp
+  - kpmg
+  - kpn
+  - kr
+  - krd
+  - kred
+  - kuokgroup
+  - kw
+  - ky
+  - kyoto
+  - kz
+  - la
+  - lacaixa
+  - lamborghini
+  - lamer
+  - land
+  - landrover
+  - lanxess
+  - lasalle
+  - lat
+  - latino
+  - latrobe
+  - law
+  - lawyer
+  - lb
+  - lc
+  - lds
+  - lease
+  - leclerc
+  - lefrak
+  - legal
+  - lego
+  - lexus
+  - lgbt
+  - li
+  - lidl
+  - life
+  - lifeinsurance
+  - lifestyle
+  - lighting
+  - like
+  - lilly
+  - limited
+  - limo
+  - lincoln
+  - link
+  - live
+  - living
+  - lk
+  - llc
+  - llp
+  - loan
+  - loans
+  - locker
+  - locus
+  - lol
+  - london
+  - lotte
+  - lotto
+  - love
+  - lpl
+  - lplfinancial
+  - lr
+  - ls
+  - lt
+  - ltd
+  - ltda
+  - lu
+  - lundbeck
+  - luxe
+  - luxury
+  - lv
+  - ly
+  - ma
+  - madrid
+  - maif
+  - maison
+  - makeup
+  - man
+  - management
+  - mango
+  - map
+  - market
+  - marketing
+  - markets
+  - marriott
+  - marshalls
+  - mattel
+  - mba
+  - mc
+  - mckinsey
+  - md
+  - me
+  - med
+  - media
+  - meet
+  - melbourne
+  - meme
+  - memorial
+  - men
+  - menu
+  - merck
+  - merckmsd
+  - mg
+  - mh
+  - miami
+  - microsoft
+  - mil
+  - mini
+  - mint
+  - mit
+  - mitsubishi
+  - mk
+  - ml
+  - mlb
+  - mls
+  - mm
+  - mma
+  - mn
+  - mo
+  - mobi
+  - mobile
+  - moda
+  - moe
+  - moi
+  - mom
+  - monash
+  - money
+  - monster
+  - mormon
+  - mortgage
+  - moscow
+  - moto
+  - motorcycles
+  - mov
+  - movie
+  - mp
+  - mq
+  - mr
+  - ms
+  - msd
+  - mt
+  - mtn
+  - mtr
+  - mu
+  - museum
+  - music
+  - mv
+  - mw
+  - mx
+  - my
+  - mz
+  - na
+  - nab
+  - nagoya
+  - name
+  - navy
+  - nba
+  - nc
+  - ne
+  - nec
+  - net
+  - netbank
+  - netflix
+  - network
+  - neustar
+  - new
+  - news
+  - next
+  - nextdirect
+  - nexus
+  - nf
+  - nfl
+  - ng
+  - ngo
+  - nhk
+  - ni
+  - nico
+  - nike
+  - nikon
+  - ninja
+  - nissan
+  - nissay
+  - nl
+  - false
+  - nokia
+  - norton
+  - now
+  - nowruz
+  - nowtv
+  - np
+  - nr
+  - nra
+  - nrw
+  - ntt
+  - nu
+  - nyc
+  - nz
+  - obi
+  - observer
+  - office
+  - okinawa
+  - olayan
+  - olayangroup
+  - ollo
+  - om
+  - omega
+  - one
+  - ong
+  - onl
+  - online
+  - ooo
+  - open
+  - oracle
+  - orange
+  - org
+  - organic
+  - origins
+  - osaka
+  - otsuka
+  - ott
+  - ovh
+  - pa
+  - page
+  - panasonic
+  - paris
+  - pars
+  - partners
+  - parts
+  - party
+  - pay
+  - pccw
+  - pe
+  - pet
+  - pf
+  - pfizer
+  - pg
+  - ph
+  - pharmacy
+  - phd
+  - philips
+  - phone
+  - photo
+  - photography
+  - photos
+  - physio
+  - pics
+  - pictet
+  - pictures
+  - pid
+  - pin
+  - ping
+  - pink
+  - pioneer
+  - pizza
+  - pk
+  - pl
+  - place
+  - play
+  - playstation
+  - plumbing
+  - plus
+  - pm
+  - pn
+  - pnc
+  - pohl
+  - poker
+  - politie
+  - porn
+  - post
+  - pr
+  - praxi
+  - press
+  - prime
+  - pro
+  - prod
+  - productions
+  - prof
+  - progressive
+  - promo
+  - properties
+  - property
+  - protection
+  - pru
+  - prudential
+  - ps
+  - pt
+  - pub
+  - pw
+  - pwc
+  - py
+  - qa
+  - qpon
+  - quebec
+  - quest
+  - racing
+  - radio
+  - re
+  - read
+  - realestate
+  - realtor
+  - realty
+  - recipes
+  - red
+  - redumbrella
+  - rehab
+  - reise
+  - reisen
+  - reit
+  - reliance
+  - ren
+  - rent
+  - rentals
+  - repair
+  - report
+  - republican
+  - rest
+  - restaurant
+  - review
+  - reviews
+  - rexroth
+  - rich
+  - richardli
+  - ricoh
+  - ril
+  - rio
+  - rip
+  - ro
+  - rocks
+  - rodeo
+  - rogers
+  - room
+  - rs
+  - rsvp
+  - ru
+  - rugby
+  - ruhr
+  - run
+  - rw
+  - rwe
+  - ryukyu
+  - sa
+  - saarland
+  - safe
+  - safety
+  - sakura
+  - sale
+  - salon
+  - samsclub
+  - samsung
+  - sandvik
+  - sandvikcoromant
+  - sanofi
+  - sap
+  - sarl
+  - sas
+  - save
+  - saxo
+  - sb
+  - sbi
+  - sbs
+  - sc
+  - scb
+  - schaeffler
+  - schmidt
+  - scholarships
+  - school
+  - schule
+  - schwarz
+  - science
+  - scot
+  - sd
+  - se
+  - search
+  - seat
+  - secure
+  - security
+  - seek
+  - select
+  - sener
+  - services
+  - seven
+  - sew
+  - sex
+  - sexy
+  - sfr
+  - sg
+  - sh
+  - shangrila
+  - sharp
+  - shell
+  - shia
+  - shiksha
+  - shoes
+  - shop
+  - shopping
+  - shouji
+  - show
+  - si
+  - silk
+  - sina
+  - singles
+  - site
+  - sj
+  - sk
+  - ski
+  - skin
+  - sky
+  - skype
+  - sl
+  - sling
+  - sm
+  - smart
+  - smile
+  - sn
+  - sncf
+  - so
+  - soccer
+  - social
+  - softbank
+  - software
+  - sohu
+  - solar
+  - solutions
+  - song
+  - sony
+  - soy
+  - spa
+  - space
+  - sport
+  - spot
+  - sr
+  - srl
+  - ss
+  - st
+  - stada
+  - staples
+  - star
+  - statebank
+  - statefarm
+  - stc
+  - stcgroup
+  - stockholm
+  - storage
+  - store
+  - stream
+  - studio
+  - study
+  - style
+  - su
+  - sucks
+  - supplies
+  - supply
+  - support
+  - surf
+  - surgery
+  - suzuki
+  - sv
+  - swatch
+  - swiss
+  - sx
+  - sy
+  - sydney
+  - systems
+  - sz
+  - tab
+  - taipei
+  - talk
+  - taobao
+  - target
+  - tatamotors
+  - tatar
+  - tattoo
+  - tax
+  - taxi
+  - tc
+  - tci
+  - td
+  - tdk
+  - team
+  - tech
+  - technology
+  - tel
+  - temasek
+  - tennis
+  - teva
+  - tf
+  - tg
+  - th
+  - thd
+  - theater
+  - theatre
+  - tiaa
+  - tickets
+  - tienda
+  - tips
+  - tires
+  - tirol
+  - tj
+  - tjmaxx
+  - tjx
+  - tk
+  - tkmaxx
+  - tl
+  - tm
+  - tmall
+  - tn
+  - to
+  - today
+  - tokyo
+  - tools
+  - top
+  - toray
+  - toshiba
+  - total
+  - tours
+  - town
+  - toyota
+  - toys
+  - tr
+  - trade
+  - trading
+  - training
+  - travel
+  - travelers
+  - travelersinsurance
+  - trust
+  - trv
+  - tt
+  - tube
+  - tui
+  - tunes
+  - tushu
+  - tv
+  - tvs
+  - tw
+  - tz
+  - ua
+  - ubank
+  - ubs
+  - ug
+  - uk
+  - unicom
+  - university
+  - uno
+  - uol
+  - ups
+  - us
+  - uy
+  - uz
+  - va
+  - vacations
+  - vana
+  - vanguard
+  - vc
+  - ve
+  - vegas
+  - ventures
+  - verisign
+  - versicherung
+  - vet
+  - vg
+  - vi
+  - viajes
+  - video
+  - vig
+  - viking
+  - villas
+  - vin
+  - vip
+  - virgin
+  - visa
+  - vision
+  - viva
+  - vivo
+  - vlaanderen
+  - vn
+  - vodka
+  - volvo
+  - vote
+  - voting
+  - voto
+  - voyage
+  - vu
+  - wales
+  - walmart
+  - walter
+  - wang
+  - wanggou
+  - watch
+  - watches
+  - weather
+  - weatherchannel
+  - web
+  - webcam
+  - weber
+  - website
+  - wed
+  - wedding
+  - weibo
+  - weir
+  - wf
+  - whoswho
+  - wien
+  - wiki
+  - williamhill
+  - win
+  - windows
+  - wine
+  - winners
+  - wme
+  - woodside
+  - work
+  - works
+  - world
+  - wow
+  - ws
+  - wtc
+  - wtf
+  - xbox
+  - xerox
+  - xihuan
+  - xin
+  - xn--11b4c3d
+  - xn--1ck2e1b
+  - xn--1qqw23a
+  - xn--2scrj9c
+  - xn--30rr7y
+  - xn--3bst00m
+  - xn--3ds443g
+  - xn--3e0b707e
+  - xn--3hcrj9c
+  - xn--3pxu8k
+  - xn--42c2d9a
+  - xn--45br5cyl
+  - xn--45brj9c
+  - xn--45q11c
+  - xn--4dbrk0ce
+  - xn--4gbrim
+  - xn--54b7fta0cc
+  - xn--55qw42g
+  - xn--55qx5d
+  - xn--5su34j936bgsg
+  - xn--5tzm5g
+  - xn--6frz82g
+  - xn--6qq986b3xl
+  - xn--80adxhks
+  - xn--80ao21a
+  - xn--80aqecdr1a
+  - xn--80asehdb
+  - xn--80aswg
+  - xn--8y0a063a
+  - xn--90a3ac
+  - xn--90ae
+  - xn--90ais
+  - xn--9dbq2a
+  - xn--9et52u
+  - xn--9krt00a
+  - xn--b4w605ferd
+  - xn--bck1b9a5dre4c
+  - xn--c1avg
+  - xn--c2br7g
+  - xn--cck2b3b
+  - xn--cckwcxetd
+  - xn--cg4bki
+  - xn--clchc0ea0b2g2a9gcd
+  - xn--czr694b
+  - xn--czrs0t
+  - xn--czru2d
+  - xn--d1acj3b
+  - xn--d1alf
+  - xn--e1a4c
+  - xn--eckvdtc9d
+  - xn--efvy88h
+  - xn--fct429k
+  - xn--fhbei
+  - xn--fiq228c5hs
+  - xn--fiq64b
+  - xn--fiqs8s
+  - xn--fiqz9s
+  - xn--fjq720a
+  - xn--flw351e
+  - xn--fpcrj9c3d
+  - xn--fzc2c9e2c
+  - xn--fzys8d69uvgm
+  - xn--g2xx48c
+  - xn--gckr3f0f
+  - xn--gecrj9c
+  - xn--gk3at1e
+  - xn--h2breg3eve
+  - xn--h2brj9c
+  - xn--h2brj9c8c
+  - xn--hxt814e
+  - xn--i1b6b1a6a2e
+  - xn--imr513n
+  - xn--io0a7i
+  - xn--j1aef
+  - xn--j1amh
+  - xn--j6w193g
+  - xn--jlq480n2rg
+  - xn--jvr189m
+  - xn--kcrx77d1x4a
+  - xn--kprw13d
+  - xn--kpry57d
+  - xn--kput3i
+  - xn--l1acc
+  - xn--lgbbat1ad8j
+  - xn--mgb9awbf
+  - xn--mgba3a3ejt
+  - xn--mgba3a4f16a
+  - xn--mgba7c0bbn0a
+  - xn--mgbaam7a8h
+  - xn--mgbab2bd
+  - xn--mgbah1a3hjkrd
+  - xn--mgbai9azgqp6j
+  - xn--mgbayh7gpa
+  - xn--mgbbh1a
+  - xn--mgbbh1a71e
+  - xn--mgbc0a9azcg
+  - xn--mgbca7dzdo
+  - xn--mgbcpq6gpa1a
+  - xn--mgberp4a5d4ar
+  - xn--mgbgu82a
+  - xn--mgbi4ecexp
+  - xn--mgbpl2fh
+  - xn--mgbt3dhd
+  - xn--mgbtx2b
+  - xn--mgbx4cd0ab
+  - xn--mix891f
+  - xn--mk1bu44c
+  - xn--mxtq1m
+  - xn--ngbc5azd
+  - xn--ngbe9e0a
+  - xn--ngbrx
+  - xn--node
+  - xn--nqv7f
+  - xn--nqv7fs00ema
+  - xn--nyqy26a
+  - xn--o3cw4h
+  - xn--ogbpf8fl
+  - xn--otu796d
+  - xn--p1acf
+  - xn--p1ai
+  - xn--pgbs0dh
+  - xn--pssy2u
+  - xn--q7ce6a
+  - xn--q9jyb4c
+  - xn--qcka1pmc
+  - xn--qxa6a
+  - xn--qxam
+  - xn--rhqv96g
+  - xn--rovu88b
+  - xn--rvc1e0am3e
+  - xn--s9brj9c
+  - xn--ses554g
+  - xn--t60b56a
+  - xn--tckwe
+  - xn--tiq49xqyj
+  - xn--unup4y
+  - xn--vermgensberater-ctb
+  - xn--vermgensberatung-pwb
+  - xn--vhquv
+  - xn--vuq861b
+  - xn--w4r85el8fhu5dnra
+  - xn--w4rs40l
+  - xn--wgbh1c
+  - xn--wgbl6a
+  - xn--xhq521b
+  - xn--xkc2al3hye2a
+  - xn--xkc2dl3a5ee0h
+  - xn--y9a3aq
+  - xn--yfro4i67o
+  - xn--ygbi2ammx
+  - xn--zfr164b
+  - xxx
+  - xyz
+  - yachts
+  - yahoo
+  - yamaxun
+  - yandex
+  - ye
+  - yodobashi
+  - yoga
+  - yokohama
+  - you
+  - youtube
+  - yt
+  - yun
+  - za
+  - zappos
+  - zara
+  - zero
+  - zip
+  - zm
+  - zone
+  - zuerich
+  - zw
   $inception_actions:
   - c2pa.created
   - c2pa.opened
@@ -78,6 +1537,14 @@ variables:
   - ingredient.claimSignature.mismatch
   - claimSignature.missing
   - MISSING_VALIDATION_RESULTS
+  $hard_binding_assertion_labels:
+  - c2pa.hash.data
+  - c2pa.hash.data.part
+  - c2pa.hash.boxes
+  - c2pa.hash.bmff.v2
+  - c2pa.hash.bmff.v3
+  - c2pa.hash.collection.data
+  - c2pa.hash.multi-asset
   $valid_relationship_values:
   - parentOf
   - inputTo
@@ -121,7 +1588,6 @@ variables:
   - c2pa.dubbed
   - c2pa.edited
   - c2pa.edited.metadata
-  - c2pa.enhanced
   - c2pa.filtered
   - c2pa.opened
   - c2pa.orientation
@@ -136,6 +1602,17 @@ variables:
   - c2pa.trimmed
   - c2pa.unknown
   - c2pa.watermarked
+  - font.charactersAdded
+  - font.charactersDeleted
+  - font.charactersModified
+  - font.createdFromVariableFont
+  - font.edited
+  - font.hinted
+  - font.merged
+  - font.openTypeFeatureAdded
+  - font.openTypeFeatureModified
+  - font.openTypeFeatureRemoved
+  - font.subset
   $deprecated_assertion_labels:
   - c2pa.claim
   - c2pa.hash.bmff.v2
@@ -143,6 +1620,7 @@ variables:
   - c2pa.ingredient
   - c2pa.ingredient.v2
   - c2pa.actions
+  - c2pa.font.info
   $deprecated_action_labels:
   - c2pa.copied
   - c2pa.formatted
@@ -166,30 +1644,334 @@ variables:
   - italic
   - slant
   - optical-size
+  $allowed_c2pa_metadata_fields:
+  - Iptc4xmpCore:Scene
+  - Iptc4xmpExt:DigImageGUID
+  - Iptc4xmpExt:DigitalSourceType
+  - Iptc4xmpExt:EventId
+  - Iptc4xmpExt:Genre
+  - Iptc4xmpExt:ImageRating
+  - Iptc4xmpExt:ImageRegion
+  - Iptc4xmpExt:LocationCreated
+  - Iptc4xmpExt:LocationShown
+  - Iptc4xmpExt:MaxAvailHeight
+  - Iptc4xmpExt:MaxAvailWidth
+  - Iptc4xmpExt:RegistryId
+  - crs:AutoBrightness
+  - crs:AutoContrast
+  - crs:AutoExposure
+  - crs:AutoShadows
+  - crs:BlueHue
+  - crs:BlueSaturation
+  - crs:Brightness
+  - crs:CameraProfile
+  - crs:ChromaticAberrationB
+  - crs:ChromaticAberrationR
+  - crs:ColorNoiseReduction
+  - crs:Contrast
+  - crs:CropAngle
+  - crs:CropBottom
+  - crs:CropHeight
+  - crs:CropLeft
+  - crs:CropRight
+  - crs:CropTop
+  - crs:CropUnits
+  - crs:CropWidth
+  - crs:Exposure
+  - crs:GreenHue
+  - crs:GreenSaturation
+  - crs:HasCrop
+  - crs:HasSettings
+  - crs:LuminanceSmoothing
+  - crs:RawFileName
+  - crs:RedHue
+  - crs:RedSaturation
+  - crs:Saturation
+  - crs:ShadowTint
+  - crs:Shadows
+  - crs:Sharpness
+  - crs:Temperature
+  - crs:Tint
+  - crs:ToneCurve
+  - crs:ToneCurveName
+  - crs:Version
+  - crs:VignetteAmount
+  - crs:VignetteMidpoint
+  - crs:WhiteBalance
+  - dc:coverage
+  - dc:created
+  - dc:date
+  - dc:format
+  - dc:identifier
+  - dc:language
+  - dc:modified
+  - dc:relation
+  - dc:title
+  - dc:type
+  - exif:ApertureValue
+  - exif:BrightnessValue
+  - exif:CFAPattern
+  - exif:ColorSpace
+  - exif:CompressedBitsPerPixel
+  - exif:Contrast
+  - exif:CustomRendered
+  - exif:DateTimeDigitized
+  - exif:DateTimeOriginal
+  - exif:DeviceSettingDescription
+  - exif:DigitalZoomRatio
+  - exif:ExifVersion
+  - exif:ExposureBiasValue
+  - exif:ExposureIndex
+  - exif:ExposureMode
+  - exif:ExposureProgram
+  - exif:ExposureTime
+  - exif:FNumber
+  - exif:FileSource
+  - exif:Flash
+  - exif:FlashEnergy
+  - exif:FlashpixVersion
+  - exif:FocalLength
+  - exif:FocalLengthIn35mmFilm
+  - exif:FocalPlaneResolutionUnit
+  - exif:FocalPlaneXResolution
+  - exif:FocalPlaneYResolution
+  - exif:GPSAltitude
+  - exif:GPSAltitudeRef
+  - exif:GPSDOP
+  - exif:GPSDateStamp
+  - exif:GPSDestBearing
+  - exif:GPSDestBearingRef
+  - exif:GPSDestDistance
+  - exif:GPSDestDistanceRef
+  - exif:GPSDestLatitude
+  - exif:GPSDestLongitude
+  - exif:GPSDifferential
+  - exif:GPSHPositioningError
+  - exif:GPSImgDirection
+  - exif:GPSImgDirectionRef
+  - exif:GPSLatitude
+  - exif:GPSLongitude
+  - exif:GPSMapDatum
+  - exif:GPSMeasureMode
+  - exif:GPSProcessingMethod
+  - exif:GPSSatellites
+  - exif:GPSSpeed
+  - exif:GPSSpeedRef
+  - exif:GPSStatus
+  - exif:GPSTimeStamp
+  - exif:GPSTrack
+  - exif:GPSTrackRef
+  - exif:GPSVersionID
+  - exif:GainControl
+  - exif:ISOSpeedRatings
+  - exif:ImageUniqueID
+  - exif:LightSource
+  - exif:MaxApertureValue
+  - exif:MeteringMode
+  - exif:OECF
+  - exif:OffsetTimeOriginal
+  - exif:PixelXDimension
+  - exif:PixelYDimension
+  - exif:RelatedSoundFile
+  - exif:Saturation
+  - exif:SceneCaptureType
+  - exif:SceneType
+  - exif:SensingMethod
+  - exif:Sharpness
+  - exif:ShutterSpeedValue
+  - exif:SpatialFrequencyResponse
+  - exif:SpectralSensitivity
+  - exif:SubjectArea
+  - exif:SubjectDistance
+  - exif:SubjectDistanceRange
+  - exif:SubjectLocation
+  - exif:WhiteBalance
+  - exifEX:BodySerialNumber
+  - exifEX:Gamma
+  - exifEX:ISOSpeed
+  - exifEX:ISOSpeedLatitudeyyy
+  - exifEX:ISOSpeedLatitudezzz
+  - exifEX:InteroperabilityIndex
+  - exifEX:LensMake
+  - exifEX:LensModel
+  - exifEX:LensSerialNumber
+  - exifEX:LensSpecification
+  - exifEX:PhotographicSensitivity
+  - exifEX:RecommendedExposureIndex
+  - exifEX:SensitivityType
+  - exifEX:StandardOutput-Sensitivity
+  - pdf:Keywords
+  - pdf:PDFVersion
+  - pdf:Producer
+  - pdf:Trapped
+  - photoshop:Category
+  - photoshop:City
+  - photoshop:ColorMode
+  - photoshop:Country
+  - photoshop:DateCreated
+  - photoshop:DocumentAncestors
+  - photoshop:History
+  - photoshop:ICCProfile
+  - photoshop:State
+  - photoshop:SupplementalCategories
+  - photoshop:TextLayers
+  - photoshop:TransmissionReference
+  - photoshop:Urgency
+  - plus:FileNameAsDelivered
+  - plus:FirstPublicationDate
+  - plus:ImageFileFormatAsDelivered
+  - plus:ImageFileSizeAsDelivered
+  - plus:ImageType
+  - plus:Version
+  - tiff:BitsPerSample
+  - tiff:Compression
+  - tiff:DateTime
+  - tiff:ImageLength
+  - tiff:ImageWidth
+  - tiff:Make
+  - tiff:Model
+  - tiff:Orientation
+  - tiff:PhotometricInterpretation
+  - tiff:PlanarConfiguration
+  - tiff:PrimaryChromaticities
+  - tiff:ReferenceBlackWhite
+  - tiff:ResolutionUnit
+  - tiff:SamplesPerPixel
+  - tiff:Software
+  - tiff:TransferFunction
+  - tiff:WhitePoint
+  - tiff:XResolution
+  - tiff:YCbCrCoefficients
+  - tiff:YCbCrPositioning
+  - tiff:YCbCrSubSampling
+  - tiff:YResolution
+  - xmp:BaseURL
+  - xmp:CreatorTool
+  - xmp:Identifier
+  - xmp:Label
+  - xmp:MetadataDate
+  - xmp:ModifyDate
+  - xmp:Nickname
+  - xmp:Rating
+  - xmp:Thumbnails
+  - xmpDM:Tracks
+  - xmpDM:absPeakAudioFilePath
+  - xmpDM:album
+  - xmpDM:altTapeName
+  - xmpDM:altTimecode
+  - xmpDM:audioChannelType
+  - xmpDM:audioCompressor
+  - xmpDM:audioSampleRate
+  - xmpDM:audioSampleType
+  - xmpDM:beatSpliceParams
+  - xmpDM:cameraAngle
+  - xmpDM:cameraLabel
+  - xmpDM:cameraModel
+  - xmpDM:cameraMove
+  - xmpDM:comment
+  - xmpDM:contributedMedia
+  - xmpDM:discNumber
+  - xmpDM:duration
+  - xmpDM:fileDataRate
+  - xmpDM:genre
+  - xmpDM:good
+  - xmpDM:instrument
+  - xmpDM:introTime
+  - xmpDM:key
+  - xmpDM:logComment
+  - xmpDM:loop
+  - xmpDM:lyrics
+  - xmpDM:markers
+  - xmpDM:numberOfBeats
+  - xmpDM:outCue
+  - xmpDM:partOfCompilation
+  - xmpDM:projectName
+  - xmpDM:projectRef
+  - xmpDM:pullDown
+  - xmpDM:relativePeakAudioFilePath
+  - xmpDM:relativeTimestamp
+  - xmpDM:releaseDate
+  - xmpDM:resampleParams
+  - xmpDM:scaleType
+  - xmpDM:scene
+  - xmpDM:shotDate
+  - xmpDM:shotDay
+  - xmpDM:shotLocation
+  - xmpDM:shotName
+  - xmpDM:shotNumber
+  - xmpDM:shotSize
+  - xmpDM:speakerPlacement
+  - xmpDM:startTimecode
+  - xmpDM:stretchMode
+  - xmpDM:takeNumber
+  - xmpDM:tapeName
+  - xmpDM:tempo
+  - xmpDM:timeScaleParams
+  - xmpDM:timeSignature
+  - xmpDM:trackNumber
+  - xmpDM:videoAlphaMode
+  - xmpDM:videoAlphaPremultipleColor
+  - xmpDM:videoAlphaUnityIsTransparent
+  - xmpDM:videoColorSpace
+  - xmpDM:videoCompressor
+  - xmpDM:videoFieldOrder
+  - xmpDM:videoFrameRate
+  - xmpDM:videoFrameSize
+  - xmpDM:videoPixelAspectRatio
+  - xmpDM:videoPixelDepth
+  - xmpMM:DerivedFrom
+  - xmpMM:DocumentID
+  - xmpMM:History
+  - xmpMM:Ingredients
+  - xmpMM:InstanceID
+  - xmpMM:ManageTo
+  - xmpMM:ManageUI
+  - xmpMM:ManagedFrom
+  - xmpMM:Manager
+  - xmpMM:Manager Variant
+  - xmpMM:OriginalDocumentID
+  - xmpMM:Pantry
+  - xmpMM:RenditionClass
+  - xmpMM:RenditionParams
+  - xmpMM:VersionID
+  - xmpMM:Versions
+  - xmpTPg:Colorants
+  - xmpTPg:Fonts
+  - xmpTPg:MaxPageSize
+  - xmpTPg:NPages
+  - xmpTPg:PlateNames
 expressions:
-  _manifest_validationResults: |-
-    ($args[0].validationResults || { failure: [{code: "MISSING_VALIDATION_RESULTS"}] })
+  _manifest_validationResults: '($args[0].validationResults || { failure: [{code: "MISSING_VALIDATION_RESULTS"}] })'
   _manifest_assertionKeys: keys($args[0].assertions || `{}`)
   _manifest_assertionValues: values($args[0].assertions || `{}`)
   _manifest_actionsV2: values($args[0].assertions || `{}`)[?actions != null][].actions[] || `[]`
-  _manifest_claimV2: $args[0].'claim.v2'
-  _manifest_createdAssertions: $args[0].'claim.v2'.created_assertions || `[]`
+  _manifest_actionsV2Assertion: $args[0].assertions.'c2pa.actions.v2'
+  _manifest_claimV2: $args[0].'claim.v2' || $args[0].claim
+  _manifest_createdAssertions: $args[0].'claim.v2'.created_assertions || $args[0].claim.created_assertions || `[]`
   _manifest_ingredientAssertions: values($args[0].assertions || `{}`)[? relationship != null]
   _baseAssertionLabel: split($args[0], "__")[0]
+  _manifest_isUpdateManifest: $args[0].isUpdateManifest == `true` || contains(keys($args[0] || `{}`), "manifest.update") || $args[0].label == "update"
+  _manifest_assertionsByLabel: map(entries($args[0].assertions || `{}`)[? _baseAssertionLabel(@[0]) == $args[1]], &[1])
   _activeManifest: manifests[0]
   _validationResults: _manifest_validationResults(_activeManifest())
   _assertionKeys: _manifest_assertionKeys(_activeManifest())
   _assertionValues: _manifest_assertionValues(_activeManifest())
   _actionsV2: _manifest_actionsV2(_activeManifest())
+  _actionsV2Assertion: _manifest_actionsV2Assertion(_activeManifest())
   _claimV2: _manifest_claimV2(_activeManifest())
   _createdAssertions: _manifest_createdAssertions(_activeManifest())
   _ingredientAssertions: _manifest_ingredientAssertions(_activeManifest())
+  _isUpdateManifest: _manifest_isUpdateManifest(_activeManifest())
+  _assertionsByLabel: _manifest_assertionsByLabel(_activeManifest(), $args[0])
+  _startsWithAny: length($args[0][? startsWith($args[1], @)]) > 0
+  _isReverseDns: contains($args[0], ".") && contains($iana_tlds, lower(split($args[0], ".")[0]))
+  _invalidPlacedActions: $args[1][? parameters.ingredients == null || length(parameters.ingredients) == 0 || length(parameters.ingredients[? url == null || !contains($args[0], split(url, "/")[-1])]) > 0]
+  _isRfc3339DateTime: contains($args[0], "T") && toDate($args[0]) != null
 
 ---
 
 - id: validation:mandatory_dst_for_perceptible_transformations
-  description: |-
-    Check if every predefined C2PA perceptible transformation action in the active manifest has a digitalSourceType (Conformance Program requirement)
+  description: Check if every predefined C2PA perceptible transformation action in the active manifest has a digitalSourceType (Conformance Program requirement)
   failIfMatched: true
   expression: |
     _actionsV2()[?
@@ -203,22 +1985,21 @@ expressions:
     'true':
       en: Every predefined C2PA perceptible transformation action has a digitalSourceType
     'false':
-      en: |-
-        Found predefined C2PA perceptible transformation actions missing a digitalSourceType: {{matches}}
+      en: 'Found predefined C2PA perceptible transformation actions missing a digitalSourceType: {{matches}}'
+
 - id: validation:mandatory_spec_version
-  description: |-
-    Check if specVersion is present and correct in claim_generator_info (mandatory since Conformance v0.2 for Spec 2.4+)
+  description: Check if specVersion is present and correct in claim_generator_info (mandatory since Conformance v0.2 for Spec 2.4+)
   failIfMatched: true
-  expression: "if(\n  (split($expected_spec_version, `\".\"`)[0] * 1 > 2.0) ||\n  (split($expected_spec_version, `\".\"`)[0] * 1 == 2.0 && split($expected_spec_version, `\".\"`)[1] * 1 >= 4.0),\n  if(\n    (_claimV2().claim_generator_info[0].specVersion || _claimV2().claim_generator_info.specVersion) == null,\n    `[\"missing\"]`,\n    if(\n      type((_claimV2().claim_generator_info[0].specVersion || _claimV2().claim_generator_info.specVersion)) != `\"string\"`,\n      [(_claimV2().claim_generator_info[0].specVersion || _claimV2().claim_generator_info.specVersion)],\n      if(\n        (split((_claimV2().claim_generator_info[0].specVersion || _claimV2().claim_generator_info.specVersion), `\".\"`)[0] == split($expected_spec_version, `\".\"`)[0]) &&\n        (split((_claimV2().claim_generator_info[0].specVersion || _claimV2().claim_generator_info.specVersion), `\".\"`)[1] == split($expected_spec_version, `\".\"`)[1]),\n        `[]`,\n        [(_claimV2().claim_generator_info[0].specVersion || _claimV2().claim_generator_info.specVersion)]\n      )\n    )\n  ),\n  `[]`\n)\n"
+  expression: "if(\n  (_claimV2().claim_generator_info[0].specVersion || _claimV2().claim_generator_info.specVersion) == null,\n  if(\n    (split($expected_spec_version, `\".\"`)[0] > `\"2\"`) || \n    (split($expected_spec_version, `\".\"`)[0] == `\"2\"` && split($expected_spec_version, `\".\"`)[1] >= `\"4\"`),\n    `[\"missing\"]`,\n    `[]`\n  ),\n  if(\n    type((_claimV2().claim_generator_info[0].specVersion || _claimV2().claim_generator_info.specVersion)) != `\"string\"`,\n    [(_claimV2().claim_generator_info[0].specVersion || _claimV2().claim_generator_info.specVersion)],\n    if(\n      (split((_claimV2().claim_generator_info[0].specVersion || _claimV2().claim_generator_info.specVersion), `\".\"`)[0] == split($expected_spec_version, `\".\"`)[0]) &&\n      (split((_claimV2().claim_generator_info[0].specVersion || _claimV2().claim_generator_info.specVersion), `\".\"`)[1] == split($expected_spec_version, `\".\"`)[1]),\n      `[]`,\n      [(_claimV2().claim_generator_info[0].specVersion\
+    \ || _claimV2().claim_generator_info.specVersion)]\n    )\n  )\n)\n"
   reportText:
     'true':
-      en: |-
-        Found correct 'specVersion' in claim_generator_info matching the expected version
+      en: Found correct 'specVersion' in claim_generator_info matching the expected version
     'false':
       en: 'Missing or incorrect ''specVersion'' in claim_generator_info: {{matches}}'
+
 - id: validation:mandatory_all_actions_included
-  description: |-
-    Check that allActionsIncluded is populated in all actions assertions (Conformance Program requirement)
+  description: Check that allActionsIncluded is populated in all actions assertions (Conformance Program requirement)
   expression: |
     length(values(_activeManifest().assertions || `{}`)[? actions != null && allActionsIncluded == null]) == 0
   reportText:
@@ -226,9 +2007,9 @@ expressions:
       en: The allActionsIncluded field is populated in all actions assertions
     'false':
       en: Missing mandatory allActionsIncluded field in one or more actions assertions
+
 - id: validation:no_dst_for_opened_action
-  description: |-
-    Check that c2pa.opened actions do not have digitalSourceType (Conformance Program 0.2 requirement, enforced for Spec 2.4+)
+  description: Check that c2pa.opened actions do not have digitalSourceType (Conformance Program 0.2 requirement, enforced for Spec 2.4+)
   failIfMatched: true
   expression: "if(\n  (split($expected_spec_version, `\".\"`)[0] * 1 > 2.0) || \n  (split($expected_spec_version, `\".\"`)[0] * 1 == 2.0 && split($expected_spec_version, `\".\"`)[1] * 1 >= 4.0),\n  _actionsV2()[?action == \"c2pa.opened\" && digitalSourceType != null].digitalSourceType,\n  `[]`\n)\n"
   reportText:
@@ -236,78 +2017,76 @@ expressions:
       en: No c2pa.opened actions have a digitalSourceType
     'false':
       en: 'Found c2pa.opened actions with digitalSourceType: {{matches}}'
+
 - id: validation:well_formed_data_present
   description: Check if validation results are present for structural analysis
-  expression: 'manifests[0].validationResults != null
-
-    '
+  expression: |
+    manifests[0].validationResults != null
   reportText:
     'true':
       en: Validation results are present for structural analysis
     'false':
       en: Missing validation results in the manifest
-- id: validation:well_formed_success
-  description: |-
-    Check if the asset has any structural or malformation failures (from the well-formed list)
-  failIfMatched: true
-  expression: '_validationResults().failure[?contains($well_formed_error_codes, code)].code
 
-    '
+- id: validation:well_formed_success
+  description: Check if the asset has any structural or malformation failures (from the well-formed list)
+  failIfMatched: true
+  expression: |
+    _validationResults().failure[?contains($well_formed_error_codes, code)].code
   reportText:
     'true':
       en: No structural failures found
     'false':
       en: 'Found structural failures: {{matches}}'
+
 - id: validation:valid_data_present
   description: Check if validation results are present for integrity analysis
-  expression: 'manifests[0].validationResults != null
-
-    '
+  expression: |
+    manifests[0].validationResults != null
   reportText:
     'true':
       en: Validation results are present for integrity analysis
     'false':
       en: Missing validation results in the manifest
+
 - id: validation:valid_success
   description: Check if the asset has any validation mismatches (from the valid list)
   failIfMatched: true
-  expression: '_validationResults().failure[?contains($valid_error_codes, code)].code
-
-    '
+  expression: |
+    _validationResults().failure[?contains($valid_error_codes, code)].code
   reportText:
     'true':
       en: No validation mismatches found
     'false':
       en: 'Found validation mismatches: {{matches}}'
+
 - id: validation:inception_action_position
-  description: |-
-    Check if an inception action is the first action in the first actions assertion in created_assertions (mandatory since Spec 2.2)
-  specSection: Spec 2.2 §18.14.2
+  description: Verify that in a standard manifest, c2pa.actions.v2 is referenced in created_assertions and its first action is an inception or opened action (Spec 2.2 §10.2.1, §18.14.2 / Spec 2.4 §10.2.1, §18.15.2)
+  specSection: Spec 2.2 §10.2.1, §18.14.2, Spec 2.4 §10.2.1, §18.15.2
   expression: |
-    endsWith(notNull(_createdAssertions()[?contains(url, "c2pa.actions")] | [0].url, ""), "c2pa.actions.v2") &&
-    (length(_actionsV2()[?action == "c2pa.created"]) == 0 ||
-      contains(`["c2pa.created", "c2pa.opened"]`, _actionsV2()[0].action))
+    _isUpdateManifest() ||
+    (endsWith(notNull(_createdAssertions()[?contains(url, "c2pa.actions")] | [0].url, ""), "c2pa.actions.v2") &&
+     contains(`["c2pa.created", "c2pa.opened"]`, _actionsV2()[0].action))
   reportText:
     'true':
-      en: |-
-        Inception action is correctly positioned as the first item in the first created actions assertion (Spec 2.2 §18.14.2)
+      en: Mandatory c2pa.actions.v2 assertion is in created_assertions with an inception or opened action as its first item (Spec 2.2 §10.2.1, §18.14.2 / Spec 2.4 §10.2.1, §18.15.2)
     'false':
-      en: |-
-        Inception action is not in the first actions assertion of created_assertions (or first item is not an actions assertion) (Spec 2.2 §18.14.2)
+      en: Mandatory c2pa.actions.v2 assertion is missing from created_assertions or its first item is not an inception/opened action (Spec 2.2 §10.2.1, §18.14.2 / Spec 2.4 §10.2.1, §18.15.2)
+
 - id: validation:no_deprecated_assertions
   description: Check for known deprecated assertion labels (mandatory since Spec 2.2)
   specSection: Spec 2.2 §6.3, App C.1
   failIfMatched: true
   expression: |
-    _assertionKeys()[?startsWith(@, "stds.") || contains($deprecated_assertion_labels, @)]
+    _assertionKeys()[?startsWith(@, "stds.") || startsWith(_baseAssertionLabel(@), "c2pa.thumbnail.claim.") || startsWith(_baseAssertionLabel(@), "c2pa.thumbnail.ingredient.") || contains($deprecated_assertion_labels, _baseAssertionLabel(@))]
   reportText:
     'true':
       en: No deprecated standard assertions found (Spec 2.2 §6.3, App C.1)
     'false':
       en: 'Found deprecated standard assertions: {{matches}} (Spec 2.2 §6.3, App C.1)'
+
 - id: validation:no_unsupported_assertions
-  description: |-
-    Check if all C2PA standard assertions are in the allow-list (mandatory since Spec 2.2)
+  description: Check if all C2PA standard assertions are in the allow-list (mandatory since Spec 2.2)
   specSection: Spec 2.2 §6.2, §6.2.2, §6.3
   failIfMatched: true
   expression: |
@@ -316,90 +2095,81 @@ expressions:
       !contains($deprecated_assertion_labels, _baseAssertionLabel(@))]
   reportText:
     'true':
-      en: |-
-        All standard assertions are supported for this spec version (Spec 2.2 §6.2, §6.2.2, §6.3)
+      en: All standard assertions are supported for this spec version (Spec 2.2 §6.2, §6.2.2, §6.3)
     'false':
-      en: |-
-        Found unsupported or unknown standard C2PA assertions: {{matches}} (Spec 2.2 §6.2, §6.2.2, §6.3)
+      en: 'Found unsupported or unknown standard C2PA assertions: {{matches}} (Spec 2.2 §6.2, §6.2.2, §6.3)'
+
 - id: validation:no_deprecated_actions
   description: Check for deprecated action types in c2pa.actions.v2 (mandatory since Spec 2.2)
   specSection: Spec 2.2 §18.14.11, App C.1
   failIfMatched: true
-  expression: '_actionsV2()[?contains($deprecated_action_labels, action)].action
-
-    '
+  expression: |
+    _actionsV2()[?contains($deprecated_action_labels, action)].action
   reportText:
     'true':
       en: No deprecated actions used (Spec 2.2 §18.14.11, App C.1)
     'false':
       en: 'Found deprecated actions: {{matches}} (Spec 2.2 §18.14.11, App C.1)'
+
 - id: validation:no_unsupported_actions
-  description: |-
-    Check if all C2PA standard actions are in the allow-list (mandatory since Spec 2.2)
+  description: Check if all C2PA standard actions are in the allow-list (mandatory since Spec 2.2)
   specSection: Spec 2.2 §18.14, §18.14.12
   failIfMatched: true
   expression: |
     _actionsV2()[?startsWith(action, "c2pa.") && !contains($allowed_actions, action)].action
   reportText:
     'true':
-      en: |-
-        All standard actions are supported for this spec version (Spec 2.2 §18.14, §18.14.12)
+      en: All standard actions are supported for this spec version (Spec 2.2 §18.14, §18.14.12)
     'false':
-      en: |-
-        Found unsupported or unknown standard C2PA actions: {{matches}} (Spec 2.2 §18.14, §18.14.12)
+      en: 'Found unsupported or unknown standard C2PA actions: {{matches}} (Spec 2.2 §18.14, §18.14.12)'
+
 - id: validation:no_unrecognized_custom_assertions
-  description: |-
-    Verify that custom assertions conform to entity-specific namespacing (MUST contain a dot '.') (mandatory since Spec 2.2)
-  specSection: Spec 2.2 §6.2.2
+  description: Verify that custom assertions conform to entity-specific reverse-DNS namespacing (Spec 2.2 §6.2.2, §18.16.2 / Spec 2.4 §6.2.2, §18.17.2)
+  specSection: Spec 2.2 §6.2.2, §18.16.2, Spec 2.4 §6.2.2, §18.17.2
   failIfMatched: true
   expression: |
     _assertionKeys()[?
       !startsWith(@, "c2pa.") &&
-      !contains(@, ".")
+      !contains($allowed_assertions, _baseAssertionLabel(@)) &&
+      (!_isReverseDns(@) || (endsWith(_baseAssertionLabel(@), ".metadata") && !_isReverseDns(substitute(_baseAssertionLabel(@), ".metadata", ""))))
     ]
   reportText:
     'true':
-      en: |-
-        All custom assertions conform to entity-specific namespacing (contain a dot '.') (Spec 2.2 §6.2.2)
+      en: All custom assertions conform to entity-specific reverse-DNS namespacing (Spec 2.2 §6.2.2, §18.16.2 / Spec 2.4 §6.2.2, §18.17.2)
     'false':
-      en: |-
-        Found custom assertions violating namespacing rules (missing a dot '.'): {{matches}} (Spec 2.2 §6.2.2)
+      en: 'Found custom assertions violating reverse-DNS namespacing rules: {{matches}} (Spec 2.2 §6.2.2, §18.16.2 / Spec 2.4 §6.2.2, §18.17.2)'
+
 - id: validation:no_unrecognized_custom_actions
-  description: |-
-    Verify that custom actions conform to entity-specific namespacing (MUST contain a dot '.') (mandatory since Spec 2.2)
-  specSection: Spec 2.2 §18.14, §18.14.12
+  description: Verify that custom actions conform to entity-specific reverse-DNS namespacing (Spec 2.2 §18.14, §18.14.12, §6.2.1)
+  specSection: Spec 2.2 §18.14, §18.14.12, §6.2.1
   failIfMatched: true
   expression: |
     _actionsV2()[?
       !startsWith(action, "c2pa.") &&
-      !contains(action, ".")
+      !_isReverseDns(action)
     ].action
   reportText:
     'true':
-      en: |-
-        All custom actions conform to entity-specific namespacing (contain a dot '.') (Spec 2.2 §18.14, §18.14.12)
+      en: All custom actions conform to entity-specific reverse-DNS namespacing (Spec 2.2 §18.14, §18.14.12, §6.2.1)
     'false':
-      en: |-
-        Found custom actions violating namespacing rules (missing a dot '.'): {{matches}} (Spec 2.2 §18.14, §18.14.12)
+      en: 'Found custom actions violating reverse-DNS namespacing rules: {{matches}} (Spec 2.2 §18.14, §18.14.12, §6.2.1)'
+
 - id: validation:no_unrecognized_custom_action_parameters
-  description: |-
-    Verify that custom action parameters conform to entity-specific namespacing (MUST contain a dot '.') (mandatory since Spec 2.2)
-  specSection: Spec 2.2 §18.14.4.7
+  description: Verify that custom action parameters conform to entity-specific reverse-DNS namespacing (Spec 2.2 §18.14.4.7, §6.2.1)
+  specSection: Spec 2.2 §18.14.4.7, §6.2.1
   failIfMatched: true
   expression: |
     _actionsV2()[?parameters != null] |
       [].keys(parameters)[] |
-      [? !contains($standard_parameters, @) && !contains(@, ".")]
+      [? !contains($standard_parameters, @) && !_isReverseDns(@)]
   reportText:
     'true':
-      en: |-
-        All custom action parameters conform to entity-specific namespacing (contain a dot '.') (Spec 2.2 §18.14.4.7)
+      en: All custom action parameters conform to entity-specific reverse-DNS namespacing (Spec 2.2 §18.14.4.7, §6.2.1)
     'false':
-      en: |-
-        Found custom action parameters violating namespacing rules (missing a dot '.'): {{matches}} (Spec 2.2 §18.14.4.7)
+      en: 'Found custom action parameters violating reverse-DNS namespacing rules: {{matches}} (Spec 2.2 §18.14.4.7, §6.2.1)'
+
 - id: validation:discouraged_legacy_action_parameters
-  description: |-
-    Check for deprecated or misplaced standard parameters inside the parameters block (warn since Spec 2.2)
+  description: Check for deprecated or misplaced standard parameters inside the parameters block (warn since Spec 2.2)
   specSection: Spec 2.2 §18.14.4.1, §18.14.12
   warnIfMatched: true
   expression: |
@@ -407,35 +2177,36 @@ expressions:
       [?parameters.description != null || parameters.ingredient != null].notNull(action, "unknown")
   reportText:
     'true':
-      en: |-
-        No discouraged legacy action parameters found in parameters block (Spec 2.2 §18.14.4.1, §18.14.12)
+      en: No discouraged legacy action parameters found in parameters block (Spec 2.2 §18.14.4.1, §18.14.12)
     'false':
-      en: |-
-        Found discouraged legacy action parameters (description or ingredient) inside the parameters block of actions: {{matches}}. These should be migrated to the v2 structure (description at top level, ingredients as plural array). (Spec 2.2 §18.14.4.1, §18.14.12)
+      en: 'Found discouraged legacy action parameters (description or ingredient) inside the parameters block of actions: {{matches}}. These should be migrated to the v2 structure (description at top level, ingredients as plural array). (Spec 2.2 §18.14.4.1, §18.14.12)'
+
 - id: validation:active_manifest_urn
   description: Check if the active manifest URN uses 'urn:c2pa:' prefix (v2.2+ requirement)
   specSection: Spec 2.2 §8.1, §10.2.1
-  expression: 'startsWith(notNull(manifests[0].label, ""), "urn:c2pa:")
-
-    '
+  expression: |
+    startsWith(notNull(manifests[0].label, ""), "urn:c2pa:")
   reportText:
     'true':
       en: Active manifest URN uses standard 'urn:c2pa:' prefix (Spec 2.2 §8.1, §10.2.1)
     'false':
-      en: |-
-        Active manifest URN uses old 'urn:uuid' prefix (pre-v2.2) (Spec 2.2 §8.1, §10.2.1)
+      en: Active manifest URN uses old 'urn:uuid' prefix (pre-v2.2) (Spec 2.2 §8.1, §10.2.1)
+
 - id: validation:review_ratings_datasource
-  description: Check that reviewRatings is absent when dataSource type is human entry
+  description: Check that reviewRatings is absent when dataSource type is human entry (Spec 2.2 §18.3.3)
   specSection: Spec 2.2 §18.3.3
+  failIfMatched: true
   expression: |
-    length(_assertionValues()[? reviewRatings != null && contains($human_entry_source_types, dataSource.type)]) == 0
+    [
+      _assertionValues(),
+      values(manifests[0].assertions || `{}`)[? metadata != null].metadata
+    ][] | [? reviewRatings != null && (startsWith(dataSource.type, "humanEntry") || contains($human_entry_source_types, dataSource.type))]
   reportText:
     'true':
-      en: |-
-        No invalid co-occurrence of reviewRatings and human entry dataSource (Spec 2.2 §18.3.3)
+      en: No invalid co-occurrence of reviewRatings and human entry dataSource (Spec 2.2 §18.3.3)
     'false':
-      en: |-
-        Found reviewRatings in an assertion with human entry dataSource (Spec 2.2 §18.3.3)
+      en: Found reviewRatings in an assertion with human entry dataSource (Spec 2.2 §18.3.3)
+
 - id: validation:ingredient_v3_no_active_manifest
   description: Check that ingredient v3 has no validationResults if no activeManifest
   specSection: Spec 2.2 §18.15.12.4.3
@@ -443,11 +2214,10 @@ expressions:
     length(_ingredientAssertions()[? activeManifest == null && validationResults != null]) == 0
   reportText:
     'true':
-      en: |-
-        Ingredient v3 assertions without activeManifest correctly omit validationResults (Spec 2.2 §18.15.12.4.3)
+      en: Ingredient v3 assertions without activeManifest correctly omit validationResults (Spec 2.2 §18.15.12.4.3)
     'false':
-      en: |-
-        Found ingredient v3 assertion without activeManifest but containing validationResults (Spec 2.2 §18.15.12.4.3)
+      en: Found ingredient v3 assertion without activeManifest but containing validationResults (Spec 2.2 §18.15.12.4.3)
+
 - id: validation:ingredient_v3_mandatory_validation_results
   description: Check that ingredient v3 has validationResults if activeManifest is present
   specSection: Spec 2.2 §18.15.12.4.3
@@ -455,11 +2225,10 @@ expressions:
     length(_ingredientAssertions()[? activeManifest != null && validationResults == null]) == 0
   reportText:
     'true':
-      en: |-
-        Ingredient v3 assertions with activeManifest correctly include validationResults (Spec 2.2 §18.15.12.4.3)
+      en: Ingredient v3 assertions with activeManifest correctly include validationResults (Spec 2.2 §18.15.12.4.3)
     'false':
-      en: |-
-        Found ingredient v3 assertion with activeManifest but missing validationResults (Spec 2.2 §18.15.12.4.3)
+      en: Found ingredient v3 assertion with activeManifest but missing validationResults (Spec 2.2 §18.15.12.4.3)
+
 - id: validation:ingredient_relationship_values
   description: Check that the relationship field in all ingredient assertions is valid
   specSection: Spec 2.2 §18.15.3
@@ -470,18 +2239,512 @@ expressions:
     'true':
       en: All ingredient assertions have valid relationship values (Spec 2.2 §18.15.3)
     'false':
-      en: |-
-        Found ingredient assertion with invalid relationship value: {{matches}} (Spec 2.2 §18.15.3)
+      en: 'Found ingredient assertion with invalid relationship value: {{matches}} (Spec 2.2 §18.15.3)'
+
 - id: validation:mandatory_dst_for_created_action
-  description: |-
-    Check that c2pa.created actions have a digitalSourceType (mandatory since Spec 2.2)
+  description: Check that c2pa.created actions have a digitalSourceType (mandatory since Spec 2.2)
   specSection: Spec 2.2 §18.14.2, §18.14.4.5
   expression: |
-    length(_actionsV2()[?action == "c2pa.created" && digitalSourceType == null]) == 0
+    length(_actionsV2()[?action == "c2pa.created" && (digitalSourceType == null || length(digitalSourceType) == 0)]) == 0
   reportText:
     'true':
-      en: |-
-        All c2pa.created actions have a digitalSourceType (Spec 2.2 §18.14.2, §18.14.4.5)
+      en: All c2pa.created actions have a digitalSourceType (Spec 2.2 §18.14.2, §18.14.4.5)
     'false':
-      en: |-
-        Found c2pa.created action missing a digitalSourceType (Spec 2.2 §18.14.2, §18.14.4.5)
+      en: Found c2pa.created action missing a digitalSourceType (Spec 2.2 §18.14.2, §18.14.4.5)
+
+- id: validation:claim_created_assertions_mandatory
+  description: Verify that the claim contains a non-empty created_assertions array of hashed URIs (Spec 2.2 §10.2.1 / Spec 2.4 §10.2.1)
+  specSection: Spec 2.2 §10.2.1, Spec 2.4 §10.2.1
+  failIfMatched: true
+  expression: |
+    length(_createdAssertions()) == 0 && `["missing or empty created_assertions"]` || `[]`
+  reportText:
+    'true':
+      en: Claim contains a valid non-empty created_assertions array (Spec 2.2 §10.2.1 / Spec 2.4 §10.2.1)
+    'false':
+      en: Claim is missing mandatory created_assertions or the array is empty (Spec 2.2 §10.2.1 / Spec 2.4 §10.2.1)
+
+- id: validation:claim_generator_info_mandatory_name
+  description: Verify that every claim_generator_info entry in the active manifest specifies a non-empty name (mandatory since Spec 2.2)
+  specSection: Spec 2.2 §10.2.1, Spec 2.4 §10.2.3.2
+  failIfMatched: true
+  expression: |
+    if(_claimV2() != null && _claimV2().claim_generator_info == null,
+      `["missing_claim_generator_info"]`,
+      if(type(_claimV2().claim_generator_info) == "array",
+        _claimV2().claim_generator_info[? name == null || length(name) == 0],
+        if(_claimV2().claim_generator_info != null && (_claimV2().claim_generator_info.name == null || length(_claimV2().claim_generator_info.name) == 0),
+          `["missing_name"]`, `[]`)))
+  reportText:
+    'true':
+      en: All claim_generator_info entries in the active manifest specify a valid name (Spec 2.2 §10.2.1 / Spec 2.4 §10.2.3.2)
+    'false':
+      en: Found claim_generator_info entry in the active manifest missing mandatory name property (Spec 2.2 §10.2.1 / Spec 2.4 §10.2.3.2)
+
+- id: validation:update_manifest_no_hard_binding
+  description: Verify that update manifests do not contain hard-binding hash assertions (Spec 2.2 §9.2, Spec 2.4 §9.2)
+  specSection: Spec 2.2 §9.2, Spec 2.4 §9.2
+  failIfMatched: true
+  expression: |
+    _isUpdateManifest() &&
+    _assertionKeys()[? _startsWithAny($hard_binding_assertion_labels, @)] || `[]`
+  reportText:
+    'true':
+      en: Update manifest correctly omits hard-binding hash assertions (Spec 2.2 §9.2 / Spec 2.4 §9.2)
+    'false':
+      en: 'Update manifest contains forbidden hard-binding hash assertion: {{matches}} (Spec 2.2 §9.2 / Spec 2.4 §9.2)'
+
+- id: validation:action_digital_source_type_valid
+  description: Verify that any digitalSourceType specified in c2pa.actions.v2 is a valid canonical URI (Spec 2.2 §18.14.4.5 / Spec 2.4 §18.15.4.5)
+  specSection: Spec 2.2 §18.14.4.5, Spec 2.4 §18.15.4.5
+  failIfMatched: true
+  expression: |
+    _actionsV2()[? digitalSourceType != null && !contains($valid_digital_source_types, digitalSourceType)].digitalSourceType
+  reportText:
+    'true':
+      en: All action digitalSourceType values are valid canonical URIs (Spec 2.2 §18.14.4.5 / Spec 2.4 §18.15.4.5)
+    'false':
+      en: 'Found action with invalid digitalSourceType value: {{matches}} (Spec 2.2 §18.14.4.5 / Spec 2.4 §18.15.4.5)'
+
+- id: validation:actions_v2_mandatory_fields
+  description: Verify mandatory field rules for c2pa.actions.v2 items (mandatory since Spec 2.2)
+  failIfMatched: true
+  expression: |
+    _actionsV2()[?
+      (action == null || length(action) == 0) ||
+      (action == "c2pa.redacted" && (reason == null || length(reason) == 0 || parameters == null || parameters.redacted == null || length(parameters.redacted) == 0)) ||
+      (softwareAgent != null && (softwareAgent.name == null || length(softwareAgent.name) == 0))
+    ].notNull(action, "missing")
+  reportText:
+    'true':
+      en: All actions.v2 items satisfy mandatory field requirements (Spec 2.2 §18.14.4.1)
+    'false':
+      en: 'Found actions.v2 items violating mandatory field rules (missing reason/parameters.redacted or empty softwareAgent.name): {{matches}} (Spec 2.2 §18.14.4.1)'
+  specSection: Spec 2.2 §18.14.4.1
+
+- id: validation:actions_v2_actions_non_empty
+  description: Verify that c2pa.actions.v2 contains a non-empty actions array (Spec 2.2 §18.14.12 / Spec 2.4 §18.15.12)
+  specSection: Spec 2.2 §18.14.12, Spec 2.4 §18.15.12
+  failIfMatched: true
+  expression: |
+    (_actionsV2Assertion() != null && (_actionsV2Assertion().actions == null || length(_actionsV2Assertion().actions) == 0)) && `["missing or empty actions array"]` || `[]`
+  reportText:
+    'true':
+      en: Actions assertion contains a valid non-empty actions array (Spec 2.2 §18.14.12 / Spec 2.4 §18.15.12)
+    'false':
+      en: Actions assertion is missing actions array or array is empty (Spec 2.2 §18.14.12 / Spec 2.4 §18.15.12)
+
+- id: validation:action_software_agent_mutual_exclusion
+  description: Verify that action items do not include both softwareAgent and softwareAgentIndex (Spec 2.2 §18.14.4.4 / Spec 2.4 §18.15.4.4)
+  specSection: Spec 2.2 §18.14.4.4, Spec 2.4 §18.15.4.4
+  failIfMatched: true
+  expression: |
+    _actionsV2()[? softwareAgent != null && softwareAgentIndex != null].action
+  reportText:
+    'true':
+      en: Action items correctly maintain mutual exclusion between softwareAgent and softwareAgentIndex (Spec 2.2 §18.14.4.4 / Spec 2.4 §18.15.4.4)
+    'false':
+      en: 'Found action items containing both softwareAgent and softwareAgentIndex: {{matches}} (Spec 2.2 §18.14.4.4 / Spec 2.4 §18.15.4.4)'
+
+- id: validation:actions_software_agent_mandatory_name
+  description: Verify that all software agents defined in c2pa.actions.v2 specify a mandatory non-empty name (Spec 2.2 §18.14.6.2 / Spec 2.4 §18.15.6.2)
+  specSection: Spec 2.2 §18.14.6.2, Spec 2.4 §18.15.6.2
+  failIfMatched: true
+  expression: |
+    _actionsV2Assertion().softwareAgents[? name == null || length(name) == 0].name ||
+      _actionsV2()[? softwareAgent != null && (softwareAgent.name == null || length(softwareAgent.name) == 0)].action
+  reportText:
+    'true':
+      en: All software agents in actions assertion contain mandatory non-empty name (Spec 2.2 §18.14.6.2 / Spec 2.4 §18.15.6.2)
+    'false':
+      en: Found software agent in actions assertion missing mandatory name (Spec 2.2 §18.14.6.2 / Spec 2.4 §18.15.6.2)
+
+- id: validation:action_when_iso8601_format
+  description: Verify that action 'when' timestamps conform to ISO 8601 / RFC 3339 format (mandatory since Spec 2.2)
+  specSection: Spec 2.2 §18.14.4.3
+  failIfMatched: true
+  expression: |
+    _actionsV2()[? when != null && !_isRfc3339DateTime(when)].when
+  reportText:
+    'true':
+      en: All action when timestamps conform to ISO 8601 / RFC 3339 date-time format (Spec 2.2 §18.14.4.3)
+    'false':
+      en: 'Found invalid non-ISO 8601 / RFC 3339 action timestamps: {{matches}} (Spec 2.2 §18.14.4.3)'
+
+- id: validation:single_created_or_opened_action
+  description: Verify that a manifest contains at most one action whose type is either c2pa.created or c2pa.opened across all actions assertions (Spec 2.2 §18.14.3 / Spec 2.4 §18.15.3)
+  specSection: Spec 2.2 §18.14.3, Spec 2.4 §18.15.3
+  failIfMatched: true
+  expression: |
+    length(_actionsV2()[? action == "c2pa.created" || action == "c2pa.opened"]) > 1 &&
+      `["multiple created or opened actions present"]` || `[]`
+  reportText:
+    'true':
+      en: Manifest contains at most one c2pa.created or c2pa.opened action (Spec 2.2 §18.14.3 / Spec 2.4 §18.15.3)
+    'false':
+      en: Manifest contains multiple c2pa.created or c2pa.opened actions across its actions assertions (Spec 2.2 §18.14.3 / Spec 2.4 §18.15.3)
+
+- id: validation:placed_ingredient_componentof
+  description: Verify that c2pa.placed actions only reference ingredient assertions with relationship componentOf (Spec 2.2 §15.10.3.2.2 / Spec 2.4 §15.10.3.2.3)
+  specSection: Spec 2.2 §15.10.3.2.2, Spec 2.4 §15.10.3.2.3
+  failIfMatched: true
+  expression: |
+    _invalidPlacedActions(
+      map(entries(manifests[0].assertions || `{}`)[? @[1].relationship == "componentOf"], &[0]),
+      _actionsV2()[? action == "c2pa.placed"]
+    )
+  reportText:
+    'true':
+      en: All c2pa.placed actions correctly reference ingredients with componentOf relationship (Spec 2.2 §15.10.3.2.2 / Spec 2.4 §15.10.3.2.3)
+    'false':
+      en: Found c2pa.placed actions referencing ingredients without componentOf relationship (Spec 2.2 §15.10.3.2.2 / Spec 2.4 §15.10.3.2.3)
+
+- id: validation:redacted_action_uri_format
+  description: Verify that redacted action parameters specify a valid JUMBF URI starting with self#jumbf= (Spec 2.2 §18.14.4.7, §18.14.12 / Spec 2.4 §18.15.4.7, §18.15.12)
+  specSection: Spec 2.2 §18.14.4.7, §18.14.12, Spec 2.4 §18.15.4.7, §18.15.12
+  failIfMatched: true
+  expression: |
+    _actionsV2()[? action == "c2pa.redacted" && parameters.redacted != null] |
+      [? !startsWith(parameters.redacted, "self#jumbf=")].parameters.redacted
+  reportText:
+    'true':
+      en: All redacted action parameters specify valid JUMBF URI references (Spec 2.2 §18.14.4.7, §18.14.12 / Spec 2.4 §18.15.4.7, §18.15.12)
+    'false':
+      en: 'Found redacted actions with invalid URI references (must start with self#jumbf=): {{matches}} (Spec 2.2 §18.14.4.7, §18.14.12 / Spec 2.4 §18.15.4.7, §18.15.12)'
+
+- id: validation:ingredient_title_and_format_nonempty
+  description: Verify that ingredient assertion title and format properties are non-empty if present (Spec 2.2 §18.15.4, §18.15.5)
+  specSection: Spec 2.2 §18.15.4, §18.15.5
+  failIfMatched: true
+  expression: |
+    _ingredientAssertions()[?
+      (title != null && length(title) == 0) ||
+      (@.'dc:title' != null && length(@.'dc:title') == 0) ||
+      (format != null && length(format) == 0) ||
+      (@.'dc:format' != null && length(@.'dc:format') == 0)
+    ]
+  reportText:
+    'true':
+      en: All ingredient assertions specify non-empty title and format if present (Spec 2.2 §18.15.4, §18.15.5)
+    'false':
+      en: Found ingredient assertions with empty title or MIME format string (Spec 2.2 §18.15.4, §18.15.5)
+
+- id: validation:ingredient_v3_validation_results_has_active_manifest
+  description: Verify that ingredient v3 validationResults contain the mandatory activeManifest status object (Spec 2.2 §18.15.12.4.3 / Spec 2.4 §18.16.12.4.3)
+  specSection: Spec 2.2 §18.15.12.4.3, Spec 2.4 §18.16.12.4.3
+  failIfMatched: true
+  expression: |
+    _ingredientAssertions()[? validationResults != null && validationResults.activeManifest == null]
+  reportText:
+    'true':
+      en: All ingredient validationResults specify mandatory activeManifest status codes (Spec 2.2 §18.15.12.4.3 / Spec 2.4 §18.16.12.4.3)
+    'false':
+      en: Found ingredient validationResults missing mandatory activeManifest status codes (Spec 2.2 §18.15.12.4.3 / Spec 2.4 §18.16.12.4.3)
+
+- id: validation:box_hash_mandatory_fields
+  description: Verify that c2pa.hash.boxes assertions contain non-empty boxes array with names and hash (Spec 2.2 §18.7.1, §18.7.4 / Spec 2.4 §18.7.1, §18.7.4)
+  specSection: Spec 2.2 §18.7.1, §18.7.4, Spec 2.4 §18.7.1, §18.7.4
+  failIfMatched: true
+  expression: |
+    _assertionsByLabel("c2pa.hash.boxes") |
+      [? boxes == null || length(boxes) == 0 || length(boxes[? names == null || length(names) == 0 || hash == null || length(hash) == 0]) > 0]
+  reportText:
+    'true':
+      en: Box hash assertions contain valid non-empty boxes with names and hash (Spec 2.2 §18.7.1, §18.7.4 / Spec 2.4 §18.7.1, §18.7.4)
+    'false':
+      en: Found box hash assertion missing boxes array or entries missing names or hash (Spec 2.2 §18.7.1, §18.7.4 / Spec 2.4 §18.7.1, §18.7.4)
+
+- id: validation:bmff_hash_mandatory_exclusions
+  description: Verify that c2pa.hash.bmff.v3 assertions contain a non-empty exclusions array with xpath (Spec 2.2 §18.6.2 / Spec 2.4 §18.6.2)
+  specSection: Spec 2.2 §18.6.2, Spec 2.4 §18.6.2
+  failIfMatched: true
+  expression: |
+    _assertionsByLabel("c2pa.hash.bmff.v3") |
+      [? exclusions == null || length(exclusions) == 0 || length(exclusions[? xpath == null || length(xpath) == 0]) > 0]
+  reportText:
+    'true':
+      en: BMFF hash assertions contain valid non-empty exclusions with xpath (Spec 2.2 §18.6.2 / Spec 2.4 §18.6.2)
+    'false':
+      en: Found BMFF hash assertion missing exclusions array or entries missing xpath (Spec 2.2 §18.6.2 / Spec 2.4 §18.6.2)
+
+- id: validation:multi_asset_hash_parts_schema
+  description: Verify that c2pa.hash.multi-asset assertions contain valid parts specifying location and hashAssertion (Spec 2.2 §18.9.3 / Spec 2.4 §18.9.3)
+  specSection: Spec 2.2 §18.9.3, Spec 2.4 §18.9.3
+  failIfMatched: true
+  expression: |
+    _assertionsByLabel("c2pa.hash.multi-asset") |
+      [? parts == null || length(parts[? location == null || hashAssertion == null || hashAssertion.url == null || length(hashAssertion.url) == 0]) > 0]
+  reportText:
+    'true':
+      en: Multi-asset hash assertions specify valid parts with location and hashAssertion (Spec 2.2 §18.9.3 / Spec 2.4 §18.9.3)
+    'false':
+      en: Found multi-asset hash assertion with parts missing location or hashAssertion (Spec 2.2 §18.9.3 / Spec 2.4 §18.9.3)
+
+- id: validation:multi_asset_hash_parts_byte_offsets
+  description: Verify that byte-offset locators in multi-asset hash assertions specify valid non-negative byteOffset and positive length (Spec 2.2 §15.12.4 / Spec 2.4 §18.9.3)
+  specSection: Spec 2.2 §15.12.4, Spec 2.4 §18.9.3
+  failIfMatched: true
+  expression: |
+    _assertionsByLabel("c2pa.hash.multi-asset") |
+      [].parts[] |
+      [? location != null && location.byteOffset != null && (location.byteOffset < `0` || location.length <= `0`)]
+  reportText:
+    'true':
+      en: Multi-asset hash byte offset locators specify valid positive length and non-negative offsets (Spec 2.2 §15.12.4 / Spec 2.4 §18.9.3)
+    'false':
+      en: Found multi-asset hash parts with invalid byteOffset or length <= 0 (Spec 2.2 §15.12.4 / Spec 2.4 §18.9.3)
+
+- id: validation:multi_asset_hash_single_instance
+  description: Check that no more than one c2pa.hash.multi-asset assertion is present (mandatory since Spec 2.2)
+  failIfMatched: true
+  expression: |
+    length(_assertionKeys()[?startsWith(@, "c2pa.hash.multi-asset")]) > 1 && `["multiple c2pa.hash.multi-asset"]` || `[]`
+  reportText:
+    'true':
+      en: At most one multi-asset hash assertion is present (Spec 2.2 §18.9, §15.12.4)
+    'false':
+      en: Found multiple c2pa.hash.multi-asset assertions in manifest (Spec 2.2 §18.9, §15.12.4)
+  specSection: Spec 2.2 §18.9, §15.12.4
+
+- id: validation:soft_binding_blocks_mandatory
+  description: Verify that c2pa.soft-binding assertions specify a non-empty blocks array with scope and value (Spec 2.2 §18.10.2 / Spec 2.4 §18.10.2)
+  specSection: Spec 2.2 §18.10.2, Spec 2.4 §18.10.2
+  failIfMatched: true
+  expression: |
+    _assertionsByLabel("c2pa.soft-binding") |
+      [? blocks == null || length(blocks) == 0 || length(blocks[? value == null || length(value) == 0 || scope == null]) > 0]
+  reportText:
+    'true':
+      en: Soft binding assertions specify valid non-empty blocks array with scope and value (Spec 2.2 §18.10.2 / Spec 2.4 §18.10.2)
+    'false':
+      en: Found soft binding assertion missing blocks or containing blocks without scope or value (Spec 2.2 §18.10.2 / Spec 2.4 §18.10.2)
+
+- id: validation:soft_binding_timespan_schema
+  description: Verify that soft binding blocks with timespan specify valid non-negative start and end with end >= start (Spec 2.2 §18.10.2 / Spec 2.4 §18.10.2)
+  specSection: Spec 2.2 §18.10.2, Spec 2.4 §18.10.2
+  failIfMatched: true
+  expression: |
+    _assertionsByLabel("c2pa.soft-binding") |
+      [].blocks[].scope.timespan |
+      [? @ != null && (start == null || end == null || start < `0` || end < start)]
+  reportText:
+    'true':
+      en: All soft binding timespans specify valid start and end offsets with end >= start (Spec 2.2 §18.10.2 / Spec 2.4 §18.10.2)
+    'false':
+      en: Found soft binding blocks with invalid timespan start or end offsets (Spec 2.2 §18.10.2 / Spec 2.4 §18.10.2)
+
+- id: validation:soft_binding_no_deprecated_fields
+  description: Verify that c2pa.soft-binding assertions do not contain deprecated url or scope.extent fields (Spec 2.2 §18.10.1 / Spec 2.4 §18.10.1)
+  specSection: Spec 2.2 §18.10.1, Spec 2.4 §18.10.1
+  failIfMatched: true
+  expression: |
+    _assertionsByLabel("c2pa.soft-binding") |
+      [? url != null || length(blocks[? scope.extent != null]) > 0]
+  reportText:
+    'true':
+      en: No deprecated url or scope.extent fields found in soft-binding assertions (Spec 2.2 §18.10.1 / Spec 2.4 §18.10.1)
+    'false':
+      en: Found deprecated url or scope.extent fields in soft-binding assertions (Spec 2.2 §18.10.1 / Spec 2.4 §18.10.1)
+
+- id: validation:soft_binding_alg_mandatory
+  description: Check that c2pa.soft-binding assertions specify a valid alg property or inherit alg_soft from the claim (Spec 2.2 §18.10.2 / Spec 2.4 §18.10.2)
+  specSection: Spec 2.2 §18.10.2, Spec 2.4 §18.10.2
+  failIfMatched: true
+  expression: |
+    (_claimV2().alg_soft == null || length(_claimV2().alg_soft) == 0) &&
+      (_assertionsByLabel("c2pa.soft-binding") | [? alg == null || length(alg) == 0]) || `[]`
+  reportText:
+    'true':
+      en: All c2pa.soft-binding assertions specify a valid alg property or inherit alg_soft (Spec 2.2 §18.10.2 / Spec 2.4 §18.10.2)
+    'false':
+      en: Found c2pa.soft-binding assertions missing alg property and claim missing alg_soft (Spec 2.2 §18.10.2 / Spec 2.4 §18.10.2)
+
+- id: validation:watermarked_requires_soft_binding
+  description: Check that watermarked actions are accompanied by a c2pa.soft-binding assertion (mandatory since Spec 2.2)
+  failIfMatched: true
+  expression: |
+    _actionsV2()[? action == "c2pa.watermarked" || action == "c2pa.watermarked.bound"] &&
+      length(_assertionsByLabel("c2pa.soft-binding")) == 0 &&
+      `["c2pa.watermarked"]` || `[]`
+  reportText:
+    'true':
+      en: Watermarked actions are correctly accompanied by a soft-binding assertion (Spec 2.2 §18.14.5, Spec 2.4 §18.15.5, §15.10.3.2.3)
+    'false':
+      en: Found watermarked action without mandatory c2pa.soft-binding assertion (Spec 2.2 §18.14.5, Spec 2.4 §18.15.5, §15.10.3.2.3)
+  specSection: Spec 2.2 §18.14.5, Spec 2.4 §18.15.5, §15.10.3.2.3
+
+- id: validation:assertion_metadata_allowed_keys
+  description: Check that assertion metadata only contains standard Spec 2.2 fields (mandatory since Spec 2.2)
+  specSection: Spec 2.2 §18.3.1
+  failIfMatched: true
+  expression: |
+    [
+      _assertionsByLabel("c2pa.assertion.metadata"),
+      values(manifests[0].assertions || `{}`)[? metadata != null].metadata[]
+    ][] |
+      [].keys(@)[] |
+      [? !contains(`["reference", "dateTime", "reviewRatings", "dataSource", "localizations", "regionOfInterest"]`, @)]
+  reportText:
+    'true':
+      en: All keys in assertion metadata belong to the standard Spec 2.2 assertion-metadata-map (Spec 2.2 §18.3.1)
+    'false':
+      en: 'Found unallowed keys in assertion metadata: {{matches}} (Spec 2.2 §18.3.1)'
+
+- id: validation:assertion_metadata_datetime_format
+  description: Verify that dateTime in assertion metadata roughly conforms to RFC 3339 (Spec 2.2 §18.3.5 / Spec 2.4 §18.3.1)
+  specSection: Spec 2.2 §18.3.5, Spec 2.4 §18.3.1
+  failIfMatched: true
+  expression: |
+    (_assertionsByLabel("c2pa.assertion.metadata") | [? dateTime != null && !_isRfc3339DateTime(dateTime)].dateTime) ||
+      _assertionValues()[? metadata != null && metadata.dateTime != null && !_isRfc3339DateTime(metadata.dateTime)].metadata.dateTime
+  reportText:
+    'true':
+      en: Assertion metadata dateTime fields roughly conform to RFC 3339 (Spec 2.2 §18.3.5 / Spec 2.4 §18.3.1)
+    'false':
+      en: 'Found assertion metadata dateTime not conforming to RFC 3339: {{matches}} (Spec 2.2 §18.3.5 / Spec 2.4 §18.3.1)'
+
+- id: validation:review_ratings_value_range
+  description: Check that reviewRatings value is an integer between 1 and 5 (mandatory since Spec 2.2)
+  failIfMatched: true
+  expression: |
+    [
+      values(manifests[0].assertions || `{}`)[? reviewRatings != null].reviewRatings[],
+      values(manifests[0].assertions || `{}`)[? metadata != null].metadata.reviewRatings[]
+    ][] | [? @ != null && (value == null || value < 1 || value > 5)].value
+  reportText:
+    'true':
+      en: All reviewRatings values fall within valid range [1, 5] (Spec 2.2 §18.3.3)
+    'false':
+      en: 'Found reviewRatings value outside valid range [1, 5]: {{matches}} (Spec 2.2 §18.3.3)'
+  specSection: Spec 2.2 §18.3.3
+
+- id: validation:font_info_mandatory_fields
+  description: Verify that font.info assertions specify fullName, familyName, style, weight, postScriptName, format, and copyrightNotice (Spec 2.2 §18.22.2 / Spec 2.4 §18.23.2)
+  specSection: Spec 2.2 §18.22.2, Spec 2.4 §18.23.2
+  failIfMatched: true
+  expression: |
+    _assertionsByLabel("font.info") |
+      [? fullName == null || length(fullName) == 0 || familyName == null || length(familyName) == 0 || style == null || length(style) == 0 || weight == null || postScriptName == null || length(postScriptName) == 0 || format == null || length(format) == 0 || copyrightNotice == null || length(copyrightNotice) == 0]
+  reportText:
+    'true':
+      en: All font.info assertions specify mandatory fullName, familyName, style, weight, postScriptName, format, and copyrightNotice properties (Spec 2.2 §18.22.2 / Spec 2.4 §18.23.2)
+    'false':
+      en: Found font.info assertion missing mandatory font properties (Spec 2.2 §18.22.2 / Spec 2.4 §18.23.2)
+
+- id: validation:cloud_data_mandatory_fields
+  description: Check that c2pa.cloud-data assertions specify mandatory label, size, content_type, and location url, alg, and hash fields (mandatory since Spec 2.2)
+  failIfMatched: true
+  expression: |
+    _assertionsByLabel("c2pa.cloud-data") |
+      [? label == null || length(label) == 0 || size == null || size < 1 || content_type == null || length(content_type) == 0 || location == null || location.url == null || (!startsWith(location.url, "http://") && !startsWith(location.url, "https://")) || location.alg == null || length(location.alg) == 0 || location.hash == null || length(location.hash) == 0]
+  reportText:
+    'true':
+      en: All c2pa.cloud-data assertions specify valid label, size, content_type, and location url, alg, and hash fields (Spec 2.2 §18.11)
+    'false':
+      en: Found c2pa.cloud-data assertions missing mandatory label, size, content_type, or valid location url, alg, and hash fields (Spec 2.2 §18.11)
+  specSection: Spec 2.2 §18.11
+
+- id: validation:gdepth_mandatory_fields
+  description: Check that GDepth depthmap assertions contain mandatory fields (mandatory since Spec 2.2)
+  failIfMatched: true
+  expression: |
+    _assertionsByLabel("c2pa.depthmap.GDepth") |
+      [? @.'GDepth:Format' == null || length(@.'GDepth:Format') == 0 ||
+         @.'GDepth:Near' == null ||
+         @.'GDepth:Far' == null ||
+         @.'GDepth:Mime' == null || length(@.'GDepth:Mime') == 0 ||
+         @.'GDepth:Data' == null || length(@.'GDepth:Data') == 0]
+  reportText:
+    'true':
+      en: All GDepth depthmap assertions contain mandatory fields (Spec 2.2 §18.21.2)
+    'false':
+      en: Found GDepth depthmap assertion missing mandatory fields (Spec 2.2 §18.21.2)
+  specSection: Spec 2.2 §18.21.2
+
+- id: validation:certificate_status_mandatory_ocsp
+  description: Verify that c2pa.certificate-status assertions specify a non-empty ocspVals array (Spec 2.2 §18.18.2 / Spec 2.4 §18.19.2)
+  specSection: Spec 2.2 §18.18.2, Spec 2.4 §18.19.2
+  failIfMatched: true
+  expression: |
+    _assertionsByLabel("c2pa.certificate-status") |
+      [? ocspVals == null || length(ocspVals) == 0]
+  reportText:
+    'true':
+      en: Certificate status assertions contain a valid non-empty ocspVals array (Spec 2.2 §18.18.2 / Spec 2.4 §18.19.2)
+    'false':
+      en: Found certificate status assertion missing ocspVals or ocspVals array is empty (Spec 2.2 §18.18.2 / Spec 2.4 §18.19.2)
+
+- id: validation:timestamp_mandatory_tokens
+  description: Verify that c2pa.time-stamp assertions map manifest URNs (urn:c2pa:...) to non-empty time-stamp tokens (Spec 2.2 §18.17.2 / Spec 2.4 §18.18.2)
+  specSection: Spec 2.2 §18.17.2, Spec 2.4 §18.18.2
+  failIfMatched: true
+  expression: |
+    _assertionsByLabel("c2pa.time-stamp") |
+      [? length(keys(@)) == 0 ||
+         length(entries(@)[? !startsWith(@[0], "urn:c2pa:") || type(@[1]) != "string" || length(@[1]) == 0]) > 0]
+  reportText:
+    'true':
+      en: Time-stamp assertions specify a valid non-empty map of manifest URNs to time-stamp tokens (Spec 2.2 §18.17.2 / Spec 2.4 §18.18.2)
+    'false':
+      en: Found time-stamp assertion with empty map or invalid URN/token entries (Spec 2.2 §18.17.2 / Spec 2.4 §18.18.2)
+
+- id: validation:c2pa_metadata_fields_allowlist
+  description: Verify that all c2pa.metadata fields belong to allowed metadata schemas (Spec 2.2 §18.16, Appendix B)
+  failIfMatched: true
+  expression: |
+    (_assertionsByLabel("c2pa.metadata") | [].keys(@)[])[?
+      @ != "@context" &&
+      !contains($allowed_c2pa_metadata_fields, @)
+    ]
+  reportText:
+    'true':
+      en: All c2pa.metadata fields belong to allowed metadata schemas (Spec 2.2 §18.16, Appendix B)
+    'false':
+      en: 'Found c2pa.metadata assertion containing unallowed metadata schema fields: {{matches}} (Spec 2.2 §18.16, Appendix B)'
+  specSection: Spec 2.2 §18.16, Appendix B
+
+- id: validation:roi_mandatory_fields_and_type
+  description: Verify that all regions of interest specify valid range types (mandatory since Spec 2.2)
+  specSection: Spec 2.2 §18.2.2, §18.2.3
+  failIfMatched: true
+  expression: |
+    [
+      _assertionValues()[? region != null].region[],
+      _assertionValues()[? regions != null].regions[],
+      _assertionValues()[? regionOfInterest != null].regionOfInterest.region[],
+      _assertionValues()[? regionOfInterest != null].regionOfInterest[].region[],
+      _assertionValues()[? metadata != null].metadata.regionOfInterest.region[]
+    ][] | [? @ != null && (type == null || !contains(`["spatial", "temporal", "textual", "frame", "identified"]`, type))]
+  reportText:
+    'true':
+      en: All region of interest range objects specify a valid type (Spec 2.2 §18.2.2, §18.2.3)
+    'false':
+      en: Found region of interest range objects with invalid or missing type (Spec 2.2 §18.2.2, §18.2.3)
+
+- id: validation:thumbnail_format_mime_type
+  description: Verify that thumbnail assertions specify an allowed image MIME type (Spec 2.2 §18.13.1)
+  failIfMatched: true
+  expression: |
+    map(entries(manifests[0].assertions || `{}`)[? startsWith(@[0], "c2pa.thumbnail.")], &[1])[?
+      mimeType == null || !contains(`["image/jpeg", "image/png", "image/webp", "image/avif", "image/svg+xml"]`, mimeType)
+    ]
+  reportText:
+    'true':
+      en: All thumbnail assertions specify an allowed image MIME type (Spec 2.2 §18.13.1)
+    'false':
+      en: 'Found thumbnail assertion with unsupported format MIME type: {{matches}} (Spec 2.2 §18.13.1)'
+  specSection: Spec 2.2 §18.13.1
+
+- id: validation:asset_reference_mandatory_fields
+  description: Verify that c2pa.asset-ref assertions specify non-empty references with valid uri (mandatory since Spec 2.2)
+  specSection: Spec 2.2 §18.19.2
+  failIfMatched: true
+  expression: |
+    _assertionsByLabel("c2pa.asset-ref") |
+      [? references == null || length(references) == 0 ||
+         length(references[? reference == null || reference.uri == null || length(reference.uri) == 0]) > 0]
+  reportText:
+    'true':
+      en: All asset reference assertions specify valid reference URIs (Spec 2.2 §18.19.2)
+    'false':
+      en: Found asset reference assertions missing references or reference URI (Spec 2.2 §18.19.2)

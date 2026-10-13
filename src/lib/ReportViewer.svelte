@@ -565,7 +565,7 @@ import type {
         {/if}
       </div>
       <div class="flex-1">
-        <h3 class="text-xl font-semibold {isTrusted ? 'text-green-900 dark:text-green-300' : 'text-red-900 dark:text-red-300'} mb-1">
+        <h2 class="text-xl font-semibold {isTrusted ? 'text-green-900 dark:text-green-300' : 'text-red-900 dark:text-red-300'} mb-1">
           {#if isTrusted}
             {#if usedITL}
               Signature Trusted via ITL
@@ -583,7 +583,7 @@ import type {
               Signature Not Trusted
             {/if}
           {/if}
-        </h3>
+        </h2>
         <div class="text-sm {isTrusted ? 'text-green-700 dark:text-gray-300' : 'text-red-700 dark:text-gray-300'}">
           {#if usedITL && isTrusted}
             Validated using Interim Trust List{#if isFullChainOcspVerified}{' '}and verified active (not revoked) via Full-Chain OCSP{:else if isOcspVerified}{' '}and verified active (not revoked) via OCSP{/if}
@@ -607,7 +607,9 @@ import type {
               <div class="mt-2 space-y-1 text-xs font-mono bg-red-50/50 dark:bg-gray-900/50 p-4 rounded-lg border border-red-100 dark:border-gray-700 w-full">
                 {#each failures as failure}
                   <div class="flex items-start gap-2">
-                    <span class="text-red-500 mt-1">✕</span>
+                    <svg aria-hidden="true" class="w-3 h-3 text-red-700 dark:text-red-300 mt-1" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M2 2l8 8M10 2l-8 8" />
+                    </svg>
                     <div class="flex-1 text-left">
                       <span class="font-bold">{failure.code}:</span>
                       <span class="text-gray-700 dark:text-gray-300">{getFailureDescription(failure.code, failure.explanation)}</span>
@@ -654,24 +656,27 @@ import type {
   <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-6 gap-4">
     <div>
       <h2 class="text-xl font-semibold text-[#1e293b] dark:text-white">{heading.title}</h2>
-      <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">{heading.subtitle}</p>
+      <p class="text-sm text-gray-600 dark:text-gray-300 mt-1">{heading.subtitle}</p>
     </div>
-    <div class="flex flex-wrap items-center gap-2">
+    <div class="flex flex-wrap items-center gap-2" role="group" aria-label="Report sections">
       <button
         class="btn-outline-gray {activeTab === 'summary' ? 'is-selected' : ''}"
         on:click={() => activeTab = 'summary'}
+        aria-pressed={activeTab === 'summary'}
       >
         Summary
       </button>
       <button
         class="btn-outline-gray {activeTab === 'report' ? 'is-selected' : ''}"
         on:click={() => activeTab = 'report'}
+        aria-pressed={activeTab === 'report'}
       >
         Report
       </button>
       <button
         class="btn-outline-gray {activeTab === 'crjson' ? 'is-selected' : ''}"
         on:click={() => activeTab = 'crjson'}
+        aria-pressed={activeTab === 'crjson'}
       >
         crJSON
       </button>
@@ -679,6 +684,7 @@ import type {
         class="btn-outline-gray {activeTab === 'rubrics' ? 'is-selected' : ''}"
         on:click={() => activeTab = 'rubrics'}
         title="Evaluate this manifest against selectable rubrics"
+        aria-pressed={activeTab === 'rubrics'}
       >
         Rubrics
       </button>

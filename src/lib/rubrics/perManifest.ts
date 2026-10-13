@@ -112,6 +112,7 @@ export function evaluatePerManifest(
       additionalSignalsInGathered: false,
       ingredients: [],
       pseudo: true,
+      ingredientKey: info.ingredientKey,
     }
   })
 
@@ -206,6 +207,7 @@ interface PseudoManifestInfo {
   mimeType: string | null
   parentManifestIdx: number
   relationship: string | undefined
+  ingredientKey: string
 }
 
 /**
@@ -234,9 +236,9 @@ function buildPseudoManifests(manifests: CrJsonManifestEntry[]): PseudoManifestI
       if (!rawValue || typeof rawValue !== 'object') continue
       const value = rawValue as Record<string, unknown>
 
-      // Only flat ingredients (no activeManifest url).
+      // Only flat ingredients (no activeManifest url or legacy v2 active_manifest string).
       const manifestRef = (value.c2pa_manifest ?? value.activeManifest ?? {}) as Record<string, unknown>
-      if (typeof manifestRef.url === 'string') continue
+      if (typeof manifestRef.url === 'string' || typeof value.active_manifest === 'string') continue
 
       const relationship = typeof value.relationship === 'string' ? value.relationship : undefined
 
@@ -280,6 +282,7 @@ function buildPseudoManifests(manifests: CrJsonManifestEntry[]): PseudoManifestI
         mimeType: typeof value['dc:format'] === 'string' ? value['dc:format'] : null,
         parentManifestIdx: parentIdx,
         relationship,
+        ingredientKey: key,
       })
       pseudoCounter++
     }
@@ -337,7 +340,12 @@ function extractIngredients(
     const value = rawValue as Record<string, unknown>
 
     const manifestRef = (value.c2pa_manifest ?? value.activeManifest ?? {}) as Record<string, unknown>
-    const url = typeof manifestRef.url === 'string' ? manifestRef.url : undefined
+    const url =
+      typeof manifestRef.url === 'string'
+        ? manifestRef.url
+        : typeof value.active_manifest === 'string'
+          ? value.active_manifest
+          : undefined
     const relationship = typeof value.relationship === 'string' ? value.relationship : undefined
 
     if (!url) continue

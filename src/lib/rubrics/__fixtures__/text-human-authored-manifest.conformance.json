@@ -1,17 +1,107 @@
 {
   "rubricName": "C2PA Asset Conformance 0.1 Spec 2.2 Rubric",
-  "rubricVersion": "1.0",
+  "rubricVersion": "1.1",
   "true": {
     "validation": [
+      {
+        "trait": "action_digital_source_type_valid",
+        "reportText": "All action digitalSourceType values are valid canonical URIs (Spec 2.2 §18.14.4.5 / Spec 2.4 §18.15.4.5)",
+        "report_text": "All action digitalSourceType values are valid canonical URIs (Spec 2.2 §18.14.4.5 / Spec 2.4 §18.15.4.5)"
+      },
+      {
+        "trait": "action_software_agent_mutual_exclusion",
+        "reportText": "Action items correctly maintain mutual exclusion between softwareAgent and softwareAgentIndex (Spec 2.2 §18.14.4.4 / Spec 2.4 §18.15.4.4)",
+        "report_text": "Action items correctly maintain mutual exclusion between softwareAgent and softwareAgentIndex (Spec 2.2 §18.14.4.4 / Spec 2.4 §18.15.4.4)"
+      },
+      {
+        "trait": "action_when_iso8601_format",
+        "reportText": "All action when timestamps conform to ISO 8601 / RFC 3339 date-time format (Spec 2.2 §18.14.4.3)",
+        "report_text": "All action when timestamps conform to ISO 8601 / RFC 3339 date-time format (Spec 2.2 §18.14.4.3)"
+      },
+      {
+        "trait": "actions_software_agent_mandatory_name",
+        "reportText": "All software agents in actions assertion contain mandatory non-empty name (Spec 2.2 §18.14.6.2 / Spec 2.4 §18.15.6.2)",
+        "report_text": "All software agents in actions assertion contain mandatory non-empty name (Spec 2.2 §18.14.6.2 / Spec 2.4 §18.15.6.2)"
+      },
+      {
+        "trait": "actions_v2_actions_non_empty",
+        "reportText": "Actions assertion contains a valid non-empty actions array (Spec 2.2 §18.14.12 / Spec 2.4 §18.15.12)",
+        "report_text": "Actions assertion contains a valid non-empty actions array (Spec 2.2 §18.14.12 / Spec 2.4 §18.15.12)"
+      },
+      {
+        "trait": "actions_v2_mandatory_fields",
+        "reportText": "All actions.v2 items satisfy mandatory field requirements (Spec 2.2 §18.14.4.1)",
+        "report_text": "All actions.v2 items satisfy mandatory field requirements (Spec 2.2 §18.14.4.1)"
+      },
+      {
+        "trait": "assertion_metadata_allowed_keys",
+        "reportText": "All keys in assertion metadata belong to the standard Spec 2.2 assertion-metadata-map (Spec 2.2 §18.3.1)",
+        "report_text": "All keys in assertion metadata belong to the standard Spec 2.2 assertion-metadata-map (Spec 2.2 §18.3.1)"
+      },
+      {
+        "trait": "assertion_metadata_datetime_format",
+        "reportText": "Assertion metadata dateTime fields roughly conform to RFC 3339 (Spec 2.2 §18.3.5 / Spec 2.4 §18.3.1)",
+        "report_text": "Assertion metadata dateTime fields roughly conform to RFC 3339 (Spec 2.2 §18.3.5 / Spec 2.4 §18.3.1)"
+      },
+      {
+        "trait": "asset_reference_mandatory_fields",
+        "reportText": "All asset reference assertions specify valid reference URIs (Spec 2.2 §18.19.2)",
+        "report_text": "All asset reference assertions specify valid reference URIs (Spec 2.2 §18.19.2)"
+      },
+      {
+        "trait": "bmff_hash_mandatory_exclusions",
+        "reportText": "BMFF hash assertions contain valid non-empty exclusions with xpath (Spec 2.2 §18.6.2 / Spec 2.4 §18.6.2)",
+        "report_text": "BMFF hash assertions contain valid non-empty exclusions with xpath (Spec 2.2 §18.6.2 / Spec 2.4 §18.6.2)"
+      },
+      {
+        "trait": "box_hash_mandatory_fields",
+        "reportText": "Box hash assertions contain valid non-empty boxes with names and hash (Spec 2.2 §18.7.1, §18.7.4 / Spec 2.4 §18.7.1, §18.7.4)",
+        "report_text": "Box hash assertions contain valid non-empty boxes with names and hash (Spec 2.2 §18.7.1, §18.7.4 / Spec 2.4 §18.7.1, §18.7.4)"
+      },
+      {
+        "trait": "c2pa_metadata_fields_allowlist",
+        "reportText": "All c2pa.metadata fields belong to allowed metadata schemas (Spec 2.2 §18.16, Appendix B)",
+        "report_text": "All c2pa.metadata fields belong to allowed metadata schemas (Spec 2.2 §18.16, Appendix B)"
+      },
+      {
+        "trait": "certificate_status_mandatory_ocsp",
+        "reportText": "Certificate status assertions contain a valid non-empty ocspVals array (Spec 2.2 §18.18.2 / Spec 2.4 §18.19.2)",
+        "report_text": "Certificate status assertions contain a valid non-empty ocspVals array (Spec 2.2 §18.18.2 / Spec 2.4 §18.19.2)"
+      },
+      {
+        "trait": "claim_generator_info_mandatory_name",
+        "reportText": "All claim_generator_info entries in the active manifest specify a valid name (Spec 2.2 §10.2.1 / Spec 2.4 §10.2.3.2)",
+        "report_text": "All claim_generator_info entries in the active manifest specify a valid name (Spec 2.2 §10.2.1 / Spec 2.4 §10.2.3.2)"
+      },
+      {
+        "trait": "cloud_data_mandatory_fields",
+        "reportText": "All c2pa.cloud-data assertions specify valid label, size, content_type, and location url, alg, and hash fields (Spec 2.2 §18.11)",
+        "report_text": "All c2pa.cloud-data assertions specify valid label, size, content_type, and location url, alg, and hash fields (Spec 2.2 §18.11)"
+      },
       {
         "trait": "discouraged_legacy_action_parameters",
         "reportText": "No discouraged legacy action parameters found in parameters block (Spec 2.2 §18.14.4.1, §18.14.12)",
         "report_text": "No discouraged legacy action parameters found in parameters block (Spec 2.2 §18.14.4.1, §18.14.12)"
       },
       {
+        "trait": "font_info_mandatory_fields",
+        "reportText": "All font.info assertions specify mandatory fullName, familyName, style, weight, postScriptName, format, and copyrightNotice properties (Spec 2.2 §18.22.2 / Spec 2.4 §18.23.2)",
+        "report_text": "All font.info assertions specify mandatory fullName, familyName, style, weight, postScriptName, format, and copyrightNotice properties (Spec 2.2 §18.22.2 / Spec 2.4 §18.23.2)"
+      },
+      {
+        "trait": "gdepth_mandatory_fields",
+        "reportText": "All GDepth depthmap assertions contain mandatory fields (Spec 2.2 §18.21.2)",
+        "report_text": "All GDepth depthmap assertions contain mandatory fields (Spec 2.2 §18.21.2)"
+      },
+      {
         "trait": "ingredient_relationship_values",
         "reportText": "All ingredient assertions have valid relationship values (Spec 2.2 §18.15.3)",
         "report_text": "All ingredient assertions have valid relationship values (Spec 2.2 §18.15.3)"
+      },
+      {
+        "trait": "ingredient_title_and_format_nonempty",
+        "reportText": "All ingredient assertions specify non-empty title and format if present (Spec 2.2 §18.15.4, §18.15.5)",
+        "report_text": "All ingredient assertions specify non-empty title and format if present (Spec 2.2 §18.15.4, §18.15.5)"
       },
       {
         "trait": "ingredient_v3_mandatory_validation_results",
@@ -24,6 +114,11 @@
         "report_text": "Ingredient v3 assertions without activeManifest correctly omit validationResults (Spec 2.2 §18.15.12.4.3)"
       },
       {
+        "trait": "ingredient_v3_validation_results_has_active_manifest",
+        "reportText": "All ingredient validationResults specify mandatory activeManifest status codes (Spec 2.2 §18.15.12.4.3 / Spec 2.4 §18.16.12.4.3)",
+        "report_text": "All ingredient validationResults specify mandatory activeManifest status codes (Spec 2.2 §18.15.12.4.3 / Spec 2.4 §18.16.12.4.3)"
+      },
+      {
         "trait": "mandatory_dst_for_created_action",
         "reportText": "All c2pa.created actions have a digitalSourceType (Spec 2.2 §18.14.2, §18.14.4.5)",
         "report_text": "All c2pa.created actions have a digitalSourceType (Spec 2.2 §18.14.2, §18.14.4.5)"
@@ -32,6 +127,21 @@
         "trait": "mandatory_dst_for_perceptible_transformations",
         "reportText": "Every predefined C2PA perceptible transformation action has a digitalSourceType",
         "report_text": "Every predefined C2PA perceptible transformation action has a digitalSourceType"
+      },
+      {
+        "trait": "multi_asset_hash_parts_byte_offsets",
+        "reportText": "Multi-asset hash byte offset locators specify valid positive length and non-negative offsets (Spec 2.2 §15.12.4 / Spec 2.4 §18.9.3)",
+        "report_text": "Multi-asset hash byte offset locators specify valid positive length and non-negative offsets (Spec 2.2 §15.12.4 / Spec 2.4 §18.9.3)"
+      },
+      {
+        "trait": "multi_asset_hash_parts_schema",
+        "reportText": "Multi-asset hash assertions specify valid parts with location and hashAssertion (Spec 2.2 §18.9.3 / Spec 2.4 §18.9.3)",
+        "report_text": "Multi-asset hash assertions specify valid parts with location and hashAssertion (Spec 2.2 §18.9.3 / Spec 2.4 §18.9.3)"
+      },
+      {
+        "trait": "multi_asset_hash_single_instance",
+        "reportText": "At most one multi-asset hash assertion is present (Spec 2.2 §18.9, §15.12.4)",
+        "report_text": "At most one multi-asset hash assertion is present (Spec 2.2 §18.9, §15.12.4)"
       },
       {
         "trait": "no_deprecated_actions",
@@ -45,18 +155,18 @@
       },
       {
         "trait": "no_unrecognized_custom_action_parameters",
-        "reportText": "All custom action parameters conform to entity-specific namespacing (contain a dot '.') (Spec 2.2 §18.14.4.7)",
-        "report_text": "All custom action parameters conform to entity-specific namespacing (contain a dot '.') (Spec 2.2 §18.14.4.7)"
+        "reportText": "All custom action parameters conform to entity-specific reverse-DNS namespacing (Spec 2.2 §18.14.4.7, §6.2.1)",
+        "report_text": "All custom action parameters conform to entity-specific reverse-DNS namespacing (Spec 2.2 §18.14.4.7, §6.2.1)"
       },
       {
         "trait": "no_unrecognized_custom_actions",
-        "reportText": "All custom actions conform to entity-specific namespacing (contain a dot '.') (Spec 2.2 §18.14, §18.14.12)",
-        "report_text": "All custom actions conform to entity-specific namespacing (contain a dot '.') (Spec 2.2 §18.14, §18.14.12)"
+        "reportText": "All custom actions conform to entity-specific reverse-DNS namespacing (Spec 2.2 §18.14, §18.14.12, §6.2.1)",
+        "report_text": "All custom actions conform to entity-specific reverse-DNS namespacing (Spec 2.2 §18.14, §18.14.12, §6.2.1)"
       },
       {
         "trait": "no_unrecognized_custom_assertions",
-        "reportText": "All custom assertions conform to entity-specific namespacing (contain a dot '.') (Spec 2.2 §6.2.2)",
-        "report_text": "All custom assertions conform to entity-specific namespacing (contain a dot '.') (Spec 2.2 §6.2.2)"
+        "reportText": "All custom assertions conform to entity-specific reverse-DNS namespacing (Spec 2.2 §6.2.2, §18.16.2 / Spec 2.4 §6.2.2, §18.17.2)",
+        "report_text": "All custom assertions conform to entity-specific reverse-DNS namespacing (Spec 2.2 §6.2.2, §18.16.2 / Spec 2.4 §6.2.2, §18.17.2)"
       },
       {
         "trait": "no_unsupported_actions",
@@ -69,9 +179,74 @@
         "report_text": "All standard assertions are supported for this spec version (Spec 2.2 §6.2, §6.2.2, §6.3)"
       },
       {
+        "trait": "placed_ingredient_componentof",
+        "reportText": "All c2pa.placed actions correctly reference ingredients with componentOf relationship (Spec 2.2 §15.10.3.2.2 / Spec 2.4 §15.10.3.2.3)",
+        "report_text": "All c2pa.placed actions correctly reference ingredients with componentOf relationship (Spec 2.2 §15.10.3.2.2 / Spec 2.4 §15.10.3.2.3)"
+      },
+      {
+        "trait": "redacted_action_uri_format",
+        "reportText": "All redacted action parameters specify valid JUMBF URI references (Spec 2.2 §18.14.4.7, §18.14.12 / Spec 2.4 §18.15.4.7, §18.15.12)",
+        "report_text": "All redacted action parameters specify valid JUMBF URI references (Spec 2.2 §18.14.4.7, §18.14.12 / Spec 2.4 §18.15.4.7, §18.15.12)"
+      },
+      {
         "trait": "review_ratings_datasource",
         "reportText": "No invalid co-occurrence of reviewRatings and human entry dataSource (Spec 2.2 §18.3.3)",
         "report_text": "No invalid co-occurrence of reviewRatings and human entry dataSource (Spec 2.2 §18.3.3)"
+      },
+      {
+        "trait": "review_ratings_value_range",
+        "reportText": "All reviewRatings values fall within valid range [1, 5] (Spec 2.2 §18.3.3)",
+        "report_text": "All reviewRatings values fall within valid range [1, 5] (Spec 2.2 §18.3.3)"
+      },
+      {
+        "trait": "roi_mandatory_fields_and_type",
+        "reportText": "All region of interest range objects specify a valid type (Spec 2.2 §18.2.2, §18.2.3)",
+        "report_text": "All region of interest range objects specify a valid type (Spec 2.2 §18.2.2, §18.2.3)"
+      },
+      {
+        "trait": "single_created_or_opened_action",
+        "reportText": "Manifest contains at most one c2pa.created or c2pa.opened action (Spec 2.2 §18.14.3 / Spec 2.4 §18.15.3)",
+        "report_text": "Manifest contains at most one c2pa.created or c2pa.opened action (Spec 2.2 §18.14.3 / Spec 2.4 §18.15.3)"
+      },
+      {
+        "trait": "soft_binding_alg_mandatory",
+        "reportText": "All c2pa.soft-binding assertions specify a valid alg property or inherit alg_soft (Spec 2.2 §18.10.2 / Spec 2.4 §18.10.2)",
+        "report_text": "All c2pa.soft-binding assertions specify a valid alg property or inherit alg_soft (Spec 2.2 §18.10.2 / Spec 2.4 §18.10.2)"
+      },
+      {
+        "trait": "soft_binding_blocks_mandatory",
+        "reportText": "Soft binding assertions specify valid non-empty blocks array with scope and value (Spec 2.2 §18.10.2 / Spec 2.4 §18.10.2)",
+        "report_text": "Soft binding assertions specify valid non-empty blocks array with scope and value (Spec 2.2 §18.10.2 / Spec 2.4 §18.10.2)"
+      },
+      {
+        "trait": "soft_binding_no_deprecated_fields",
+        "reportText": "No deprecated url or scope.extent fields found in soft-binding assertions (Spec 2.2 §18.10.1 / Spec 2.4 §18.10.1)",
+        "report_text": "No deprecated url or scope.extent fields found in soft-binding assertions (Spec 2.2 §18.10.1 / Spec 2.4 §18.10.1)"
+      },
+      {
+        "trait": "soft_binding_timespan_schema",
+        "reportText": "All soft binding timespans specify valid start and end offsets with end >= start (Spec 2.2 §18.10.2 / Spec 2.4 §18.10.2)",
+        "report_text": "All soft binding timespans specify valid start and end offsets with end >= start (Spec 2.2 §18.10.2 / Spec 2.4 §18.10.2)"
+      },
+      {
+        "trait": "thumbnail_format_mime_type",
+        "reportText": "All thumbnail assertions specify an allowed image MIME type (Spec 2.2 §18.13.1)",
+        "report_text": "All thumbnail assertions specify an allowed image MIME type (Spec 2.2 §18.13.1)"
+      },
+      {
+        "trait": "timestamp_mandatory_tokens",
+        "reportText": "Time-stamp assertions specify a valid non-empty map of manifest URNs to time-stamp tokens (Spec 2.2 §18.17.2 / Spec 2.4 §18.18.2)",
+        "report_text": "Time-stamp assertions specify a valid non-empty map of manifest URNs to time-stamp tokens (Spec 2.2 §18.17.2 / Spec 2.4 §18.18.2)"
+      },
+      {
+        "trait": "update_manifest_no_hard_binding",
+        "reportText": "Update manifest correctly omits hard-binding hash assertions (Spec 2.2 §9.2 / Spec 2.4 §9.2)",
+        "report_text": "Update manifest correctly omits hard-binding hash assertions (Spec 2.2 §9.2 / Spec 2.4 §9.2)"
+      },
+      {
+        "trait": "watermarked_requires_soft_binding",
+        "reportText": "Watermarked actions are correctly accompanied by a soft-binding assertion (Spec 2.2 §18.14.5, Spec 2.4 §18.15.5, §15.10.3.2.3)",
+        "report_text": "Watermarked actions are correctly accompanied by a soft-binding assertion (Spec 2.2 §18.14.5, Spec 2.4 §18.15.5, §15.10.3.2.3)"
       }
     ]
   },
@@ -83,9 +258,14 @@
         "report_text": "Active manifest URN uses old 'urn:uuid' prefix (pre-v2.2) (Spec 2.2 §8.1, §10.2.1)"
       },
       {
+        "trait": "claim_created_assertions_mandatory",
+        "reportText": "Claim is missing mandatory created_assertions or the array is empty (Spec 2.2 §10.2.1 / Spec 2.4 §10.2.1)",
+        "report_text": "Claim is missing mandatory created_assertions or the array is empty (Spec 2.2 §10.2.1 / Spec 2.4 §10.2.1)"
+      },
+      {
         "trait": "inception_action_position",
-        "reportText": "Inception action is not in the first actions assertion of created_assertions (or first item is not an actions assertion) (Spec 2.2 §18.14.2)",
-        "report_text": "Inception action is not in the first actions assertion of created_assertions (or first item is not an actions assertion) (Spec 2.2 §18.14.2)"
+        "reportText": "Mandatory c2pa.actions.v2 assertion is missing from created_assertions or its first item is not an inception/opened action (Spec 2.2 §10.2.1, §18.14.2 / Spec 2.4 §10.2.1, §18.15.2)",
+        "report_text": "Mandatory c2pa.actions.v2 assertion is missing from created_assertions or its first item is not an inception/opened action (Spec 2.2 §10.2.1, §18.14.2 / Spec 2.4 §10.2.1, §18.15.2)"
       },
       {
         "trait": "valid_data_present",

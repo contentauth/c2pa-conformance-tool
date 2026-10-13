@@ -4,6 +4,7 @@ import {
   processRemoteManifest, revalidateRemoteManifest,
   _setLocalModuleForTesting, _fetchSoftBindingAlgorithmsForTesting, _resetSoftBindingCacheForTesting,
 } from './c2pa'
+import { ASSET_ACCEPT, TEXT_ACCEPT, isMidiFile, isMidiMimeType, isTextFile } from './fileTypes'
 import type { ConformanceReport } from './types'
 
 // ── Shared crJSON factory ─────────────────────────────────────────────────────
@@ -143,6 +144,80 @@ describe('c2pa utilities', () => {
       const f = new File([new Uint8Array([0])], 'photo.jpg', { type: 'image/jpeg' })
       expect(isSidecarFile(f)).toBe(false)
       expect(resolveMimeType(f)).toBe('image/jpeg')
+    })
+
+    it('falls back to the extension when the browser reports no specific MIME', () => {
+      const empty = new File([new Uint8Array([0])], 'scan.ARW', { type: '' })
+      expect(resolveMimeType(empty)).toBe('image/x-sony-arw')
+      const octet = new File([new Uint8Array([0])], 'asset.heics', { type: 'application/octet-stream' })
+      expect(resolveMimeType(octet)).toBe('heics')
+      const noExt = new File([new Uint8Array([0])], 'blob', { type: 'application/octet-stream' })
+      expect(resolveMimeType(noExt)).toBe('application/octet-stream')
+    })
+  })
+
+  // ── Text formats ────────────────────────────────────────────────────────────
+
+  describe('text formats', () => {
+    const file = (name: string, type: string) => new File(['hello'], name, { type })
+
+    it('maps text extensions to the format c2pa-rs registers, over the browser MIME', () => {
+      expect(resolveMimeType(file('notes.txt', 'text/plain'))).toBe('text/plain')
+      expect(resolveMimeType(file('README.md', ''))).toBe('text/markdown')
+      expect(resolveMimeType(file('config.yaml', 'application/x-yaml'))).toBe('application/yaml')
+      expect(resolveMimeType(file('Cargo.toml', ''))).toBe('application/toml')
+      expect(resolveMimeType(file('setup.ini', 'application/octet-stream'))).toBe('ini')
+      expect(resolveMimeType(file('app.js', 'application/x-javascript'))).toBe('text/javascript')
+      expect(resolveMimeType(file('script.py', 'text/x-python-script'))).toBe('text/x-python')
+      expect(resolveMimeType(file('Notes.MD', 'text/markdown'))).toBe('text/markdown')
+    })
+
+    it('recognises text files by extension only', () => {
+      expect(isTextFile(file('notes.TXT', ''))).toBe(true)
+      expect(isTextFile(file('feed.atom', ''))).toBe(true)
+      expect(isTextFile(file('photo.jpg', 'image/jpeg'))).toBe(false)
+      expect(isTextFile(file('manifest.c2pa', ''))).toBe(false)
+      expect(isTextFile(file('txt', 'text/plain'))).toBe(false)
+    })
+
+    it('offers every text extension in the asset picker', () => {
+      for (const ext of ['.txt', '.md', '.yaml', '.toml', '.ini', '.py', '.vtt']) {
+        expect(ASSET_ACCEPT.split(',')).toContain(ext)
+      }
+      expect(TEXT_ACCEPT.split(',').every(e => ASSET_ACCEPT.split(',').includes(e))).toBe(true)
+    })
+  })
+
+  // ── MIDI ────────────────────────────────────────────────────────────────────
+
+  describe('MIDI', () => {
+    const file = (name: string, type = '') => new File(['MThd'], name, { type })
+    const unsupported = () => Promise.reject('Failed to read C2PA data: type is unsupported')
+
+    it('maps MIDI extensions to audio/midi, over the browser MIME', () => {
+      expect(resolveMimeType(file('song.mid'))).toBe('audio/midi')
+      expect(resolveMimeType(file('song.MIDI', 'audio/mid'))).toBe('audio/midi')
+    })
+
+    it('recognises MIDI by extension or MIME type and offers it in the asset picker', () => {
+      expect(isMidiFile(file('song.mid'))).toBe(true)
+      expect(isMidiFile(file('song', 'audio/x-midi'))).toBe(true)
+      expect(isMidiFile(file('song.mp3', 'audio/mpeg'))).toBe(false)
+      expect(isMidiMimeType('audio/mid')).toBe(true)
+      expect(isMidiMimeType('audio/wav')).toBe(false)
+      expect(ASSET_ACCEPT.split(',')).toEqual(expect.arrayContaining(['.mid', '.midi']))
+    })
+
+    it('explains that MIDI needs the c2pa-rs MIDI handler when the build lacks it', async () => {
+      _setLocalModuleForTesting(makeLocalModule({ readManifestStore: unsupported }))
+      await expect(processFile(file('song.mid', 'audio/midi')))
+        .rejects.toThrow(/MIDI files \(audio\/midi\) are not supported yet.*contentauth\/c2pa-rs#2733/)
+    })
+
+    it('keeps the general unsupported-format message for other types', async () => {
+      _setLocalModuleForTesting(makeLocalModule({ readManifestStore: unsupported }))
+      await expect(processFile(file('clip.xyz', 'application/x-unknown')))
+        .rejects.toThrow(/^Unsupported file format \(application\/x-unknown\)/)
     })
   })
 

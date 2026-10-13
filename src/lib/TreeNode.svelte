@@ -62,8 +62,11 @@
     return r.replace(/([A-Z])/g, ' $1').replace(/^./, s => s.toUpperCase()).trim()
   }
 
+  // Stubs can still carry signals overlaid from a flat ingredient's pseudo-manifest.
+  $: stubSignals = [...node.inceptions, ...node.transformations].join(', ')
+
   $: cardAccessibleLabel = node.isStub
-    ? `${node.signer ?? 'Unknown source file'}. No Content Credentials.`
+    ? `${node.signer ?? 'Unknown source file'}. No Content Credentials.${stubSignals ? ` ${stubSignals}.` : ''}`
     : `${isRoot ? 'Current file' : 'Source file'}${node.signer ? `, signed by ${node.signer}` : ''}${node.date ? `, ${node.date}` : ''}.`
 </script>
 

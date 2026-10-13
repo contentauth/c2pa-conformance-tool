@@ -494,6 +494,16 @@ describe('ReportViewer Component', () => {
         expect(compositeLabel?.textContent).toContain('No Content Credentials')
         expect(compositeLabel?.textContent).toContain('Contains Partly GenAI Creation')
         expect(compositeLabel?.textContent).not.toContain('Contains Fully GenAI Media')
+
+        // The card's accessible name mentions overlaid signals, and only when there are any.
+        const cardLabelFor = (name: string) =>
+          Array.from(cards).find(card => card.getAttribute('aria-label')?.startsWith(name))?.getAttribute('aria-label')
+        expect(cardLabelFor('GenAI Flat Ingredient')).toBe(
+          'GenAI Flat Ingredient. No Content Credentials. Contains Fully GenAI Media.'
+        )
+        expect(cardLabelFor('Uncredentialed No-DST Ingredient')).toBe(
+          'Uncredentialed No-DST Ingredient. No Content Credentials.'
+        )
       })
     } finally {
       global.fetch = originalFetch

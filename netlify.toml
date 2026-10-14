@@ -2,6 +2,9 @@
   command = "bash scripts/netlify-build.sh"
   publish = "dist"
 
+[functions]
+  directory = "netlify/functions"
+
 [build.environment]
   NODE_VERSION = "20"
   # Tells Netlify to clone git submodules (c2pa-rs).

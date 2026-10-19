@@ -1062,7 +1062,7 @@ import type {
                           {/if}
                         </div>
                         <p class="text-xs text-gray-500 dark:text-gray-400 mb-3">
-                          {sigTypeDisplayName(identity.sigType)}{#if identity.issuer} issued by <span class="font-mono">{identity.issuer}</span>{:else if identity.certificate?.issuer?.CN} issued by {identity.certificate.issuer.CN}{/if}.
+                          {sigTypeDisplayName(identity.sigType)}{#if identity.issuer}{' issued by '}<span class="font-mono">{identity.issuer}</span>{:else if identity.certificate?.issuer?.CN}{` issued by ${identity.certificate.issuer.CN}`}{/if}.
                           These results apply to this identity assertion's own credential, not the manifest's signature.
                         </p>
                         {#if identity.failure.length + identity.success.length + identity.informational.length === 0}

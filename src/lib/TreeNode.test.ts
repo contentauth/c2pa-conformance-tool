@@ -23,7 +23,7 @@ describe('TreeNode identity card', () => {
     expect(card.getAttribute('data-state')).toBe('untrusted')
     expect(card.textContent).toContain('testuser23 (behance)')
     expect(card.textContent).toContain('Untrusted issuer')
-    expect(card.textContent).toContain('Identity claims aggregation')
+    expect(card.textContent).toContain('Identity claims aggregation · did:web:connected-identities.identity-stage.adobe.com')
     expect(card.querySelector('a')?.getAttribute('href')).toBe('https://net.s2stagehance.com/testuser23')
   })
 

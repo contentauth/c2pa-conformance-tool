@@ -851,6 +851,7 @@ describe('ReportViewer CAWG identity', () => {
     expect(identity).toBeTruthy()
     expect(identity.textContent).toContain('Untrusted issuer')
     expect(identity.textContent).toContain('C2PA Test Signing Cert')
+    expect(identity.textContent).toContain('X.509 certificate issued by Intermediate CA.')
     expect(identity.textContent).toContain('cawg.x509.credential.untrusted')
     expect(identity.textContent).toContain('cawg.identity.well-formed')
 

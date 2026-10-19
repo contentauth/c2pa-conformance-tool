@@ -229,7 +229,7 @@
             {/if}
           {/each}
           <p class="text-[11px] text-gray-500 dark:text-gray-400 truncate" title={identity.issuer ?? identity.certificate?.issuer?.CN}>
-            {sigTypeDisplayName(identity.sigType)}{#if identity.issuer} · {identity.issuer}{:else if identity.certificate?.issuer?.CN} · issued by {identity.certificate.issuer.CN}{/if}
+            {sigTypeDisplayName(identity.sigType)}{#if identity.issuer}{` · ${identity.issuer}`}{:else if identity.certificate?.issuer?.CN}{` · issued by ${identity.certificate.issuer.CN}`}{/if}
           </p>
           {#if identity.roles.length > 0}
             <p class="text-[11px] text-gray-500 dark:text-gray-400 truncate">Role: {identity.roles.join(', ')}</p>

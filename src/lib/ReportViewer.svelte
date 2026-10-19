@@ -29,6 +29,7 @@ import type {
     isReportOcspRevoked
   } from './crjson'
   import { evaluateReportSignals } from './summarySignals'
+  import { getCawgIdentities, sigTypeDisplayName, CAWG_STATE_LABEL } from './cawg'
   import { VALIDATION_STATUS, VALIDATION_FAILURE_DESCRIPTIONS, isOcspNotRevokedCode, isOcspRevokedCode } from './constants'
 
   export let report: ConformanceReport
@@ -262,9 +263,12 @@ import type {
         sigInfo,
         success,
         failure,
-        informational
-      }
-    }).filter(group => group.success.length > 0 || group.failure.length > 0 || group.informational.length > 0)
+        informational,
+        identities: getCawgIdentities(report, m)
+      } satisfies ManifestValidationGroup
+    }).filter(group =>
+      group.success.length > 0 || group.failure.length > 0 || group.informational.length > 0 || group.identities.length > 0
+    )
   })()
 
   // Certificate validity status derived from validation results
@@ -1041,6 +1045,58 @@ import type {
                              <p class="text-sm leading-relaxed mt-1 text-blue-700 dark:text-blue-400">{status.explanation}</p>
                            </div>
                          </div>
+                      </div>
+                    {/each}
+
+                    <!-- CAWG identity assertions: statuses for each identity's own credential -->
+                    {#each group.identities as identity (identity.label)}
+                      <div class="cawg-identity-group rounded-2xl border border-gray-200 dark:border-gray-700 p-4 bg-white dark:bg-gray-800/40" data-label={identity.label}>
+                        <div class="flex items-center gap-2 flex-wrap mb-1">
+                          <span class="badge bg-purple-100 dark:bg-purple-900/40 text-purple-800 dark:text-purple-300">CAWG identity</span>
+                          <span class="text-xs font-mono text-gray-500">{identity.label}</span>
+                          <span class="badge {identity.state === 'trusted' ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300' : identity.state === 'invalid' ? 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300' : identity.state === 'untrusted' ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-300' : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'}">{CAWG_STATE_LABEL[identity.state]}</span>
+                          {#if identity.displayName}
+                            <span class="text-xs font-medium text-gray-500 dark:text-gray-400 ml-auto">
+                              names <span class="font-semibold text-gray-700 dark:text-gray-300">{identity.displayName}</span>
+                            </span>
+                          {/if}
+                        </div>
+                        <p class="text-xs text-gray-500 dark:text-gray-400 mb-3">
+                          {sigTypeDisplayName(identity.sigType)}{#if identity.issuer} issued by <span class="font-mono">{identity.issuer}</span>{:else if identity.certificate?.issuer?.CN} issued by {identity.certificate.issuer.CN}{/if}.
+                          These results apply to this identity assertion's own credential, not the manifest's signature.
+                        </p>
+                        {#if identity.failure.length + identity.success.length + identity.informational.length === 0}
+                          <p class="text-sm text-gray-500 dark:text-gray-400">No validation statuses were reported for this identity assertion.</p>
+                        {/if}
+                        <div class="space-y-2">
+                          {#each identity.failure as status}
+                            <div class="rounded-xl p-3 border bg-red-50/50 dark:bg-gray-900/30 border-red-100 dark:border-red-900/30 text-red-800 dark:text-red-300 flex items-start gap-3">
+                              <span class="flex-shrink-0 w-5 h-5 rounded-full bg-red-600 dark:bg-red-800 text-white flex items-center justify-center text-xs font-bold">✕</span>
+                              <div class="flex-1 text-left">
+                                <span class="font-bold text-xs font-mono">{status.code}</span>
+                                <p class="text-sm mt-1 text-red-700 dark:text-red-400">{status.explanation ?? 'Validation failed'}</p>
+                              </div>
+                            </div>
+                          {/each}
+                          {#each identity.success as status}
+                            <div class="rounded-xl p-3 border bg-green-50/50 dark:bg-gray-900/30 border-green-100 dark:border-green-900/30 text-green-800 dark:text-green-300 flex items-start gap-3">
+                              <span class="flex-shrink-0 w-5 h-5 rounded-full bg-green-700 dark:bg-green-800 text-white flex items-center justify-center text-xs font-bold">✓</span>
+                              <div class="flex-1 text-left">
+                                <span class="font-bold text-xs font-mono">{status.code}</span>
+                                <p class="text-sm mt-1 text-green-700 dark:text-green-400">{status.explanation ?? 'Validation passed'}</p>
+                              </div>
+                            </div>
+                          {/each}
+                          {#each identity.informational as status}
+                            <div class="rounded-xl p-3 border bg-blue-100 dark:bg-gray-900/30 border-blue-100 dark:border-blue-900/30 text-blue-800 dark:text-blue-300 flex items-start gap-3">
+                              <span class="flex-shrink-0 w-5 h-5 rounded-full bg-blue-600 dark:bg-blue-800 text-white flex items-center justify-center text-xs font-bold">i</span>
+                              <div class="flex-1 text-left">
+                                <span class="font-bold text-xs font-mono">{status.code}</span>
+                                <p class="text-sm mt-1 text-blue-700 dark:text-blue-400">{status.explanation ?? 'Informational'}</p>
+                              </div>
+                            </div>
+                          {/each}
+                        </div>
                       </div>
                     {/each}
                   </div>

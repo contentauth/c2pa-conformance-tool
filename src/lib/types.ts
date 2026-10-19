@@ -4,6 +4,7 @@
  */
 
 import type { CrJson, CrJsonSignatureInfo, CrJsonValidationResults } from './crjson'
+import type { CawgIdentity } from './cawg'
 
 export type {
   CrJson,
@@ -66,6 +67,8 @@ export interface OverviewNode {
   transformations: string[]
   relationship?: string
   isStub?: boolean
+  /** CAWG identity assertions in this manifest */
+  identities?: CawgIdentity[]
   children: OverviewNode[]
   isRevoked?: boolean
   isOcspGood?: boolean
@@ -97,6 +100,8 @@ export interface ManifestValidationGroup {
   success: ValidationStatusItem[]
   failure: ValidationStatusItem[]
   informational: ValidationStatusItem[]
+  /** CAWG identity assertions, each with its own credential's statuses */
+  identities: CawgIdentity[]
 }
 
 /** Assertion summary row for display */

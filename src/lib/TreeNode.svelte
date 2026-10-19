@@ -1,6 +1,14 @@
 <script lang="ts">
   import type { OverviewNode } from './types'
   import { isOcspRevokedCode } from './constants'
+  import { CAWG_STATE_LABEL, sigTypeDisplayName, type CawgIdentityState } from './cawg'
+
+  const IDENTITY_BADGE: Record<CawgIdentityState, string> = {
+    trusted: 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300',
+    untrusted: 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300',
+    invalid: 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300',
+    unknown: 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300',
+  }
 
   export let node: OverviewNode
   export let isRoot = false
@@ -200,6 +208,34 @@
           <span class="badge bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300">{s}</span>
         {/each}
       </div>
+    {/if}
+
+    {#if !node.isStub}
+      <!-- CAWG identity assertions — trust here is the identity credential's own,
+           independent of the C2PA signer above -->
+      {#each node.identities ?? [] as identity (identity.label)}
+        <div class="cawg-identity mt-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white/70 dark:bg-gray-900/40 px-3 py-2 text-left" data-state={identity.state}>
+          <div class="flex items-center gap-2">
+            <svg class="w-3.5 h-3.5 flex-shrink-0 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0"/><path d="M6 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2"/></svg>
+            <span class="text-[10px] font-semibold uppercase tracking-wide text-gray-400">Identity</span>
+            <span class="ml-auto badge {IDENTITY_BADGE[identity.state]}">{CAWG_STATE_LABEL[identity.state]}</span>
+          </div>
+          <p class="text-xs font-semibold text-gray-800 dark:text-gray-200 truncate mt-1" title={identity.displayName}>
+            {identity.displayName ?? 'Unnamed identity'}
+          </p>
+          {#each identity.verifiedIdentities as vi}
+            {#if vi.uri}
+              <a href={vi.uri} target="_blank" rel="noopener noreferrer" class="block text-[11px] text-blue-600 dark:text-blue-400 hover:underline truncate" on:mousedown|stopPropagation>{vi.uri}</a>
+            {/if}
+          {/each}
+          <p class="text-[11px] text-gray-500 dark:text-gray-400 truncate" title={identity.issuer ?? identity.certificate?.issuer?.CN}>
+            {sigTypeDisplayName(identity.sigType)}{#if identity.issuer} · {identity.issuer}{:else if identity.certificate?.issuer?.CN} · issued by {identity.certificate.issuer.CN}{/if}
+          </p>
+          {#if identity.roles.length > 0}
+            <p class="text-[11px] text-gray-500 dark:text-gray-400 truncate">Role: {identity.roles.join(', ')}</p>
+          {/if}
+        </div>
+      {/each}
     {/if}
   </div>
 

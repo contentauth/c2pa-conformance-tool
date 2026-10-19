@@ -3,6 +3,7 @@
   import ManifestSummary from './ManifestSummary.svelte'
   import RubricsPanel from './RubricsPanel.svelte'
   import OverviewPanel from './OverviewPanel.svelte'
+  import CawgIdentityPanel from './CawgIdentityPanel.svelte'
   import JsonViewer from './JsonViewer.svelte'
 import type {
     ConformanceReport,
@@ -1109,6 +1110,8 @@ import type {
             </div>
           {/if}
         </section>
+
+        <CawgIdentityPanel {report} />
 
         {#if signatureInfo}
           <section class="bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 rounded-2xl p-8 shadow-sm" id="signature-info">

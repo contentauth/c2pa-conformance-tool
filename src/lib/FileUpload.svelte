@@ -102,20 +102,12 @@
         </div>
       </div>
       <p class="text-2xl font-bold text-gray-900 dark:text-white text-center mb-4">
-        {dragOver ? 'Drop it here!' : 'Drop a file or click to browse'}
+        {dragOver ? 'Drop it here!' : 'Drag & drop a file or click to browse'}
       </p>
       <p class="text-sm text-gray-600 dark:text-gray-400 text-center">
-        Supports images, videos, audio, PDFs, and standalone <code class="font-mono text-sm">.c2pa</code> sidecar files
+        Supports images, videos, audio, PDFs and more
       </p>
 
-      <!-- File type badges -->
-      <div class="flex items-center justify-center gap-2 mt-6 flex-wrap">
-        <span class="px-4 py-1 bg-gray-100 group-hover:bg-white dark:group-hover:bg-gray-600 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-full text-xs font-semibold transition duration-200">Images</span>
-        <span class="px-4 py-1 bg-gray-100 group-hover:bg-white dark:group-hover:bg-gray-600 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-full text-xs font-semibold transition duration-200">Videos</span>
-        <span class="px-4 py-1 bg-gray-100 group-hover:bg-white dark:group-hover:bg-gray-600 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-full text-xs font-semibold transition duration-200">Audio</span>
-        <span class="px-4 py-1 bg-gray-100 group-hover:bg-white dark:group-hover:bg-gray-600 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-full text-xs font-semibold transition duration-200">PDFs</span>
-        <span class="px-4 py-1 bg-gray-100 group-hover:bg-white dark:group-hover:bg-gray-600 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-full text-xs font-semibold transition duration-200">.c2pa sidecars</span>
-      </div>
     </div>
 
     <input

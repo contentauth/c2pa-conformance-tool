@@ -82,6 +82,18 @@ describe('$expected_spec_version injection', () => {
     expect(specCheck?.passed).toBe(false)
   })
 
+  it('mandatory_spec_version FAILS when specVersion absent and expected spec has a two-digit minor (2.10)', () => {
+    // The Spec 2.4+ gate must compare version parts numerically: as strings,
+    // "10" sorts before "4" and the requirement would lapse at Spec 2.10
+    // (c2pa-org/conformance#514).
+    const rubric = loadRubric('asset-rubric-conformance0.2-spec2.4.yml')
+    rubric.metadata.variables = { ...rubric.metadata.variables, '$expected_spec_version': '2.10' }
+
+    const result = evaluateRubric(rubric, crJsonNoSpecVersion, { rubricId: 'test' })
+    const specCheck = result.statements.find((s) => s.id === 'validation:mandatory_spec_version')
+    expect(specCheck?.passed).toBe(false)
+  })
+
   it('mandatory_spec_version PASSES when specVersion absent and rubric is spec2.2', () => {
     const rubric22 = loadRubric('asset-rubric-conformance0.2-spec2.2.yml')
     expect(rubric22.metadata.variables?.['$expected_spec_version']).toBe('2.2')

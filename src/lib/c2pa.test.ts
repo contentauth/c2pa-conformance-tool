@@ -41,6 +41,9 @@ let readCallCount = 0
 const recordedTrustAnchors: string[] = []
 const recordedTrustConfigs: string[] = []
 const recordedVerifySettings: unknown[] = []
+const recordedTrustSettings: Array<{
+  anchors: Array<{ trust_kind: string; trust_uri: string; trust_anchors: string; allowed_list?: string }>
+}> = []
 
 function makeLocalModule(opts: {
   // Call index → overrides; unmatched calls use defaults.
@@ -61,7 +64,12 @@ function makeLocalModule(opts: {
         try {
           const s = JSON.parse(settingsJson)
           recordedVerifySettings.push(s.verify)
-          if (s?.trust?.trust_anchors) recordedTrustAnchors.push(s.trust.trust_anchors)
+          if (s.trust) recordedTrustSettings.push(s.trust)
+          if (s?.trust?.anchors) {
+            recordedTrustAnchors.push(s.trust.anchors
+              .filter((anchor: { trust_kind: string }) => anchor.trust_kind === 'manifest')
+              .map((anchor: { trust_anchors: string }) => anchor.trust_anchors).join('\n'))
+          }
           if (s?.trust?.trust_config) recordedTrustConfigs.push(s.trust.trust_config)
         } catch { /* ignore */ }
       }
@@ -84,6 +92,7 @@ describe('c2pa utilities', () => {
     recordedTrustAnchors.length = 0
     recordedTrustConfigs.length = 0
     recordedVerifySettings.length = 0
+    recordedTrustSettings.length = 0
     vi.clearAllMocks()
 
     // Default: inject a mock local module that always returns a trusted result.
@@ -97,6 +106,8 @@ describe('c2pa utilities', () => {
         content = '-----BEGIN CERTIFICATE-----\nITLAllowedCert\n-----END CERTIFICATE-----'
       } else if (url.includes('anchors.pem')) {
         content = '-----BEGIN CERTIFICATE-----\nITLAnchorCert\n-----END CERTIFICATE-----'
+      } else if (url.includes('C2PA-TSA-TRUST-LIST.pem')) {
+        content = '-----BEGIN CERTIFICATE-----\nTSAAnchorCert\n-----END CERTIFICATE-----'
       }
       return Promise.resolve({
         ok: true, status: 200, statusText: 'OK',
@@ -233,6 +244,35 @@ describe('c2pa utilities', () => {
         ocsp_fetch_should_override: true,
         remote_manifest_fetch: false,
       })
+    })
+
+    it('separates manifest and TSA anchors and keeps ITL leaf credentials out of timestamp trust', async () => {
+      _setLocalModuleForTesting(makeLocalModule({
+        calls: [{ untrusted: true }, { untrusted: true }, { trusted: true }],
+      }))
+      await processFile(
+        new File(['test'], 'test.jpg', { type: 'image/jpeg' }),
+        ['-----BEGIN CERTIFICATE-----\nTestCert\n-----END CERTIFICATE-----'],
+      )
+
+      expect(recordedTrustSettings).toHaveLength(3)
+      const official = recordedTrustSettings[0].anchors
+      expect(official).toHaveLength(2)
+      expect(official.find(a => a.trust_kind === 'manifest')?.trust_anchors).not.toContain('TSAAnchorCert')
+      expect(official.find(a => a.trust_kind === 'tsa')?.trust_anchors).toContain('TSAAnchorCert')
+      expect(recordedTrustSettings[1].anchors).toContainEqual(expect.objectContaining({
+        trust_kind: 'tsa', trust_uri: 'session-test-certificates-tsa',
+      }))
+      const itl = recordedTrustSettings[2].anchors
+      expect(itl).toContainEqual(expect.objectContaining({
+        trust_kind: 'manifest',
+        trust_anchors: expect.stringContaining('ITLAnchorCert'),
+        allowed_list: expect.stringContaining('ITLAllowedCert'),
+      }))
+      expect(itl).toContainEqual(expect.objectContaining({
+        trust_kind: 'tsa', trust_anchors: expect.stringContaining('ITLAnchorCert'),
+      }))
+      expect(itl.filter(a => a.trust_kind === 'tsa').every(a => a.allowed_list === undefined)).toBe(true)
     })
   })
 

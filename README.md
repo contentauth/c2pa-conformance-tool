@@ -167,6 +167,7 @@ Any format supported by c2pa-rs: JPEG, PNG, WebP, AVIF, HEIC, MP4, MOV, MP3, WAV
 - **Core validation runs in your browser** — manifest parsing and signature validation happens locally via WebAssembly
 - **No tracking or analytics**
 - Trust lists are fetched directly from the official C2PA repository at validation time
+- Manifest-signing and timestamp trust lists are supplied as separate SDK trust-anchor types. The ITL fallback supplies its root CAs for both purposes, but its private leaf-certificate allow-list applies only to manifest signatures, never timestamps.
 - Signing-certificate OCSP status is fetched through the tool's server-side proxy, even when a manifest embeds an OCSP response. A definitive live result takes precedence; if the live check is inconclusive, the SDK falls back to embedded responses.
 
 ## Dependencies

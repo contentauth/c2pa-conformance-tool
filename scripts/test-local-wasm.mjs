@@ -4,7 +4,13 @@ import { readFile } from 'node:fs/promises'
 import { createServer } from 'node:http'
 import { test } from 'node:test'
 import { createServer as createViteServer } from 'vite'
-import * as wasm from '../public/local-c2pa/c2pa_local.js'
+
+const wasmJsUrl = new URL('../public/local-c2pa/c2pa_local.js', import.meta.url)
+const wasm = await import(wasmJsUrl.href).catch((error) => {
+  if (error?.code !== 'ERR_MODULE_NOT_FOUND') throw error
+  console.error('Compiled WASM not found in public/local-c2pa/. Run `npm run build:local-wasm` first.')
+  process.exit(1)
+})
 
 await wasm.default({
   module_or_path: await readFile(new URL('../public/local-c2pa/c2pa_local_bg.wasm', import.meta.url)),

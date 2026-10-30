@@ -40,6 +40,7 @@ let readCallCount = 0
 // Track trust settings per call so ITL tests can inspect them.
 const recordedTrustAnchors: string[] = []
 const recordedTrustConfigs: string[] = []
+const recordedVerifySettings: unknown[] = []
 
 function makeLocalModule(opts: {
   // Call index → overrides; unmatched calls use defaults.
@@ -59,6 +60,7 @@ function makeLocalModule(opts: {
       if (settingsJson) {
         try {
           const s = JSON.parse(settingsJson)
+          recordedVerifySettings.push(s.verify)
           if (s?.trust?.trust_anchors) recordedTrustAnchors.push(s.trust.trust_anchors)
           if (s?.trust?.trust_config) recordedTrustConfigs.push(s.trust.trust_config)
         } catch { /* ignore */ }
@@ -81,6 +83,7 @@ describe('c2pa utilities', () => {
     readCallCount = 0
     recordedTrustAnchors.length = 0
     recordedTrustConfigs.length = 0
+    recordedVerifySettings.length = 0
     vi.clearAllMocks()
 
     // Default: inject a mock local module that always returns a trusted result.
@@ -195,6 +198,41 @@ describe('c2pa utilities', () => {
         expect(trustConfig).toContain('1.3.6.1.4.1.62558.2.1')
         expect(trustConfig).toContain('1.3.6.1.5.5.7.3.36')
       }
+    })
+
+    it('prefers live OCSP in every trust validation pass without enabling remote manifest fetches', async () => {
+      _setLocalModuleForTesting(makeLocalModule({
+        calls: [
+          { untrusted: true },
+          { untrusted: true },
+          { trusted: true },
+        ],
+      }))
+
+      await processFile(
+        new File(['test'], 'test.jpg', { type: 'image/jpeg' }),
+        ['-----BEGIN CERTIFICATE-----\nTestCert\n-----END CERTIFICATE-----'],
+      )
+
+      expect(recordedVerifySettings).toHaveLength(3)
+      for (const verify of recordedVerifySettings) {
+        expect(verify).toMatchObject({
+          ocsp_fetch: true,
+          ocsp_fetch_should_override: true,
+          remote_manifest_fetch: false,
+        })
+      }
+    })
+
+    it('prefers live OCSP when reading a standalone sidecar', async () => {
+      await processFile(new File(['test'], 'test.c2pa', { type: SIDECAR_MIME }))
+
+      expect(recordedVerifySettings).toHaveLength(1)
+      expect(recordedVerifySettings[0]).toMatchObject({
+        ocsp_fetch: true,
+        ocsp_fetch_should_override: true,
+        remote_manifest_fetch: false,
+      })
     })
   })
 
@@ -341,9 +379,10 @@ describe('c2pa utilities', () => {
       const manifestBytes = new Uint8Array([1, 2, 3])
       mockFetchWithRemoteManifest(remoteManifestUrl, manifestBytes)
 
-      _setLocalModuleForTesting(makeLocalModule({
-        readSidecarManifestStore: () => Promise.resolve(makeCrJson({ trusted: true })),
-      }))
+      const readSidecarSpy = vi.fn((
+        _manifestBytes: Uint8Array, _assetBytes: Uint8Array, _assetFormat: string, _settingsJson?: string,
+      ) => Promise.resolve(makeCrJson({ trusted: true })))
+      _setLocalModuleForTesting(makeLocalModule({ readSidecarManifestStore: readSidecarSpy }))
 
       const { report, manifestBytes: returnedBytes } = await processRemoteManifest(
         new File(['test'], 'test.jpg', { type: 'image/jpeg' }),
@@ -353,6 +392,12 @@ describe('c2pa utilities', () => {
       expect(report.fetchedRemoteManifest).toBe(true)
       expect(report.remoteManifestUrl).toBe(remoteManifestUrl)
       expect(returnedBytes).toEqual(manifestBytes)
+      const settings = JSON.parse(readSidecarSpy.mock.calls[0][3]!)
+      expect(settings.verify).toMatchObject({
+        ocsp_fetch: true,
+        ocsp_fetch_should_override: true,
+        remote_manifest_fetch: false,
+      })
     })
 
     it('processRemoteManifest throws when the fetch itself fails', async () => {
@@ -369,7 +414,9 @@ describe('c2pa utilities', () => {
       const remoteManifestUrl = 'https://example.com/manifest.c2pa'
       const manifestBytes = new Uint8Array([1, 2, 3])
 
-      const readSidecarSpy = vi.fn(() => Promise.resolve(makeCrJson({ trusted: true })))
+      const readSidecarSpy = vi.fn((
+        _manifestBytes: Uint8Array, _assetBytes: Uint8Array, _assetFormat: string, _settingsJson?: string,
+      ) => Promise.resolve(makeCrJson({ trusted: true })))
       _setLocalModuleForTesting(makeLocalModule({ readSidecarManifestStore: readSidecarSpy }))
 
       const fetchedUrls: string[] = []
@@ -390,6 +437,12 @@ describe('c2pa utilities', () => {
       expect(report.fetchedRemoteManifest).toBe(true)
       expect(report.remoteManifestUrl).toBe(remoteManifestUrl)
       expect(readSidecarSpy).toHaveBeenCalled()
+      const settings = JSON.parse(readSidecarSpy.mock.calls[0][3]!)
+      expect(settings.verify).toMatchObject({
+        ocsp_fetch: true,
+        ocsp_fetch_should_override: true,
+        remote_manifest_fetch: false,
+      })
       expect(fetchedUrls).not.toContain(remoteManifestUrl)
     })
   })

@@ -13,6 +13,7 @@
     "test": "vitest",
     "test:ui": "vitest --ui",
     "test:run": "vitest run",
+    "test:local-wasm": "node --test scripts/test-local-wasm.mjs",
     "test:coverage": "vitest run --coverage",
     "postinstall": "echo 'No postinstall steps'"
   },

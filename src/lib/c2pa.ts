@@ -95,11 +95,13 @@ function toLocalSettingsJson(settings?: Settings): string {
       // fetch them ourselves only after the user explicitly opts in (see
       // processRemoteManifest).
       remote_manifest_fetch: false,
-      // Live-fetch OCSP status for the signing certificate when the manifest doesn't
-      // already staple an OCSP response. Routed through our own SSRF-hardened proxy
+      // Prefer live OCSP status even when the manifest staples an OCSP response.
+      // The SDK falls back to embedded responses if the live result is inconclusive.
+      // Routed through our own SSRF-hardened proxy
       // (see set_ocsp_proxy_endpoint / ProxyHttpResolver in the wasm crate) since OCSP
       // responders don't serve CORS headers and can't be fetched from the browser directly.
       ocsp_fetch: true,
+      ocsp_fetch_should_override: true,
     },
     trust: (settings?.trust?.trustAnchors || settings?.trust?.allowedList)
       ? {
@@ -868,4 +870,3 @@ export async function extractCertificatesForFile(file: File): Promise<any> {
   }
   return c2pa.extractCertificates ? c2pa.extractCertificates(mime, file) : null
 }
-

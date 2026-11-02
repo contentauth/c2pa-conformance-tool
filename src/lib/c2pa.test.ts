@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import {
-  processFile, getVersion, isSidecarFile, resolveMimeType, SIDECAR_MIME,
+  processFile, getVersion, isSidecarFile, resolveMimeType, SIDECAR_MIME, extractCertificatesForFile,
   processRemoteManifest, revalidateRemoteManifest,
   _setLocalModuleForTesting, _fetchSoftBindingAlgorithmsForTesting, _resetSoftBindingCacheForTesting,
 } from './c2pa'
@@ -242,6 +242,54 @@ describe('c2pa utilities', () => {
       expect(recordedVerifySettings[0]).toMatchObject({
         ocsp_fetch: true,
         ocsp_fetch_should_override: true,
+        remote_manifest_fetch: false,
+      })
+    })
+
+    it('resolves thumbnails without re-verifying the store or fetching OCSP', async () => {
+      const resourceSettings: Array<Record<string, unknown>> = []
+      const crJson = JSON.parse(makeCrJson({ trusted: true }))
+      crJson.manifests[0].assertions = {
+        'c2pa.thumbnail.claim': { identifier: 'self#jumbf=c2pa.assertions/c2pa.thumbnail.claim' },
+      }
+      _setLocalModuleForTesting(Object.assign(
+        makeLocalModule({ readManifestStore: () => Promise.resolve(JSON.stringify(crJson)) })!,
+        {
+          get_resource_bytes: vi.fn((_bytes: Uint8Array, _format: string, _uri: string, settingsJson?: string) => {
+            resourceSettings.push(JSON.parse(settingsJson!).verify)
+            return Promise.resolve(new Uint8Array([1, 2, 3]))
+          }),
+        },
+      ))
+
+      await processFile(new File(['test'], 'test.jpg', { type: 'image/jpeg' }))
+
+      expect(resourceSettings).toHaveLength(1)
+      expect(resourceSettings[0]).toMatchObject({
+        verify_after_reading: false,
+        verify_trust: false,
+        ocsp_fetch: false,
+        ocsp_fetch_should_override: false,
+        remote_manifest_fetch: false,
+      })
+    })
+
+    it('extracts certificates without re-verifying the store or fetching OCSP', async () => {
+      let certSettings: Record<string, unknown> | undefined
+      _setLocalModuleForTesting(Object.assign(makeLocalModule()!, {
+        extract_manifest_certificates: vi.fn((_bytes: Uint8Array, _format: string, settingsJson?: string) => {
+          certSettings = JSON.parse(settingsJson!).verify
+          return Promise.resolve('{}')
+        }),
+      }))
+
+      await extractCertificatesForFile(new File(['test'], 'test.jpg', { type: 'image/jpeg' }))
+
+      expect(certSettings).toMatchObject({
+        verify_after_reading: false,
+        verify_trust: false,
+        ocsp_fetch: false,
+        ocsp_fetch_should_override: false,
         remote_manifest_fetch: false,
       })
     })

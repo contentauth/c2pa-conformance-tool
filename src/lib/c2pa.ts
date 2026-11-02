@@ -4,9 +4,16 @@ import { VALIDATION_STATUS } from './constants'
 import { isCrJson, legacyToCrJson, getActiveManifestValidationStatus, type CrJson } from './crjson'
 
 // Trust/verify settings passed to the local WASM read functions.
+type TrustAnchor = {
+  trust_kind: 'manifest' | 'tsa'
+  trust_uri: string
+  trust_anchors: string
+  allowed_list?: string
+}
+
 type Settings = {
   verify?: { verifyAfterReading?: boolean; verifyTrust?: boolean }
-  trust?: { trustAnchors?: string; allowedList?: string }
+  trust?: { anchors: TrustAnchor[] }
   softBindingAlgorithms?: string[]
 }
 
@@ -52,7 +59,7 @@ const importModule = new Function('modulePath', 'return import(modulePath)') as 
 type ITL = { allowed: string; anchors: string }
 
 let c2paInstance: C2paInstance | null = null
-let mainTrustListPem: string | null = null
+let mainTrustLists: { manifest: string; tsa: string } | null = null
 let itl: ITL | null = null
 let softBindingAlgorithms: string[] | null = null
 
@@ -95,17 +102,18 @@ function toLocalSettingsJson(settings?: Settings): string {
       // fetch them ourselves only after the user explicitly opts in (see
       // processRemoteManifest).
       remote_manifest_fetch: false,
-      // Live-fetch OCSP status for the signing certificate when the manifest doesn't
-      // already staple an OCSP response. Routed through our own SSRF-hardened proxy
+      // Prefer live OCSP status even when the manifest staples an OCSP response.
+      // The SDK falls back to embedded responses if the live result is inconclusive.
+      // Routed through our own SSRF-hardened proxy
       // (see set_ocsp_proxy_endpoint / ProxyHttpResolver in the wasm crate) since OCSP
       // responders don't serve CORS headers and can't be fetched from the browser directly.
       ocsp_fetch: true,
+      ocsp_fetch_should_override: true,
     },
-    trust: (settings?.trust?.trustAnchors || settings?.trust?.allowedList)
+    trust: settings?.trust
       ? {
-          ...(settings?.trust?.trustAnchors ? { trust_anchors: settings.trust.trustAnchors } : {}),
-          ...(settings?.trust?.allowedList ? { allowed_list: settings.trust.allowedList } : {}),
           trust_config: DEFAULT_TRUST_CONFIG,
+          anchors: settings.trust.anchors,
         }
       : undefined,
     ...(settings?.softBindingAlgorithms?.length
@@ -281,9 +289,9 @@ async function initC2pa(): Promise<C2paInstance> {
 
 // ── Trust list fetching ───────────────────────────────────────────────────────
 
-async function fetchMainTrustList(): Promise<string> {
-  if (mainTrustListPem) {
-    return mainTrustListPem
+async function fetchMainTrustList(): Promise<{ manifest: string; tsa: string }> {
+  if (mainTrustLists) {
+    return mainTrustLists
   }
 
   try {
@@ -304,9 +312,9 @@ async function fetchMainTrustList(): Promise<string> {
       tsaTrustListResponse.text()
     ])
 
-    mainTrustListPem = trustList + '\n' + tsaTrustList
+    mainTrustLists = { manifest: trustList, tsa: tsaTrustList }
     console.log('✅ Loaded main trust lists')
-    return mainTrustListPem
+    return mainTrustLists
   } catch (error) {
     console.error('Failed to fetch main trust lists:', error)
     throw new Error('Failed to fetch C2PA trust lists')
@@ -508,9 +516,13 @@ async function runTrustValidationFlow(
   ])
 
   console.log('Step 1: Validating with official trust list only...')
+  const officialAnchors: TrustAnchor[] = [
+    { trust_kind: 'manifest', trust_uri: TRUST_LIST_URL, trust_anchors: mainTrustList.manifest },
+    { trust_kind: 'tsa', trust_uri: TSA_TRUST_LIST_URL, trust_anchors: mainTrustList.tsa },
+  ]
   const officialSettings: Settings = {
     verify: { verifyTrust: true, verifyAfterReading: true },
-    trust: { trustAnchors: mainTrustList },
+    trust: { anchors: officialAnchors },
     softBindingAlgorithms: softBindingAlgs,
   }
 
@@ -541,7 +553,13 @@ async function runTrustValidationFlow(
     console.log('Step 2: Validating with test certificates added...')
     const testSettings: Settings = {
       verify: { verifyTrust: true, verifyAfterReading: true },
-      trust: { trustAnchors: mainTrustList + '\n' + testCertificates.join('\n') },
+      trust: {
+        anchors: [
+          ...officialAnchors,
+          { trust_kind: 'manifest', trust_uri: 'session-test-certificates', trust_anchors: testCertificates.join('\n') },
+          { trust_kind: 'tsa', trust_uri: 'session-test-certificates-tsa', trust_anchors: testCertificates.join('\n') },
+        ],
+      },
       softBindingAlgorithms: softBindingAlgs,
     }
 
@@ -588,8 +606,14 @@ async function runTrustValidationFlow(
     const itlSettings: Settings = {
       verify: { verifyTrust: true, verifyAfterReading: true },
       trust: {
-        trustAnchors: mainTrustList + '\n' + itlData.anchors,
-        allowedList: itlData.allowed,
+        anchors: [
+          ...officialAnchors,
+          {
+            trust_kind: 'manifest', trust_uri: ITL_ANCHORS_URL,
+            trust_anchors: itlData.anchors, allowed_list: itlData.allowed,
+          },
+          { trust_kind: 'tsa', trust_uri: ITL_ANCHORS_URL, trust_anchors: itlData.anchors },
+        ],
       },
       softBindingAlgorithms: softBindingAlgs,
     }
@@ -868,4 +892,3 @@ export async function extractCertificatesForFile(file: File): Promise<any> {
   }
   return c2pa.extractCertificates ? c2pa.extractCertificates(mime, file) : null
 }
-

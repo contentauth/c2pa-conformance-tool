@@ -76,6 +76,7 @@ npm run build:local-wasm
 npm run dev          # Start Vite dev server with hot reload
 npm run check        # Svelte type checking
 npm run test:run     # Run tests once
+npm run test:local-wasm # Exercise compiled WASM OCSP/proxy integration (build WASM first)
 npm run test         # Run tests in watch mode
 npm run build        # Production build → dist/
 npm run preview      # Preview production build locally
@@ -166,6 +167,8 @@ Any format supported by c2pa-rs: JPEG, PNG, WebP, AVIF, HEIC, MP4, MOV, MP3, WAV
 - **Core validation runs in your browser** — manifest parsing and signature validation happens locally via WebAssembly
 - **No tracking or analytics**
 - Trust lists are fetched directly from the official C2PA repository at validation time
+- Manifest-signing and timestamp trust lists are supplied as separate SDK trust-anchor types. The ITL fallback supplies its root CAs for both purposes, but its private leaf-certificate allow-list applies only to manifest signatures, never timestamps.
+- Signing-certificate OCSP status is fetched through the tool's server-side proxy, even when a manifest embeds an OCSP response. A definitive live result takes precedence; if the live check is inconclusive, the SDK falls back to embedded responses.
 
 ## Dependencies
 

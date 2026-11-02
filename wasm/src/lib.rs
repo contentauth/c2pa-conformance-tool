@@ -433,9 +433,15 @@ mod eku_trust_config_tests {
     }
 
     /// Same shape `toLocalSettingsJson` (c2pa.ts) builds: `verify` plus a `trust` block
-    /// with our root as the trust anchor and, optionally, `trust_config`.
+    /// with our root as a typed manifest anchor and, optionally, `trust_config`.
     fn settings_json(trust_config: Option<&str>) -> String {
-        let mut trust = serde_json::json!({ "trust_anchors": ROOT_CERT_PEM });
+        let mut trust = serde_json::json!({
+            "anchors": [{
+                "trust_kind": "manifest",
+                "trust_uri": "eku-test-root",
+                "trust_anchors": ROOT_CERT_PEM,
+            }],
+        });
         if let Some(tc) = trust_config {
             trust["trust_config"] = serde_json::json!(tc);
         }

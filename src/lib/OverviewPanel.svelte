@@ -7,6 +7,7 @@
   import { evaluateReportSignals } from './summarySignals'
   import { getSignerName } from './generateSummary'
   import { VALIDATION_STATUS, isOcspNotRevokedCode, isOcspRevokedCode } from './constants'
+  import { getCawgIdentities } from './cawg'
 
   export let report: ConformanceReport
   export let file: File | null = null
@@ -492,6 +493,7 @@
       transformations: sigData?.localTransformations.map(h => h.reportText) ?? [],
       relationship: undefined,
       isStub: false,
+      identities: getCawgIdentities(r, manifest),
       children,
       isRevoked,
       isOcspGood,

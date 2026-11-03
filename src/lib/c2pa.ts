@@ -91,10 +91,16 @@ const DEFAULT_TRUST_CONFIG = [
   '1.3.6.1.4.1.62558.2.1',     // C2PA claim signing
 ].join('\n')
 
+// For calls that only need the parsed manifest store (thumbnail bytes, certificate
+// chains). Skipping verification also skips live OCSP, so these calls never hit the
+// OCSP proxy.
+const PARSE_ONLY_SETTINGS: Settings = { verify: { verifyAfterReading: false, verifyTrust: false } }
+
 function toLocalSettingsJson(settings?: Settings): string {
+  const verifyAfterReading = settings?.verify?.verifyAfterReading ?? true
   const localSettings = {
     verify: {
-      verify_after_reading: settings?.verify?.verifyAfterReading ?? true,
+      verify_after_reading: verifyAfterReading,
       verify_trust: settings?.verify?.verifyTrust ?? true,
       // Never let c2pa-rs auto-fetch remote manifests: doing so would silently reveal
       // the validating user's IP address and the fact they're inspecting this file to
@@ -107,8 +113,9 @@ function toLocalSettingsJson(settings?: Settings): string {
       // Routed through our own SSRF-hardened proxy
       // (see set_ocsp_proxy_endpoint / ProxyHttpResolver in the wasm crate) since OCSP
       // responders don't serve CORS headers and can't be fetched from the browser directly.
-      ocsp_fetch: true,
-      ocsp_fetch_should_override: true,
+      // Only enabled when the store is actually verified.
+      ocsp_fetch: verifyAfterReading,
+      ocsp_fetch_should_override: verifyAfterReading,
     },
     trust: settings?.trust
       ? {
@@ -215,7 +222,7 @@ function buildC2paFromModule(localModule: LocalC2paModule): C2paInstance {
             const json = await localModule.extract_manifest_certificates!(
               fileBytes,
               format,
-              toLocalSettingsJson(settings),
+              toLocalSettingsJson(settings ?? PARSE_ONLY_SETTINGS),
             )
             return JSON.parse(json)
           },
@@ -234,7 +241,7 @@ function buildC2paFromModule(localModule: LocalC2paModule): C2paInstance {
               sidecarBytes,
               assetBytes,
               assetFormat,
-              toLocalSettingsJson(settings),
+              toLocalSettingsJson(settings ?? PARSE_ONLY_SETTINGS),
             )
             return JSON.parse(json)
           },
@@ -447,9 +454,10 @@ async function enrichThumbnailsViaWasm(
 
   // Pass explicit settings (not undefined) so the wasm side doesn't fall back to
   // c2pa-rs's own defaults, which have remote_manifest_fetch: true — resolving a
-  // thumbnail must never silently fetch a remote manifest.
+  // thumbnail must never silently fetch a remote manifest. The report has already
+  // been verified, so skip re-verification (and its live OCSP calls) here.
   const resourceToBytes = async (uri: string): Promise<Uint8Array> => {
-    return localModule.get_resource_bytes!(fileBytes, format, uri, toLocalSettingsJson({}))
+    return localModule.get_resource_bytes!(fileBytes, format, uri, toLocalSettingsJson(PARSE_ONLY_SETTINGS))
   }
 
   await enrichThumbnails(crJson, resourceToBytes)

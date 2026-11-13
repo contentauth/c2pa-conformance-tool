@@ -1556,6 +1556,7 @@ variables:
   - image/tiff
   - image/x-adobe-dng
   $allowed_assertions:
+  - cawg.training-mining
   - c2pa.hash.data
   - c2pa.hash.data.part
   - c2pa.actions.v2

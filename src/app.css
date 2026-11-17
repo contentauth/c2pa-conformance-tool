@@ -5,6 +5,10 @@
 @tailwind utilities;
 
 @layer base {
+  html {
+    scrollbar-gutter: stable;
+  }
+
   :root {
     font-family: "Inter", system-ui, Avenir, Helvetica, Arial, sans-serif;
     font-optical-sizing: auto;

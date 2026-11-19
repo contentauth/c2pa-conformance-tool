@@ -38,10 +38,16 @@ variables:
   - manifest.structuredText.multipleReferences
   - manifest.structuredText.noManifest
   - manifest.structuredText.noResolutionPath
+  - manifest.text.corruptedWrapper
+  - manifest.text.multipleWrappers
   - manifest.timestamp.invalid
   - manifest.timestamp.wrongParents
   - manifest.update.invalid
   - manifest.update.wrongParents
+  - MISSING_VALIDATION_RESULTS
+  $trust_error_codes:
+  - signingCredential.invalid
+  - signingCredential.untrusted
   - MISSING_VALIDATION_RESULTS
   $valid_error_codes:
   - assertion.action.ingredientMismatch
@@ -60,13 +66,10 @@ variables:
   - ingredient.claimSignature.missing
   - ingredient.claimSignature.mismatch
   - claimSignature.missing
-  - MISSING_VALIDATION_RESULTS
-  $trust_error_codes:
   - claimSignature.mismatch
   - claimSignature.outsideValidity
-  - signingCredential.invalid
   - signingCredential.ocsp.revoked
-  - signingCredential.untrusted
+  - algorithm.unsupported
   - MISSING_VALIDATION_RESULTS
 expressions:
   _manifest_validationResults: '($args[0].validationResults || { failure: [{code: "MISSING_VALIDATION_RESULTS"}] })'
@@ -128,10 +131,18 @@ expressions:
       en: Missing validation results in the manifest
 
 - id: validation:trusted_success
-  description: Check if the asset has any trust failures (from the trusted list)
+  description: |
+    Check that the asset is trusted (Spec §14.3.6): the manifest must be well-formed and valid (§14.3.4, §14.3.5),
+    have no trust failures, and positively report claimSignature.validated, claimSignature.insideValidity
+    and signingCredential.trusted
   failIfMatched: true
   expression: |
-    _validationResults().failure[?contains($trust_error_codes, code)].code
+    [
+      _validationResults().failure[?contains($well_formed_error_codes, code) || contains($valid_error_codes, code) || contains($trust_error_codes, code)].code,
+      if(contains(_validationResults().success[*].code || `[]`, "claimSignature.validated"), `[]`, `["MISSING_CLAIM_SIGNATURE_VALIDATED"]`),
+      if(contains(_validationResults().success[*].code || `[]`, "claimSignature.insideValidity"), `[]`, `["MISSING_CLAIM_SIGNATURE_INSIDE_VALIDITY"]`),
+      if(contains(_validationResults().success[*].code || `[]`, "signingCredential.trusted"), `[]`, `["MISSING_SIGNING_CREDENTIAL_TRUSTED"]`)
+    ][]
   reportText:
     'true':
       en: Asset is trusted

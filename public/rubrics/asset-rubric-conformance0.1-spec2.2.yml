@@ -5,6 +5,7 @@ rubric_metadata:
   version: '1.1'
   language: en
 variables:
+  $asset_media_type: null
   $valid_digital_source_types:
   - http://cv.iptc.org/newscodes/digitalsourcetype/digitalCapture
   - http://cv.iptc.org/newscodes/digitalsourcetype/computationalCapture
@@ -1514,28 +1515,12 @@ variables:
   - manifest.structuredText.multipleReferences
   - manifest.structuredText.noManifest
   - manifest.structuredText.noResolutionPath
+  - manifest.text.corruptedWrapper
+  - manifest.text.multipleWrappers
   - manifest.timestamp.invalid
   - manifest.timestamp.wrongParents
   - manifest.update.invalid
   - manifest.update.wrongParents
-  - MISSING_VALIDATION_RESULTS
-  $valid_error_codes:
-  - assertion.action.ingredientMismatch
-  - assertion.action.redactionMismatch
-  - assertion.bmffHash.mismatch
-  - assertion.boxesHash.mismatch
-  - assertion.collectionHash.mismatch
-  - assertion.dataHash.mismatch
-  - assertion.external-reference.hashMismatch
-  - assertion.alternativeContentRepresentation.hashMismatch
-  - assertion.multiAssetHash.mismatch
-  - assertion.hashedURI.mismatch
-  - assertion.hardBinding.redacted
-  - hashedURI.mismatch
-  - ingredient.manifest.mismatch
-  - ingredient.claimSignature.missing
-  - ingredient.claimSignature.mismatch
-  - claimSignature.missing
   - MISSING_VALIDATION_RESULTS
   $hard_binding_assertion_labels:
   - c2pa.hash.data
@@ -1552,6 +1537,18 @@ variables:
   $human_entry_source_types:
   - humanEntry.anonymous
   - humanEntry.credentialed
+  $zip_media_types:
+  - application/epub+zip
+  - application/vnd.openxmlformats-officedocument.wordprocessingml.document
+  - application/vnd.openxmlformats-officedocument.spreadsheetml.sheet
+  - application/vnd.openxmlformats-officedocument.presentationml.presentation
+  - application/vnd.openxmlformats-officedocument.presentationml.slideshow
+  - application/vnd.oasis.opendocument.text
+  - application/vnd.oasis.opendocument.spreadsheet
+  - application/vnd.oasis.opendocument.presentation
+  - application/vnd.oasis.opendocument.graphics
+  - application/oxps
+  - application/x-zip-based
   $allowed_assertions:
   - c2pa.hash.data
   - c2pa.hash.data.part
@@ -1940,6 +1937,29 @@ variables:
   - xmpTPg:MaxPageSize
   - xmpTPg:NPages
   - xmpTPg:PlateNames
+  $valid_error_codes:
+  - assertion.action.ingredientMismatch
+  - assertion.action.redactionMismatch
+  - assertion.bmffHash.mismatch
+  - assertion.boxesHash.mismatch
+  - assertion.collectionHash.mismatch
+  - assertion.dataHash.mismatch
+  - assertion.external-reference.hashMismatch
+  - assertion.alternativeContentRepresentation.hashMismatch
+  - assertion.multiAssetHash.mismatch
+  - assertion.hashedURI.mismatch
+  - assertion.hardBinding.redacted
+  - hashedURI.mismatch
+  - ingredient.manifest.mismatch
+  - ingredient.claimSignature.missing
+  - ingredient.claimSignature.mismatch
+  - claimSignature.missing
+  - claimSignature.mismatch
+  - claimSignature.outsideValidity
+  - signingCredential.ocsp.revoked
+  - signingCredential.ocsp.unknown
+  - algorithm.unsupported
+  - MISSING_VALIDATION_RESULTS
 expressions:
   _manifest_validationResults: '($args[0].validationResults || { failure: [{code: "MISSING_VALIDATION_RESULTS"}] })'
   _manifest_assertionKeys: keys($args[0].assertions || `{}`)
@@ -1950,8 +1970,8 @@ expressions:
   _manifest_createdAssertions: $args[0].'claim.v2'.created_assertions || $args[0].claim.created_assertions || `[]`
   _manifest_ingredientAssertions: values($args[0].assertions || `{}`)[? relationship != null]
   _baseAssertionLabel: split($args[0], "__")[0]
-  _manifest_isUpdateManifest: $args[0].isUpdateManifest == `true` || contains(keys($args[0] || `{}`), "manifest.update") || $args[0].label == "update"
   _manifest_assertionsByLabel: map(entries($args[0].assertions || `{}`)[? _baseAssertionLabel(@[0]) == $args[1]], &[1])
+  _manifest_isUpdateManifest: $args[0].isUpdateManifest == `true` || contains(keys($args[0] || `{}`), "manifest.update") || $args[0].label == "update"
   _activeManifest: manifests[0]
   _validationResults: _manifest_validationResults(_activeManifest())
   _assertionKeys: _manifest_assertionKeys(_activeManifest())
@@ -2368,6 +2388,32 @@ expressions:
     'false':
       en: Found c2pa.placed actions referencing ingredients without componentOf relationship (Spec 2.2 §15.10.3.2.2 / Spec 2.4 §15.10.3.2.3)
 
+- id: validation:parentof_requires_opened_action
+  description: Verify that in a standard manifest, adding an ingredient with a parentOf relationship is accompanied by a c2pa.opened action (Spec 2.2 §18.15.3 / Spec 2.4 §18.16.3)
+  specSection: Spec 2.2 §18.15.3, Spec 2.4 §18.16.3
+  expression: |
+    _isUpdateManifest() ||
+    length(_ingredientAssertions()[? relationship == "parentOf"]) == 0 ||
+    length(_actionsV2()[? action == "c2pa.opened"]) > 0
+  reportText:
+    'true':
+      en: All parentOf ingredient assertions in standard manifests are accompanied by a c2pa.opened action (Spec 2.2 §18.15.3 / Spec 2.4 §18.16.3)
+    'false':
+      en: Found parentOf ingredient assertion in a standard manifest without a required c2pa.opened action (Spec 2.2 §18.15.3 / Spec 2.4 §18.16.3)
+
+- id: validation:componentof_requires_placed_action
+  description: Verify that in a standard manifest, adding an ingredient with a componentOf relationship is accompanied by a c2pa.placed action (Spec 2.2 §18.15.3 / Spec 2.4 §18.16.3)
+  specSection: Spec 2.2 §18.15.3, Spec 2.4 §18.16.3
+  expression: |
+    _isUpdateManifest() ||
+    length(_ingredientAssertions()[? relationship == "componentOf"]) == 0 ||
+    length(_actionsV2()[? action == "c2pa.placed"]) > 0
+  reportText:
+    'true':
+      en: All componentOf ingredient assertions in standard manifests are accompanied by a c2pa.placed action (Spec 2.2 §18.15.3 / Spec 2.4 §18.16.3)
+    'false':
+      en: Found componentOf ingredient assertion in a standard manifest without a required c2pa.placed action (Spec 2.2 §18.15.3 / Spec 2.4 §18.16.3)
+
 - id: validation:redacted_action_uri_format
   description: Verify that redacted action parameters specify a valid JUMBF URI starting with self#jumbf= (Spec 2.2 §18.14.4.7, §18.14.12 / Spec 2.4 §18.15.4.7, §18.15.12)
   specSection: Spec 2.2 §18.14.4.7, §18.14.12, Spec 2.4 §18.15.4.7, §18.15.12
@@ -2717,3 +2763,23 @@ expressions:
       en: All asset reference assertions specify valid reference URIs (Spec 2.2 §18.19.2)
     'false':
       en: Found asset reference assertions missing references or reference URI (Spec 2.2 §18.19.2)
+
+- id: validation:zip_collection_hash_required
+  description: Verify that ZIP-based assets are hashed using a collection data hash that includes the ZIP central directory hash (Spec 2.2, Spec 2.4)
+  specSection: Spec 2.2 §A.6.2.1 / Spec 2.4 §A.6.2.1
+  failIfMatched: true
+  expression: |
+    if(
+      !_isUpdateManifest() &&
+        contains($zip_media_types, notNull($asset_media_type, manifests[0].assertions.'c2pa.asset-type.v2'.'dc:format')) &&
+        (!contains(_assertionKeys(), "c2pa.hash.collection.data") ||
+          _activeManifest().assertions.'c2pa.hash.collection.data'.zip_central_directory_hash == `null` ||
+          _activeManifest().assertions.'c2pa.hash.collection.data'.zip_central_directory_hash == ""),
+      `["c2pa.hash.collection.data with zip_central_directory_hash"]`,
+      `[]`
+    )
+  reportText:
+    'true':
+      en: ZIP-based asset is hashed using a collection data hash with a ZIP central directory hash, or the asset is not ZIP-based or is an update manifest (Spec 2.2 §A.6.2.1 / Spec 2.4 §A.6.2.1, §A.6.2.2)
+    'false':
+      en: 'ZIP-based asset does not have a complete collection data hash; missing: {{matches}} (Spec 2.2 §A.6.2.1 / Spec 2.4 §A.6.2.1, §A.6.2.2)'

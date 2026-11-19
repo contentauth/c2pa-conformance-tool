@@ -79,6 +79,11 @@
         "report_text": "All c2pa.cloud-data assertions specify valid label, size, content_type, and location url, alg, and hash fields (Spec 2.2 §18.11)"
       },
       {
+        "trait": "componentof_requires_placed_action",
+        "reportText": "All componentOf ingredient assertions in standard manifests are accompanied by a c2pa.placed action (Spec 2.2 §18.15.3 / Spec 2.4 §18.16.3)",
+        "report_text": "All componentOf ingredient assertions in standard manifests are accompanied by a c2pa.placed action (Spec 2.2 §18.15.3 / Spec 2.4 §18.16.3)"
+      },
+      {
         "trait": "discouraged_legacy_action_parameters",
         "reportText": "No discouraged legacy action parameters found in parameters block (Spec 2.2 §18.14.4.1, §18.14.12)",
         "report_text": "No discouraged legacy action parameters found in parameters block (Spec 2.2 §18.14.4.1, §18.14.12)"
@@ -179,6 +184,11 @@
         "report_text": "All standard assertions are supported for this spec version (Spec 2.2 §6.2, §6.2.2, §6.3)"
       },
       {
+        "trait": "parentof_requires_opened_action",
+        "reportText": "All parentOf ingredient assertions in standard manifests are accompanied by a c2pa.opened action (Spec 2.2 §18.15.3 / Spec 2.4 §18.16.3)",
+        "report_text": "All parentOf ingredient assertions in standard manifests are accompanied by a c2pa.opened action (Spec 2.2 §18.15.3 / Spec 2.4 §18.16.3)"
+      },
+      {
         "trait": "placed_ingredient_componentof",
         "reportText": "All c2pa.placed actions correctly reference ingredients with componentOf relationship (Spec 2.2 §15.10.3.2.2 / Spec 2.4 §15.10.3.2.3)",
         "report_text": "All c2pa.placed actions correctly reference ingredients with componentOf relationship (Spec 2.2 §15.10.3.2.2 / Spec 2.4 §15.10.3.2.3)"
@@ -267,6 +277,11 @@
         "trait": "well_formed_success",
         "reportText": "No structural failures found",
         "report_text": "No structural failures found"
+      },
+      {
+        "trait": "zip_collection_hash_required",
+        "reportText": "ZIP-based asset is hashed using a collection data hash with a ZIP central directory hash, or the asset is not ZIP-based or is an update manifest (Spec 2.2 §A.6.2.1 / Spec 2.4 §A.6.2.1, §A.6.2.2)",
+        "report_text": "ZIP-based asset is hashed using a collection data hash with a ZIP central directory hash, or the asset is not ZIP-based or is an update manifest (Spec 2.2 §A.6.2.1 / Spec 2.4 §A.6.2.1, §A.6.2.2)"
       }
     ]
   },

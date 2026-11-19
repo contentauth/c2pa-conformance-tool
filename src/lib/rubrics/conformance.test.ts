@@ -201,3 +201,26 @@ describe('$expected_spec_version injection', () => {
     expect(check?.passed).toBe(true)
   })
 })
+
+describe.each(['2.2', '2.4'])('Conformance 0.2 / Spec %s CAWG training and data mining', (version) => {
+  it('recognizes the CAWG 1.1 label and still reports unknown custom assertions', () => {
+    const filename = `asset-rubric-conformance0.2-spec${version}.yml`
+    const rubric = loadRubric(filename)
+    const label = 'urn:c2pa:test'
+    const report = {
+      activeManifest: label,
+      manifests: [{
+        label,
+        'claim.v2': { created_assertions: [] },
+        assertions: {
+          'cawg.training-mining': { entries: { 'cawg.ai_training': { use: 'notAllowed' } } },
+          'cawg.unknown-test': {},
+        },
+      }],
+    } as unknown as CrJson
+    const result = evaluateRubric(rubric, report, { rubricId: filename })
+    const check = result.statements.find(s => s.id === 'validation:no_unrecognized_custom_assertions')
+    expect(check?.passed).toBe(false)
+    expect(check?.rawValue).toEqual(['cawg.unknown-test'])
+  })
+})

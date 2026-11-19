@@ -181,17 +181,24 @@ export function getAssertionDataByLabel(m: CrJsonManifestEntry, label: string): 
 }
 
 /**
- * True if a validation status is scoped to a specific embedded assertion (its `url`
- * points into `c2pa.assertions/...`, e.g. a `cawg.identity` assertion's own X.509
- * credential) rather than to the manifest's own claim signature.
+ * True if a validation status is scoped to an embedded assertion's own credential —
+ * a CAWG identity assertion (`cawg.identity`, `cawg.identity__N`) — rather than to
+ * the manifest's own claim signature.
  *
  * c2pa-rs reuses the same status codes (e.g. `signingCredential.untrusted`) for both
- * the manifest's claim signature and any per-assertion credential — the `url` is the
- * only way to tell them apart. Conflating the two makes an untrusted CAWG identity
+ * the manifest's claim signature and an identity assertion's credential — the `url` is
+ * the only way to tell them apart. Conflating the two makes an untrusted CAWG identity
  * credential look like the file's own C2PA signature is untrusted, which it isn't.
+ *
+ * Only identity assertions count: other assertion-scoped statuses (e.g.
+ * `assertion.dataHash.mismatch` on `c2pa.hash.data`) are about the manifest's own
+ * integrity and must still count against it.
  */
 export function isAssertionScopedStatus(status: CrJsonValidationStatus): boolean {
-  return status.url?.includes('/c2pa.assertions/') ?? false
+  const match = status.url?.match(/\/c2pa\.assertions\/([^/]+)$/)
+  if (!match) return false
+  const label = match[1]
+  return label === 'cawg.identity' || label.startsWith('cawg.identity__')
 }
 
 function excludeAssertionScoped(status: CrJsonActiveManifestStatus): CrJsonActiveManifestStatus {

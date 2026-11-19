@@ -150,6 +150,26 @@ describe('crjson utilities', () => {
         { code: 'signingCredential.untrusted', url: claimUrl }
       ])
     })
+    // Regression: only CAWG identity assertions carry their own credential. A data
+    // hash mismatch is reported against the c2pa.hash.data assertion's url, and it
+    // must still count against the manifest, or a tampered asset reads as trusted.
+    it('still includes an integrity failure scoped to a non-identity assertion', () => {
+      const hashUrl = 'self#jumbf=/c2pa/urn:c2pa:test/c2pa.assertions/c2pa.hash.data'
+      const report: CrJson = {
+        manifests: [
+          {
+            label: 'active',
+            assertions: {},
+            validationResults: {
+              failure: [{ code: 'assertion.dataHash.mismatch', url: hashUrl }]
+            }
+          }
+        ]
+      }
+      expect(getAllValidationFailures(report)).toEqual([
+        { code: 'assertion.dataHash.mismatch', url: hashUrl }
+      ])
+    })
   })
 
   describe('isAssertionScopedStatus', () => {
@@ -164,6 +184,20 @@ describe('crjson utilities', () => {
       expect(isAssertionScopedStatus({
         code: 'signingCredential.trusted',
         url: 'self#jumbf=/c2pa/urn:c2pa:test/c2pa.signature'
+      })).toBe(false)
+    })
+
+    it('is true for a numbered identity assertion', () => {
+      expect(isAssertionScopedStatus({
+        code: 'cawg.identity.well-formed',
+        url: 'self#jumbf=/c2pa/urn:c2pa:test/c2pa.assertions/cawg.identity__1'
+      })).toBe(true)
+    })
+
+    it('is false for a status scoped to a non-identity assertion', () => {
+      expect(isAssertionScopedStatus({
+        code: 'assertion.dataHash.mismatch',
+        url: 'self#jumbf=/c2pa/urn:c2pa:test/c2pa.assertions/c2pa.hash.data'
       })).toBe(false)
     })
 

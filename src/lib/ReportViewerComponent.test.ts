@@ -837,3 +837,29 @@ describe('ReportViewer Component', () => {
     }
   })
 })
+
+describe('ReportViewer CAWG identity', () => {
+  // Real crJSON from C_with_CAWG_data.jpg (see src/lib/cawg.test.ts)
+  it('groups identity-scoped statuses under the identity assertion, not the manifest', async () => {
+    const fixture = (await import('../test/fixtures/cawg/C_with_CAWG_data.crjson.json')).default
+    const report = fixture as unknown as ConformanceReport
+    const { container, getByText } = render(ReportViewer, { report })
+    await fireEvent.click(getByText('Report'))
+
+    const group = container.querySelector('#validation-status .manifest-group-card')!
+    const identity = group.querySelector('.cawg-identity-group[data-label="cawg.identity"]')!
+    expect(identity).toBeTruthy()
+    expect(identity.textContent).toContain('Untrusted issuer')
+    expect(identity.textContent).toContain('C2PA Test Signing Cert')
+    expect(identity.textContent).toContain('X.509 certificate issued by Intermediate CA.')
+    expect(identity.textContent).toContain('cawg.x509.credential.untrusted')
+    expect(identity.textContent).toContain('cawg.identity.well-formed')
+
+    // The manifest-level lists must not repeat the identity's statuses.
+    const identityCodes = ['cawg.x509.credential.untrusted', 'cawg.identity.well-formed', 'cawg.x509.signature.validated']
+    const manifestLevelCodes = Array.from(group.querySelectorAll(':scope > .space-y-4 > div:not(.cawg-identity-group) .font-mono'))
+      .map((el) => el.textContent?.trim())
+    for (const code of identityCodes) expect(manifestLevelCodes).not.toContain(code)
+    expect(manifestLevelCodes).toContain('signingCredential.untrusted')
+  })
+})
